@@ -739,7 +739,32 @@ void *greyscale_video(void * arg){
   return NULL;
 }
 
-// void reduced_video(void * arg){}
+void *reduced_video(void * arg){
+  struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
+  printf("%s thread started \n",param->name);
+  struct draw_bitmap_multiwindow_handle_t *handle = draw_bitmap_create_window(param->width,param->height);
+  char *reduced_raw = (char *)malloc(param->height*param->width*3);
+  struct pixel_format_RGB* reduced_img = (struct pixel_format_RGB*) reduced_raw;
+  
+  while(!(*param->quit_flag))
+  {
+    printf("entering while loop");
+    memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
+    printf("memcpy successful");
+    scale_image_data(
+          (struct pixel_format_RGB *)param->RGB_IMG_data,
+          320,
+          240,
+          reduced_img,
+          10,
+          10);
+    printf("scale image successful");
+    draw_bitmap_display(handle, reduced_img);
+  }
+  draw_bitmap_close_window(handle);
+  printf("%s exited \n", param->name);
+  return NULL;
+}
 
 void *black_and_white(void * arg){
   struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
@@ -836,6 +861,7 @@ int main(int argc, char * argv[] )
     pthread_t t_rbg; //rgb img with green cross
     pthread_t t_grey;
     pthread_t t_bw;
+    pthread_t t_reduced;
     bool quit_flag = false;
 
     struct fifo_t key_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
@@ -858,22 +884,21 @@ int main(int argc, char * argv[] )
     struct pixel_format_RGB     * GREYSCALE_IMG_data;
     unsigned char               * BW_IMG_raw;
     struct pixel_format_RGB     * BW_IMG_data;
-    // unsigned char               * REDUCED_IMG_raw;
-    // struct pixel_format_RGB     * REDUCED_IMG_data;
+    unsigned char               * REDUCED_IMG_raw;
+    struct pixel_format_RGB     * REDUCED_IMG_data;
 
     IMG_RAW = (unsigned char *)malloc(IMAGE_SIZE+1);
-    // free(IMG_RAW);
-    // IMG_RAW = (unsigned char *)malloc(IMAGE_SIZE);
     RGB_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     GREYSCALE_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     BW_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-    // REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE);
+    REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE);
 
     IMG_DATA = (struct pixel_format_RGB*)IMG_RAW;
     RGB_IMG_data = (struct pixel_format_RGB *)RGB_IMG_raw;
     GREYSCALE_IMG_data = (struct pixel_format_RGB*)GREYSCALE_IMG_raw;
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
-    // REDUCED_IMG_data = (struct pixel_format_RGB)REDUCED_IMG_data;
+    REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_data;
+
     /*intial the parameter of motor_speed_thread    */
     struct motor_speed_thread_param       motor_speed_param     = {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag,25};
     /*intial the parameter of motor_direction_thread    */
@@ -937,18 +962,18 @@ int main(int argc, char * argv[] )
       &quit_flag,
       true
     };
-    // struct img_process_thread_param       reduced_param
-    // {
-    //   "reduced img",
-    //   &reduced_img_fifo,
-    //   REDUCED_IMG_data,
-    //   32,
-    //   24,
-    //   &reduced_lock,
-    //   NULL,
-    //   &quit_flag,
-    //   true
-    // };
+    struct img_process_thread_param       reduced_param=
+    {
+      "reduced img",
+      &reduced_img_fifo,
+      IMG_RAW,
+      REDUCED_IMG_raw,
+      REDUCED_IMG_data,
+      32,
+      24,
+      &quit_flag,
+      true
+    };
     struct io_peripherals *io;
     io = import_registers();
     if (io != NULL)
@@ -1006,7 +1031,7 @@ int main(int argc, char * argv[] )
 
         pthread_create(&t_grey,NULL, greyscale_video, (void*)&greyscale_param);
         pthread_create(&t_bw,NULL, black_and_white, (void*)&bw_param);
-
+        // pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
 
 
         // Wait to finish ts, td, tc, and tk threads
@@ -1019,6 +1044,7 @@ int main(int argc, char * argv[] )
         pthread_join(t_rbg,NULL);
         pthread_join(t_grey,NULL);
         pthread_join(t_bw,NULL);
+        pthread_join(t_reduced,NULL);
         
         printf("trying to free buffers \n");
         free(RGB_IMG_raw);
