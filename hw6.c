@@ -59,8 +59,8 @@ void *KeyRead(void * arg)
         {
           cmd.command  = keyhit1;  // other key hit
           cmd.argument = keyhit2;
-          if (!(FIFO_FULL( param->key_fifo )))
-          {FIFO_INSERT( param->key_fifo, cmd );}
+          if (!(FIFO_FULL( param->motor_control_fifo )))
+          {FIFO_INSERT( param->motor_control_fifo, cmd );}
           else {printf( "key_fifo queue full\n" );}
         }
 
@@ -86,7 +86,7 @@ void *KeyRead(void * arg)
 void *IR_Sensor(void* arg)
 {
   struct IR_Sensor_param *param = (struct IR_Sensor_param *)arg;
-  bool pause_thread = false;
+  bool pause_thread = true;
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function, 
              // similar to interrupt occuring every 10ms
@@ -118,17 +118,17 @@ void *IR_Sensor(void* arg)
       }
     }
     //check for mode switching
-    if(!FIFO_EMPTY(param->IR_sensor_fifo))
-    {
-      FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
-      printf( "\n %s= %c\n", param->name, cmd2.command);
-      switch(cmd2.command)
-      {
-        case 'w':{pause_thread = false;break;}
-        case 's':{pause_thread = true; break;}
-        default:{ printf("invalid mode \n");}
-      }
-    }
+    // if(!FIFO_EMPTY(param->IR_sensor_fifo))
+    // {
+    //   FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
+    //   printf( "\n %s= %c\n", param->name, cmd2.command);
+    //   switch(cmd2.command)
+    //   {
+    //     case 'w':{pause_thread = false;break;}
+    //     case 's':{pause_thread = true; break;}
+    //     default:{ printf("invalid mode \n");}
+    //   }
+    // }
 
     wait_period( &timer_state, 10u );
   }
@@ -203,15 +203,15 @@ void *Motor_Control(void * arg)
           {
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->reduced_img))
+            {FIFO_INSERT(param->reduced_img,cmd2);}
             break;
           }
           else{
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->IR_sensor_fifo))
-            {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
+            if(!FIFO_FULL(param->reduced_img))
+            {FIFO_INSERT(param->reduced_img,cmd2);}
           }              
         }
         case 'a':{
@@ -227,14 +227,14 @@ void *Motor_Control(void * arg)
             cmd2.command = 's';
             cmd2.argument = 0;
             if(param->mode){
-              if(!FIFO_FULL(param->dir_fifo)){
-                {FIFO_INSERT(param->dir_fifo,cmd2);}
+              if(!FIFO_FULL(param->reduced_img)){
+                {FIFO_INSERT(param->reduced_img,cmd2);}
                 break;
               }
             }
             else{
-              if(!FIFO_FULL(param->IR_sensor_fifo)){
-                {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
+              if(!FIFO_FULL(param->reduced_img)){
+                {FIFO_INSERT(param->reduced_img,cmd2);}
                 break;
               }
             } 
@@ -555,7 +555,7 @@ void *video_capture(void * arg){
     // param->img_data = (struct pixel_format_RGB*)param->img_raw;
     int argc = 0;
     char *argv[3];
-    
+    printf("scaled height: %d scaled width %d", scaled_height,scaled_width);
     while(! *param->quit_flag)
     {
       if (video_interface_get_image(handle_video, param->image))
@@ -740,26 +740,93 @@ void *greyscale_video(void * arg){
 }
 
 void *reduced_video(void * arg){
-  struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
+  struct reduced_img_thread_param *param = (struct reduced_img_thread_param*)arg;
   printf("%s thread started \n",param->name);
   struct draw_bitmap_multiwindow_handle_t *handle = draw_bitmap_create_window(param->width,param->height);
   char *reduced_raw = (char *)malloc(param->height*param->width*3);
   struct pixel_format_RGB* reduced_img = (struct pixel_format_RGB*) reduced_raw;
-  
+  struct thread_command cmd= {0,0};
+  bool pause_thread = false;
   while(!(*param->quit_flag))
   {
-    printf("entering while loop");
+    
     memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
-    printf("memcpy successful");
+    
     scale_image_data(
-          (struct pixel_format_RGB *)param->RGB_IMG_data,
-          320,
+          param->RGB_IMG_data,
           240,
+          320,
           reduced_img,
           10,
           10);
-    printf("scale image successful");
-    draw_bitmap_display(handle, reduced_img);
+
+
+    if(!(FIFO_EMPTY(param->img_cmd_fifo)))
+    {
+      FIFO_REMOVE(param->img_cmd_fifo,&cmd);
+      switch(cmd.command)
+      {
+        case'b':{
+          if(handle == NULL)
+          {
+            handle = draw_bitmap_create_window(param->width,param->height);
+          }
+          else{
+            draw_bitmap_close_window(handle);
+            handle = NULL;
+          }
+        }
+        case 'w':{pause_thread = false;break;}
+        case 's':{pause_thread = true; break;}
+        default:{break;}
+      }
+    }
+    for(size_t i= 0; i< param->height*param->width; i++)
+    {
+        int avg = (reduced_img[i].R +reduced_img[i].G +reduced_img[i].B)/3;
+        if(avg > 128)
+        {
+          reduced_img[i].R = 255;
+          reduced_img[i].G = 255;
+          reduced_img[i].B = 255;
+        }
+        else{
+          reduced_img[i].R = 0;
+          reduced_img[i].G = 0;
+          reduced_img[i].B = 0;
+        }
+        
+    }
+    if(handle != NULL){draw_bitmap_display(handle,reduced_img);}
+    //pixel count
+    if(!pause_thread)
+    {
+      int left_thresh = 85;
+      int right_thresh = 85;
+      int left_count = 0;
+      int right_count = 0;
+      for(size_t i= 0; i< param->height*param->width; i++){
+        int cur_val = reduced_img[i].G;
+        if(cur_val ==0)
+        {
+          if(i % param->width < 8){left_count +=1;}
+          else if(i % param->width > 16){right_count += 1;}
+        } 
+      }
+      
+      if(left_count > left_thresh)
+      {
+        if(!FIFO_FULL(param->dir_fifo))
+        {
+          FIFO_INSERT(param->dir_fifo,{'a',0});
+        }
+      }
+      if(right_count > right_thresh)
+      {
+          FIFO_INSERT(param->dir_fifo,{'d',0});
+      }
+    }    
+    //wait_period(&timer_state, 300u);
   }
   draw_bitmap_close_window(handle);
   printf("%s exited \n", param->name);
@@ -821,7 +888,26 @@ void *black_and_white(void * arg){
   printf("%s exited \n",param->name);
   return NULL;
 }
+void set_gpio(struct io_peripherals *io)
+{
+  /* set the pin function to OUTPUT for GPIO22 - */
+  /* set the pin function to OUTPUT for GPIO23 -    */
+  io->gpio->GPFSEL2.field.FSEL2 = GPFSEL_OUTPUT;
+  io->gpio->GPFSEL2.field.FSEL3 = GPFSEL_OUTPUT;
+  /* set the pin function to OUTPUT for GPIO24 - */
+  /* set the pin function to OUTPUT for GPIO25 -    */
+  io->gpio->GPFSEL2.field.FSEL4 = GPFSEL_INPUT;
+    io->gpio->GPFSEL2.field.FSEL5 = GPFSEL_INPUT;
+  /* set the pin function to OUTPUT for GPIO05 - */
+  /* set the pin function to OUTPUT for GPIO06 -    */
+  io->gpio->GPFSEL0.field.FSEL5 = GPFSEL_OUTPUT;
+  io->gpio->GPFSEL0.field.FSEL6 = GPFSEL_OUTPUT;
 
+  /* set the pin function to alternate function 0 for GPIO12, PWM for LED on GPIO12 */
+  /* set the pin function to alternate function 0 for GPIO13, PWM for LED on GPIO13 */
+  io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
+  io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
+}
 void enable_pwm(struct io_peripherals *io)
 {
   io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
@@ -868,7 +954,7 @@ int main(int argc, char * argv[] )
     struct fifo_t speed_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t dir_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t IR_sensor_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    
+    struct fifo_t motor_control_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t rgb_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t greyscale_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
@@ -891,13 +977,13 @@ int main(int argc, char * argv[] )
     RGB_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     GREYSCALE_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     BW_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-    REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE);
+    REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
 
     IMG_DATA = (struct pixel_format_RGB*)IMG_RAW;
     RGB_IMG_data = (struct pixel_format_RGB *)RGB_IMG_raw;
     GREYSCALE_IMG_data = (struct pixel_format_RGB*)GREYSCALE_IMG_raw;
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
-    REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_data;
+    REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
 
     /*intial the parameter of motor_speed_thread    */
     struct motor_speed_thread_param       motor_speed_param     = {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag,25};
@@ -906,7 +992,7 @@ int main(int argc, char * argv[] )
     /*intial the parameter of key_input_thread    */
     struct key_thread_param               key_param             = {"key",     &key_fifo, &quit_flag};
     /*intial the parameter of motor_control_thread    */
-    struct motor_control_thread_param     con_param             = {"control", &key_fifo, &speed_fifo, &dir_fifo, &IR_sensor_fifo,&img_fifo,&quit_flag, true};
+    struct motor_control_thread_param     con_param             = {"control", &key_fifo, &speed_fifo, &dir_fifo, &reduced_img_fifo,&img_fifo,&quit_flag, true};
     /*intialize the parameter of IR_sensor_thread
       - initialize to line tracing mode
     */
@@ -962,10 +1048,12 @@ int main(int argc, char * argv[] )
       &quit_flag,
       true
     };
-    struct img_process_thread_param       reduced_param=
+
+    struct reduced_img_thread_param reduced_param=
     {
       "reduced img",
       &reduced_img_fifo,
+      &dir_fifo,
       IMG_RAW,
       REDUCED_IMG_raw,
       REDUCED_IMG_data,
@@ -985,24 +1073,7 @@ int main(int argc, char * argv[] )
         signal(SIGINT, sigint_handler);
 
         enable_pwm_clock(io->cm, io->pwm);
-        /* set the pin function to OUTPUT for GPIO22 - */
-        /* set the pin function to OUTPUT for GPIO23 -    */
-        io->gpio->GPFSEL2.field.FSEL2 = GPFSEL_OUTPUT;
-        io->gpio->GPFSEL2.field.FSEL3 = GPFSEL_OUTPUT;
-        /* set the pin function to OUTPUT for GPIO24 - */
-        /* set the pin function to OUTPUT for GPIO25 -    */
-        io->gpio->GPFSEL2.field.FSEL4 = GPFSEL_INPUT;
-         io->gpio->GPFSEL2.field.FSEL5 = GPFSEL_INPUT;
-        /* set the pin function to OUTPUT for GPIO05 - */
-        /* set the pin function to OUTPUT for GPIO06 -    */
-        io->gpio->GPFSEL0.field.FSEL5 = GPFSEL_OUTPUT;
-        io->gpio->GPFSEL0.field.FSEL6 = GPFSEL_OUTPUT;
-
-        /* set the pin function to alternate function 0 for GPIO12, PWM for LED on GPIO12 */
-        /* set the pin function to alternate function 0 for GPIO13, PWM for LED on GPIO13 */
-        io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
-        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
-
+        set_gpio(io);
         /*enables pwm function*/
         enable_pwm(io);
        
@@ -1031,7 +1102,7 @@ int main(int argc, char * argv[] )
 
         pthread_create(&t_grey,NULL, greyscale_video, (void*)&greyscale_param);
         pthread_create(&t_bw,NULL, black_and_white, (void*)&bw_param);
-        // pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
+        pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
 
 
         // Wait to finish ts, td, tc, and tk threads
@@ -1055,6 +1126,8 @@ int main(int argc, char * argv[] )
         printf("greyscale image buffer freed succesfully \n");
         free(BW_IMG_raw);
         printf("bw image buffer freed successsfully \n");
+        free(REDUCED_IMG_raw);
+        printf("reduced img buffer freed successfully");
     
 
         /* main task finished  */
