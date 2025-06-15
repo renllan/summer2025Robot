@@ -112,6 +112,19 @@ struct img_process_thread_param
 {
   const char                  * name;
   struct fifo_t               * img_cmd_fifo;
+  unsigned char               * ORIG_IMG_raw;
+  unsigned char               * RGB_IMG_raw;
+  struct pixel_format_RGB     * RGB_IMG_data;
+  unsigned int                  width;       
+  unsigned int                  height;
+  bool                        * quit_flag;
+  bool                        status_flag;
+};
+
+struct reduced_img_thread_param{
+  const char                  * name;
+  struct fifo_t               * img_cmd_fifo;
+  struct fifo_t               * dir_fifo;
   unsigned char              * ORIG_IMG_raw;
   unsigned char              * RGB_IMG_raw;
   struct pixel_format_RGB     * RGB_IMG_data;
@@ -120,7 +133,6 @@ struct img_process_thread_param
   bool                        * quit_flag;
   bool                        status_flag;
 };
-
 struct img_capture_thread_param   
 {
   const char                  * name;

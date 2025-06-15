@@ -59,8 +59,8 @@ void *KeyRead(void * arg)
         {
           cmd.command  = keyhit1;  // other key hit
           cmd.argument = keyhit2;
-          if (!(FIFO_FULL( param->motor_control_fifo )))
-          {FIFO_INSERT( param->motor_control_fifo, cmd );}
+          if (!(FIFO_FULL( param->key_fifo )))
+          {FIFO_INSERT( param->key_fifo, cmd );}
           else {printf( "key_fifo queue full\n" );}
         }
 
@@ -203,15 +203,15 @@ void *Motor_Control(void * arg)
           {
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->reduced_img))
-            {FIFO_INSERT(param->reduced_img,cmd2);}
+            if(!FIFO_FULL(param->dir_fifo))
+            {FIFO_INSERT(param->dir_fifo,cmd2);}
             break;
           }
-          else{
+          else{ //mode2
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->reduced_img))
-            {FIFO_INSERT(param->reduced_img,cmd2);}
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
           }              
         }
         case 'a':{
@@ -227,14 +227,14 @@ void *Motor_Control(void * arg)
             cmd2.command = 's';
             cmd2.argument = 0;
             if(param->mode){
-              if(!FIFO_FULL(param->reduced_img)){
-                {FIFO_INSERT(param->reduced_img,cmd2);}
+              if(!FIFO_FULL(param->dir_fifo)){
+                {FIFO_INSERT(param->dir_fifo,cmd2);}
                 break;
               }
             }
-            else{
-              if(!FIFO_FULL(param->reduced_img)){
-                {FIFO_INSERT(param->reduced_img,cmd2);}
+            else{ //mode2
+              if(!FIFO_FULL(param->img_cmd_fifo)){
+                {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
                 break;
               }
             } 
@@ -390,6 +390,7 @@ void *Motor_Direction_Thread(void * arg)
   struct  motor_direction_thread_param * param = (struct motor_direction_thread_param *)arg;
   struct  thread_command cmd = {0, 0};
   struct  timespec  timer_state; 
+  int turn_angle_pause_time = 2500000;
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
 
@@ -471,7 +472,7 @@ void *Motor_Direction_Thread(void * arg)
         GPIO_CLR(param->gpio,param->pin_2);
         GPIO_CLR(param->gpio,param->pin_3);
         GPIO_SET(param->gpio,param->pin_4);
-        usleep(1500000);
+        usleep(turn_angle_pause_time);
         param->state = param->forward;
         break;
       }
@@ -487,7 +488,7 @@ void *Motor_Direction_Thread(void * arg)
         GPIO_SET(param->gpio,param->pin_2);
         GPIO_SET(param->gpio,param->pin_3);
         GPIO_CLR(param->gpio,param->pin_4);
-        usleep(250000);
+        usleep(turn_angle_pause_time);
         param->state = param->forward;
         break;
       }
@@ -617,7 +618,24 @@ void *video_capture(void * arg){
             }
             break;
           }
-          default:
+          case 'w':{
+            cmd2 = cmd1;
+            if(!FIFO_FULL(param->reduced_cmd_fifo))
+            {
+              FIFO_INSERT(param->reduced_cmd_fifo,cmd1);
+            }
+            break;
+          }
+          case 's':
+          {
+            cmd2 = cmd1;
+            if(!FIFO_FULL(param->reduced_cmd_fifo))
+            {
+              FIFO_INSERT(param->reduced_cmd_fifo,cmd1);
+            }
+            break;
+          }
+          default:{break;}
         }
       }
     }
@@ -746,6 +764,7 @@ void *reduced_video(void * arg){
   char *reduced_raw = (char *)malloc(param->height*param->width*3);
   struct pixel_format_RGB* reduced_img = (struct pixel_format_RGB*) reduced_raw;
   struct thread_command cmd= {0,0};
+  struct thread_command cmd2 = {0,0};
   bool pause_thread = false;
   while(!(*param->quit_flag))
   {
@@ -818,12 +837,18 @@ void *reduced_video(void * arg){
       {
         if(!FIFO_FULL(param->dir_fifo))
         {
-          FIFO_INSERT(param->dir_fifo,{'a',0});
+          cmd2 = (struct thread_command){'a',0};
+          FIFO_INSERT(param->dir_fifo,cmd2);
         }
       }
       if(right_count > right_thresh)
       {
-          FIFO_INSERT(param->dir_fifo,{'d',0});
+        if(!FIFO_FULL(param->dir_fifo))
+        {
+          cmd2 = (struct thread_command){'d',0};
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }  
+        
       }
     }    
     //wait_period(&timer_state, 300u);
@@ -986,11 +1011,16 @@ int main(int argc, char * argv[] )
     REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
 
     /*intial the parameter of motor_speed_thread    */
-    struct motor_speed_thread_param       motor_speed_param     = {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag,25};
+    struct motor_speed_thread_param motor_speed_param= 
+    {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag,25};
     /*intial the parameter of motor_direction_thread    */
-    struct motor_direction_thread_param   motor_direction_param = {"direction", NULL,5,6,22,23,&dir_fifo,&quit_flag, 's'};
+    struct motor_direction_thread_param motor_direction_param = 
+    {"direction", NULL,5,6,22,23,&dir_fifo,&quit_flag, 's'};
     /*intial the parameter of key_input_thread    */
-    struct key_thread_param               key_param             = {"key",     &key_fifo, &quit_flag};
+    struct key_thread_param key_param = {
+      "key",
+      &key_fifo,    
+      &quit_flag};
     /*intial the parameter of motor_control_thread    */
     struct motor_control_thread_param     con_param             = {"control", &key_fifo, &speed_fifo, &dir_fifo, &reduced_img_fifo,&img_fifo,&quit_flag, true};
     /*intialize the parameter of IR_sensor_thread
