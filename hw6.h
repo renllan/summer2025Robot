@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sys/time.h>
+#include "to_black_white.h"
 #include "../include/keypress.h"
 #include "../include/import_registers.h"
 #include "../include/cm.h"
@@ -43,7 +45,7 @@
 struct thread_command
 {
     uint8_t command;
-    uint8_t argument;
+    int argument;
 };
 
 FIFO_TYPE(struct thread_command, FIFO_LENGTH, fifo_t);
@@ -112,7 +114,6 @@ struct img_process_thread_param
 {
   const char                  * name;
   struct fifo_t               * img_cmd_fifo;
-  unsigned char               * ORIG_IMG_raw;
   unsigned char               * RGB_IMG_raw;
   struct pixel_format_RGB     * RGB_IMG_data;
   unsigned int                  width;       
@@ -125,7 +126,6 @@ struct reduced_img_thread_param{
   const char                  * name;
   struct fifo_t               * img_cmd_fifo;
   struct fifo_t               * dir_fifo;
-  unsigned char              * ORIG_IMG_raw;
   unsigned char              * RGB_IMG_raw;
   struct pixel_format_RGB     * RGB_IMG_data;
   unsigned int                  width;       
@@ -145,5 +145,9 @@ struct img_capture_thread_param
   struct image_t              *image;
   unsigned char               *img_raw;
   struct pixel_format_RGB     *img_data;
+  unsigned char               *rgb_raw;
+  unsigned char               *greyscale_raw;
+  unsigned char               *bw_raw;
+  unsigned char               *reduced_raw;
   bool                       * quit_flag;
 };
