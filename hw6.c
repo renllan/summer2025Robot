@@ -338,8 +338,8 @@ void *Motor_Control(void * arg)
               param->mode = true; 
               cmd2.command = 's';
               cmd2.argument = 0;
-              if(!FIFO_FULL(param->IR_sensor_fifo))
-              {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
+              if(!FIFO_FULL(param->img_cmd_fifo))
+              {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
               printf("switched to mode 1 \n");
               break;
             }
@@ -348,8 +348,8 @@ void *Motor_Control(void * arg)
               param->mode = false;
               cmd2.command = 'w';
               cmd2.argument = 0;
-              if(!FIFO_FULL(param->IR_sensor_fifo))
-              {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
+              if(!FIFO_FULL(param->img_cmd_fifo))
+              {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
               printf("switched to mode 2 \n");
               break;
               
@@ -944,10 +944,10 @@ void *reduced_video(void * arg){
         cmd.command = prev_dir;
         if(!FIFO_FULL(param->dir_fifo))
         {
-          struct thread_command stop_cmd = {'s',0};
-          //FIFO_INSERT(param->dir_fifo,stop_cmd);
-          FIFO_INSERT(param->dir_fifo,cmd);
-          //usleep(250000);
+          // struct thread_command stop_cmd = {'s',0};
+          // //FIFO_INSERT(param->dir_fifo,stop_cmd);
+          // FIFO_INSERT(param->dir_fifo,cmd);
+          // //usleep(250000);
         }
       }
       for(int i = right_IR_sensor; i<(right_IR_sensor+3*param->width);i+=param->width)
@@ -957,12 +957,12 @@ void *reduced_video(void * arg){
           cmd.command='d';
           prev_dir = 'a';
           //printf("detected blackline at the right \n");
-          if(!FIFO_FULL(param->dir_fifo))
-          {
-            FIFO_INSERT(param->dir_fifo,cmd);
-            //usleep(250000);
-            break;
-          }
+          // if(!FIFO_FULL(param->dir_fifo))
+          // {
+          //   FIFO_INSERT(param->dir_fifo,cmd);
+          //   //usleep(250000);
+          //   break;
+          // }
         }
       
       }
@@ -975,13 +975,13 @@ void *reduced_video(void * arg){
           cmd.command = 'a';
           prev_dir = 'd';
           //printf("detected blackline at the left\n");
-          if(!FIFO_FULL(param->dir_fifo))
-          {
-            FIFO_INSERT(param->dir_fifo,cmd);
-            //printf("detection thread sleeping \n");
-            //usleep(250000);
-            break;
-          }
+          // if(!FIFO_FULL(param->dir_fifo))
+          // {
+          //   FIFO_INSERT(param->dir_fifo,cmd);
+          //   //printf("detection thread sleeping \n");
+          //   //usleep(250000);
+          //   break;
+          // }
         }
       }
       
@@ -1256,6 +1256,17 @@ void *video_histogram(void *arg)
     printf("%s exited\n", param->name);
     return NULL;
 }
+void draw_bbox(int min_x,int min_y, int max_x, int max_y, struct pixel_format_RGB *egg_data,struct pixel_format_RGB color)
+{
+  for (int x = min_x; x <= max_x; x++) {
+    egg_data[min_y * IMG_WIDTH + x] = color;
+    egg_data[max_y * IMG_WIDTH + x] = color;
+  }
+  for (int y = min_y; y <= max_y; y++) {
+      egg_data[y * IMG_WIDTH + min_x] = color;
+      egg_data[y * IMG_WIDTH + max_x] = color;
+  }
+}
 void *egg_detector(void * arg)
 {
     struct egg_detector_thread_param *param = (struct egg_detector_thread_param*)arg;
@@ -1276,15 +1287,19 @@ void *egg_detector(void * arg)
       if(!FIFO_EMPTY(param->egg_fifo))
       {
           FIFO_REMOVE(param->egg_fifo,&cmd);
-          //printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+          
           switch (cmd.command)
           {
             case 'w': 
               pause_thread = false;
+              printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
               printf("starting egg detection \n");
+              break;
             case 's': 
               pause_thread = true;
+              printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
               printf("stop egg detection \n");
+              break;
             case 'e':
               if(handle == NULL)
               {
@@ -1314,27 +1329,27 @@ void *egg_detector(void * arg)
                 int max_y = eggs[i].max_y;
 
                 // Draw red bounding box
-                for (int x = min_x; x <= max_x; x++) {
-                    egg_data[min_y * IMG_WIDTH + x] = (struct pixel_format_RGB){255, 0, 0};
-                    egg_data[max_y * IMG_WIDTH + x] = (struct pixel_format_RGB){255, 0, 0};
-                }
-                for (int y = min_y; y <= max_y; y++) {
-                    egg_data[y * IMG_WIDTH + min_x] = (struct pixel_format_RGB){255, 0, 0};
-                    egg_data[y * IMG_WIDTH + max_x] = (struct pixel_format_RGB){255, 0, 0};
-                }
+                draw_bbox(min_x,min_y,max_x,max_y, egg_data,(struct pixel_format_RGB){255, 0, 0});
                 if(eggs[i].size > eggs[max_egg].size)
                 {
                   max_egg = i;
                 }
                 //printf("Egg %d at center (%d, %d), size %d\n", i+1, eggs[i].center_x, eggs[i].center_y, eggs[i].size);
               }
+              int min_x = eggs[max_egg].min_x;
+              int max_x = eggs[max_egg].max_x;
+              int min_y = eggs[max_egg].min_y;
+              int max_y = eggs[max_egg].max_y;
+              draw_bbox(min_x,min_y,max_x,max_y,egg_data,(struct pixel_format_RGB){0, 255, 0});
               if(!pause_thread)
               {
                 int max_egg_x = eggs[max_egg].center_x - IMG_WIDTH/2;
+                printf("largest egg is at %d \n", max_egg_x);
                 if(eggs[max_egg].size > STOP_THRESH) //needs tp
                 {
                   if(!FIFO_FULL(param->dir_fifo))
                   {
+                    printf("egg is close to robot to grab \n");
                     cmd.command = 's';
                     FIFO_INSERT(param->dir_fifo,cmd);
                     //TODO grab the egg;
@@ -1348,6 +1363,7 @@ void *egg_detector(void * arg)
                   struct thread_command cmd = {0,0};
                   if(!FIFO_FULL(param->dir_fifo))
                   {
+                    printf("largest egg detected at the left\n");
                     cmd.command = 'a';
                     FIFO_INSERT(param->dir_fifo,cmd);
                     break;
@@ -1357,6 +1373,7 @@ void *egg_detector(void * arg)
                 if(max_egg_x > 60)
                 {
                   cmd.command = 'd';
+                  printf("largest egg detected at the right\n");
                   FIFO_INSERT(param->dir_fifo,cmd);
                   break;
                 }

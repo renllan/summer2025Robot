@@ -1,4 +1,11 @@
 #include "find_egg_blobs.h"
+#define PIXEL_RATIO_H 85
+#define PIXEL_RATIO_L 30
+#define PIXEL_THRESH_H 15000
+#define PIXEL_THRESH_L 1000
+#define ASPECT_H 3
+#define ASPECT_L 1
+
 void reset_queue(PointQueue *q)
 {
     q->front = 0;
@@ -93,10 +100,12 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
                 int total_pixels = w*h;
                 float aspect = (float)w / h;
                 float white_pixels_ratio = 100*(float)white_pixels/total_pixels;
-
-                if (white_pixels_ratio> 30 && white_pixels_ratio< 80 && pixels >1000 && aspect > 0.5 && aspect < 3) {
+                //printf("eggs at %d , %d pixels %d, aspect: %f ,ratio %f\n",sum_x / pixels,sum_y / pixels,pixels,aspect,white_pixels_ratio);
+                if (white_pixels_ratio> PIXEL_RATIO_L && white_pixels_ratio< PIXEL_RATIO_H 
+                    && pixels >PIXEL_THRESH_L 
+                     && aspect > ASPECT_L && aspect < ASPECT_H) {
                     if (egg_count < max_eggs) {
-                        //printf("eggs at %d , %d pixels %d, aspect: %f ,ratio %f\n",sum_x / pixels,sum_y / pixels,pixels,aspect,white_pixels_ratio);
+                        
                         eggs[egg_count].min_x = min_x;
                         eggs[egg_count].max_x = max_x;
                         eggs[egg_count].min_y = min_y;
@@ -111,6 +120,6 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
         }
     }
     free(visited);
-    printf("egg count: %d \n",egg_count);
+    //printf("egg count: %d \n",egg_count);
     return egg_count;
 }
