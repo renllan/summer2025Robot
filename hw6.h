@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "to_black_white.h"
+#include "find_egg_blobs.h"
 #include "../include/keypress.h"
 #include "../include/import_registers.h"
 #include "../include/cm.h"
@@ -41,6 +42,30 @@
 #define SCALE_REDUCTION_PER_AXIS  2   /* the image size reduction ratio (note that 640*480*3*8*FPS = your bandwidth usage, at 24FPS, that is 177MPBS) */
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)/(SCALE_REDUCTION_PER_AXIS*SCALE_REDUCTION_PER_AXIS)
+#define EGG_THRESHOLD 200
+#define COUNT_THRESHOLD 500
+#define IMG_WIDTH 320
+#define IMG_HEIGHT 240
+#define MAX_EGGS 5
+#define STOP_THRESH 5000
+
+void *video_histogram(void *arg) ;
+void set_gpio(struct io_peripherals *io);
+void enable_pwm(struct io_peripherals *io) ;
+void *black_and_white(void * arg);
+void *reduced_video(void * arg);
+void *video_with_cross(void * arg);
+void *video_capture(void * arg);
+void set_gpio_context(volatile struct gpio_register * gpio); 
+void *Motor_Direction_Thread(void * arg);
+void *Motor_Speed_Thread(void * args);
+void *Motor_Control(void * arg);
+void *IR_Sensor(void* arg);
+void *KeyRead(void * arg);
+void *greyscale_video(void * arg);
+void *egg_detector(void * arg);
+
+void sigint_handler(int signum);
 
 struct thread_command
 {
@@ -49,7 +74,15 @@ struct thread_command
 };
 
 FIFO_TYPE(struct thread_command, FIFO_LENGTH, fifo_t);
+struct egg_detector_thread_param{
 
+  const char                  *name;
+  struct fifo_t               *egg_fifo;
+  struct fifo_t               *dir_fifo;
+  unsigned char               * RGB_IMG_raw;
+  struct pixel_format_RGB     * RGB_IMG_data;
+  bool                        *quit_flag;
+};
 struct IR_Sensor_param
 {
   const char                  *name;
@@ -61,14 +94,12 @@ struct IR_Sensor_param
   bool                       *quit_flag;
 };
 
-
 struct key_thread_param
 {
   const char                    * name;
   struct fifo_t                 * key_fifo;
   bool                          * quit_flag;
 };
-
 
 struct motor_speed_thread_param
 {
@@ -95,8 +126,6 @@ struct motor_direction_thread_param
   char                           state; 
   char                           forward;//true forward, false backward
 };
-
-
 
 struct motor_control_thread_param
 {
@@ -133,15 +162,17 @@ struct reduced_img_thread_param{
   bool                        * quit_flag;
   bool                        status_flag;
 };
+
 struct img_capture_thread_param   
 {
   const char                  * name;
-  
   struct fifo_t               * img_cmd_fifo;
   struct fifo_t               * rgb_cmd_fifo;
   struct fifo_t               * greyscale_cmd_fifo;
   struct fifo_t               * bw_cmd_fifo;
   struct fifo_t               * reduced_cmd_fifo;
+  struct fifo_t               * hist_fifo;
+  struct fifo_t               * egg_fifo;
   struct image_t              *image;
   unsigned char               *img_raw;
   struct pixel_format_RGB     *img_data;
@@ -151,3 +182,11 @@ struct img_capture_thread_param
   unsigned char               *reduced_raw;
   bool                       * quit_flag;
 };
+
+// int find_max(int hist[], int size) {
+//     int max = 1;  // Minimum of 1 to avoid division by zero
+//     for (int i = 0; i < size; i++) {
+//         if (hist[i] > max) max = hist[i];
+//     }
+//     return max;
+// }

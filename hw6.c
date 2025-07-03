@@ -1,6 +1,4 @@
-
 #include "hw6.h"
-
 void *KeyRead(void * arg)
 {
   struct  key_thread_param * param = (struct key_thread_param *)arg;
@@ -159,6 +157,24 @@ void *Motor_Control(void * arg)
       printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
       switch (cmd1.command)
       {
+        case 'h':
+        {
+          cmd2.command =cmd1.command;
+          cmd2.argument = 0;
+          if(!FIFO_FULL(param->img_cmd_fifo))
+          {
+            FIFO_INSERT(param->img_cmd_fifo,cmd2);
+          }break;
+        }
+        case 'e':
+        {
+          cmd2.command =cmd1.command;
+          cmd2.argument = 0;
+          if(!FIFO_FULL(param->img_cmd_fifo))
+          {
+            FIFO_INSERT(param->img_cmd_fifo,cmd2);
+          }break;
+        }
         case 'c':
         {
           cmd2.command ='c';
@@ -599,32 +615,47 @@ void *video_capture(void * arg){
     
     int argc = 0;
     char *argv[3];
+    int counter = 0;
     printf("scaled height: %d scaled width %d", scaled_height,scaled_width);
     while(! *param->quit_flag)
     {
-      if (video_interface_get_image(handle_video, param->image))
+      counter++;
+      if(counter%25 == 0)
       {
-      
-        scale_image_data(
-          (struct pixel_format_RGB *)param->image,
-          handle_video->configured_height,
-          handle_video->configured_width,
-          param->img_data,
-          SCALE_REDUCTION_PER_AXIS,
-          SCALE_REDUCTION_PER_AXIS );
+        if (video_interface_get_image(handle_video, param->image))
+        {
 
-          struct thread_command cmd = {'u',0};
-          FIFO_INSERT(param->rgb_cmd_fifo,cmd);
-          FIFO_INSERT(param->greyscale_cmd_fifo,cmd);
-          FIFO_INSERT(param->bw_cmd_fifo,cmd);
-          //FIFO_INSERT(param->reduced_cmd_fifo,cmd);
+          
+          scale_image_data(
+            (struct pixel_format_RGB *)param->image,
+            handle_video->configured_height,
+            handle_video->configured_width,
+            param->img_data,
+            SCALE_REDUCTION_PER_AXIS,
+            SCALE_REDUCTION_PER_AXIS );
 
-        //draw_bitmap_display(handle_GUI_RGB, param->img_data);
+            struct thread_command cmd = {'u',0};
+            memcpy(param->rgb_raw,param->img_raw,IMAGE_SIZE);
+            memcpy(param->greyscale_raw,param->img_raw,IMAGE_SIZE);
+            memcpy(param->bw_raw,param->img_raw,IMAGE_SIZE);
+            memcpy(param->reduced_raw,param->img_raw,IMAGE_SIZE);
+
+            FIFO_INSERT(param->rgb_cmd_fifo,cmd);
+            FIFO_INSERT(param->greyscale_cmd_fifo,cmd);
+            FIFO_INSERT(param->bw_cmd_fifo,cmd);
+            FIFO_INSERT(param->reduced_cmd_fifo,cmd);
+            FIFO_INSERT(param->hist_fifo,cmd);
+            FIFO_INSERT(param->egg_fifo,cmd);
+            
+            
+          //draw_bitmap_display(handle_GUI_RGB, param->img_data);
+        }
+        else
+        {
+          printf("did not get image \n");
+        }
       }
-      else
-      {
-        printf("did not get image \n");
-      }
+
       struct thread_command cmd1 = {0,0};
       struct thread_command cmd2 = {0,0};
       if(!FIFO_EMPTY(param->img_cmd_fifo))
@@ -633,6 +664,22 @@ void *video_capture(void * arg){
         printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
         switch(cmd1.command)
         {
+          case 'e':
+          {
+            cmd2 = cmd1;
+            if(!FIFO_FULL(param->egg_fifo)){
+              FIFO_INSERT(param->egg_fifo,cmd2);
+            }
+          }
+          case 'h':
+          {
+            cmd2 = cmd1;
+            if(!FIFO_FULL(param->hist_fifo))
+            {
+              FIFO_INSERT(param->hist_fifo,cmd1);
+            }
+            break;
+          }
           case 'c':{
             cmd2 = cmd1;
             if(!FIFO_FULL(param->rgb_cmd_fifo))
@@ -667,25 +714,28 @@ void *video_capture(void * arg){
           }
           case 'w':{
             cmd2 = cmd1;
-            if(!FIFO_FULL(param->reduced_cmd_fifo))
+            if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
             {
               FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
+              FIFO_INSERT(param->egg_fifo,cmd2);
+
             }
             break;
           }
           case 's':
           {
             cmd2 = cmd1;
-            if(!FIFO_FULL(param->reduced_cmd_fifo))
+            if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
             {
               FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
+              FIFO_INSERT(param->egg_fifo,cmd2);
             }
             break;
           }
           default:{break;}
         }
       }
-      wait_period( &timer_state,250u );
+      wait_period( &timer_state,10u );
     }
     
 
@@ -728,8 +778,11 @@ void *video_with_cross(void * arg){
         }
         case 'u':
         {
-          memcpy(param->RGB_IMG_raw,param->ORIG_IMG_raw, IMAGE_SIZE);
+          //memcpy(param->RGB_IMG_raw,param->ORIG_IMG_raw, IMAGE_SIZE);
           //draw cross
+          struct timeval tv;
+          long long prev_ms = (long long)(tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
+          
           for(size_t i= 160; i< IMAGE_SIZE/3; i+=param->width)
           {
             param->RGB_IMG_data[i].R = 0;
@@ -749,7 +802,7 @@ void *video_with_cross(void * arg){
     //handle = NULL;
     if(handle != NULL){draw_bitmap_display(handle,param->RGB_IMG_data);}
     
-    wait_period(&timer_state, 250u);
+    wait_period(&timer_state, 10u);
   }
   //draw_bitmap_close_window(handle);
   printf("%s exited \n", param->name);
@@ -787,7 +840,7 @@ void *greyscale_video(void * arg){
         }
         case 'u':
         {
-          memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
+          //memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
           for(size_t i= 0; i< IMAGE_SIZE/3; i++)
           {
             int avg = (param->RGB_IMG_data[i].R +param->RGB_IMG_data[i].G +param->RGB_IMG_data[i].B)/3;
@@ -802,7 +855,7 @@ void *greyscale_video(void * arg){
       
     }
     if(handle != NULL){draw_bitmap_display(handle,param->RGB_IMG_data);}
-    wait_period(&timer_state, 200u);
+    wait_period(&timer_state, 10u);
   }
   printf("%s exited \n",param->name);
   return NULL;
@@ -826,20 +879,12 @@ void *reduced_video(void * arg){
   int left_IR_Sensor = param->width*row + param->width/2- offset;
   int right_IR_sensor = param->width*row + param->width/2 +offset;
   char prev_dir = 'x';
-
+  int counter = 0;
   while(!(*param->quit_flag))
   {
     
-    memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
-          scale_image_data(
-            param->RGB_IMG_data,
-            240,
-            320,
-            reduced_img,
-            10,
-            10);
+    //memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
           
-    to_black_white(reduced_img,param->width*param->height,100);
     if(!(FIFO_EMPTY(param->img_cmd_fifo)))
     {
       FIFO_REMOVE(param->img_cmd_fifo,&cmd);
@@ -862,14 +907,25 @@ void *reduced_video(void * arg){
         case 's':{
           printf("pausing camera detection \n");
           pause_thread = true; break;}
-        
+        case 'u':{
+          scale_image_data(
+                      param->RGB_IMG_data,
+                      240,
+                      320,
+                      reduced_img,
+                      10,
+                      10);
+          
+          to_black_white(reduced_img,param->width*param->height,100);
+          break;
+        }
         default:{break;}
       }
     }
     
     
     //pixel count
-    if(!pause_thread)
+    if(!pause_thread && counter % 250==0)
     {
       //printf("using camera to control car \n");
       //right have black line
@@ -884,14 +940,14 @@ void *reduced_video(void * arg){
         }
       } 
       if(all_white){
-        printf("did not detect black pixel\n");
+        //printf("did not detect black pixel\n");
         cmd.command = prev_dir;
         if(!FIFO_FULL(param->dir_fifo))
         {
           struct thread_command stop_cmd = {'s',0};
           //FIFO_INSERT(param->dir_fifo,stop_cmd);
           FIFO_INSERT(param->dir_fifo,cmd);
-          usleep(250000);
+          //usleep(250000);
         }
       }
       for(int i = right_IR_sensor; i<(right_IR_sensor+3*param->width);i+=param->width)
@@ -900,11 +956,11 @@ void *reduced_video(void * arg){
         {
           cmd.command='d';
           prev_dir = 'a';
-          printf("detected blackline at the right \n");
+          //printf("detected blackline at the right \n");
           if(!FIFO_FULL(param->dir_fifo))
           {
             FIFO_INSERT(param->dir_fifo,cmd);
-            usleep(250000);
+            //usleep(250000);
             break;
           }
         }
@@ -918,12 +974,12 @@ void *reduced_video(void * arg){
         {
           cmd.command = 'a';
           prev_dir = 'd';
-          printf("detected blackline at the left\n");
+          //printf("detected blackline at the left\n");
           if(!FIFO_FULL(param->dir_fifo))
           {
             FIFO_INSERT(param->dir_fifo,cmd);
-            printf("detection thread sleeping \n");
-            usleep(250000);
+            //printf("detection thread sleeping \n");
+            //usleep(250000);
             break;
           }
         }
@@ -958,8 +1014,9 @@ void *reduced_video(void * arg){
     }
     if(handle != NULL){draw_bitmap_display(handle,reduced_img);}
   
-    wait_period(&timer_state, 250u);
+    wait_period(&timer_state, 10u);
   }
+  free(reduced_raw);
   printf("%s exited \n", param->name);
   return NULL;
 }
@@ -993,8 +1050,8 @@ void *black_and_white(void * arg){
         }
         case 'u':
         {
-          memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
-          to_black_white(param->RGB_IMG_data,param->width*param->height,120);
+          //memcpy(param->RGB_IMG_raw, param->ORIG_IMG_raw, IMAGE_SIZE);
+          to_black_white(param->RGB_IMG_data,param->width*param->height,200);
           break;
         }
         default:{break;}
@@ -1007,6 +1064,31 @@ void *black_and_white(void * arg){
   //draw_bitmap_close_window(handle);
   printf("%s exited \n",param->name);
   return NULL;
+}
+
+void enable_pwm(struct io_peripherals *io) {
+    io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
+    io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
+
+    io->pwm->RNG1 = PWM_RANGE;
+    io->pwm->RNG2 = PWM_RANGE;
+    io->pwm->DAT1 = 1;
+    io->pwm->DAT2 = 1;
+    io->pwm->CTL.field.MODE1 = 0;
+    io->pwm->CTL.field.MODE2 = 0;
+    io->pwm->CTL.field.RPTL1 = 1;
+    io->pwm->CTL.field.RPTL2 = 1;
+    io->pwm->CTL.field.SBIT1 = 0;
+    io->pwm->CTL.field.SBIT2 = 0;
+    io->pwm->CTL.field.POLA1 = 0;
+    io->pwm->CTL.field.POLA2 = 0;
+    io->pwm->CTL.field.USEF1 = 0;
+    io->pwm->CTL.field.USEF2 = 0;
+    io->pwm->CTL.field.MSEN1 = 1;
+    io->pwm->CTL.field.MSEN2 = 1;
+    io->pwm->CTL.field.CLRF1 = 1;
+    io->pwm->CTL.field.PWEN1 = 1;
+    io->pwm->CTL.field.PWEN2 = 1;
 }
 void set_gpio(struct io_peripherals *io)
 {
@@ -1028,252 +1110,265 @@ void set_gpio(struct io_peripherals *io)
   io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
   io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
 }
-void enable_pwm(struct io_peripherals *io)
+void *video_histogram(void *arg) 
 {
-  io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
-  io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
+    struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
+    printf("%s thread started\n", param->name);
+    struct draw_bitmap_multiwindow_handle_t *grey_handle = NULL;
+    struct draw_bitmap_multiwindow_handle_t *r_handle = NULL;
+    struct draw_bitmap_multiwindow_handle_t *g_handle = NULL;
+    struct draw_bitmap_multiwindow_handle_t *b_handle = NULL;
 
-  io->pwm->RNG1 = PWM_RANGE;     /* the range value, 100 level steps */
-  io->pwm->RNG2 = PWM_RANGE;     /* the range value, 100 level steps */
-  io->pwm->DAT1 = 1;             /* initial beginning level=1/100=1% */
-  io->pwm->DAT2 = 1;             /* initial beginning level=1/100=1% */
-  io->pwm->CTL.field.MODE1 = 0;  /* PWM mode */
-  io->pwm->CTL.field.MODE2 = 0;  /* PWM mode */
-  io->pwm->CTL.field.RPTL1 = 1;  /* not using FIFO, but repeat the last byte anyway */
-  io->pwm->CTL.field.RPTL2 = 1;  /* not using FIFO, but repeat the last byte anyway */
-  io->pwm->CTL.field.SBIT1 = 0;  /* idle low */
-  io->pwm->CTL.field.SBIT2 = 0;  /* idle low */
-  io->pwm->CTL.field.POLA1 = 0;  /* non-inverted polarity */
-  io->pwm->CTL.field.POLA2 = 0;  /* non-inverted polarity */
-  io->pwm->CTL.field.USEF1 = 0;  /* do not use FIFO */
-  io->pwm->CTL.field.USEF2 = 0;  /* do not use FIFO */
-  io->pwm->CTL.field.MSEN1 = 1;  /* use M/S algorithm, level=pwm->DAT1/PWM_RANGE */
-  io->pwm->CTL.field.MSEN2 = 1;  /* use M/S algorithm, level=pwm->DAT2/PWM_RANGE */
-  io->pwm->CTL.field.CLRF1 = 1;  /* clear the FIFO, even though it is not used */
-  io->pwm->CTL.field.PWEN1 = 1;  /* enable the PWM channel */
-  io->pwm->CTL.field.PWEN2 = 1;  /* enable the PWM channel */
+    struct thread_command cmd = {0,0};
+    struct timespec timer_state;
+    wait_period_initialize(&timer_state);
+    wait_period(&timer_state, 100u);  // Initial delay
+    
+    // Histogram configuration
+    #define HIST_WIDTH 256
+    #define HIST_HEIGHT 100
+    #define NUM_BINS 256
+
+    int grey_hist[NUM_BINS] = {0};
+    int r_hist[NUM_BINS]= {0};
+    int g_hist[NUM_BINS] = {0};
+    int b_hist[NUM_BINS] = {0};
+
+    struct pixel_format_RGB grey_img[HIST_WIDTH * HIST_HEIGHT];
+    struct pixel_format_RGB r_img[HIST_WIDTH * HIST_HEIGHT];
+    struct pixel_format_RGB g_img[HIST_WIDTH * HIST_HEIGHT];
+    struct pixel_format_RGB b_img[HIST_WIDTH * HIST_HEIGHT];
+
+    while(!(*param->quit_flag)) {
+        // Process commands
+      if(!(FIFO_EMPTY(param->img_cmd_fifo))) {
+        FIFO_REMOVE(param->img_cmd_fifo, &cmd);
+        //printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+        switch(cmd.command) {
+          case 'h':  // Toggle histogram window
+            if(grey_handle == NULL) {
+              grey_handle = draw_bitmap_create_window(HIST_WIDTH, HIST_HEIGHT);
+              r_handle = draw_bitmap_create_window(HIST_WIDTH, HIST_HEIGHT);
+              g_handle = draw_bitmap_create_window(HIST_WIDTH, HIST_HEIGHT);
+              b_handle = draw_bitmap_create_window(HIST_WIDTH, HIST_HEIGHT);
+            } else {
+              draw_bitmap_close_window(grey_handle);
+              draw_bitmap_close_window(r_handle);
+              draw_bitmap_close_window(g_handle);
+              draw_bitmap_close_window(b_handle);
+              grey_handle = NULL;
+              r_handle = NULL;
+              g_handle = NULL;
+              b_handle = NULL;
+            }
+            break;
+                
+          case 'u':  // Update histogram
+              // Reset histogram counts
+              memset(grey_hist, 0, sizeof(grey_hist));
+              memset(r_hist, 0, sizeof(r_hist));
+              memset(g_hist, 0, sizeof(g_hist));
+              memset(b_hist, 0, sizeof(b_hist));
+              for(size_t i= 0; i< IMAGE_SIZE/3; i++)
+              {
+                  int avg = (param->RGB_IMG_data[i].R +param->RGB_IMG_data[i].G +param->RGB_IMG_data[i].B)/3;
+                  grey_hist[avg]++;
+                  r_hist[param->RGB_IMG_data[i].R]++;
+                  g_hist[param->RGB_IMG_data[i].G]++;
+                  b_hist[param->RGB_IMG_data[i].B]++;
+              }
+              
+              break;
+              
+          default:
+              break;
+        }
+      }
         
+        // Update and display histogram if window is open
+        if(g_handle || grey_handle || b_handle ||r_handle)
+        {
+          int max_grey = 1;  // Initialize to 1 to avoid division by zero
+          int max_r = 1;
+          int max_g = 1;
+          int max_b = 1;
+          memset(grey_img, 0, sizeof(grey_img));
+          memset(r_img, 0, sizeof(r_img));
+          memset(g_img, 0, sizeof(g_img));
+          memset(b_img, 0, sizeof(b_img));
+          for(int i = 0; i < NUM_BINS; i++) {
+              if(grey_hist[i] > max_grey) max_grey = grey_hist[i];
+              if(r_hist[i] > max_r) max_r = r_hist[i];
+              if(g_hist[i] > max_g) max_g = g_hist[i];
+              if(b_hist[i] > max_b) max_b = b_hist[i];
+          }
+          for (int x = 0; x < HIST_WIDTH; x++) {
+          // Map screen position to intensity bin (0-255)
+            int bin = (x * NUM_BINS) / HIST_WIDTH;
+            bin = bin > 255 ? 255 : bin;
+            
+            // Calculate bar heights (scale to histogram height)
+            int grey_h = (grey_hist[bin] * HIST_HEIGHT) / max_grey;
+            int r_h = (r_hist[bin] * HIST_HEIGHT) / max_r;
+            int g_h = (g_hist[bin] *HIST_HEIGHT) / max_g;
+            int b_h = (b_hist[bin] * HIST_HEIGHT) / max_b;
+            
+            // Draw vertical bars
+            for (int y = 0; y < HIST_HEIGHT; y++) {
+              int pos = (HIST_HEIGHT-1-y) * HIST_WIDTH + x;
+              
+              // Grayscale (white)
+              if (y < grey_h) {
+                  grey_img[pos] = (struct pixel_format_RGB){255, 255, 255};
+              }
+              
+              // Red channel
+              if (y < r_h) {
+                  r_img[pos] = (struct pixel_format_RGB){255, 0, 0};
+              }
+              
+              // Green channel
+              if (y < g_h) {
+                  g_img[pos] = (struct pixel_format_RGB){0, 255, 0};
+              }
+              
+              // Blue channel
+              if (y < b_h) {
+                  b_img[pos] = (struct pixel_format_RGB){0, 0, 255};
+              }
+            }
+          }
+        }
+        
+        if (grey_handle) draw_bitmap_display(grey_handle, grey_img);
+        if (r_handle) draw_bitmap_display(r_handle, r_img);
+        if (g_handle) draw_bitmap_display(g_handle, g_img);
+        if (b_handle) draw_bitmap_display(b_handle, b_img);
+        wait_period(&timer_state, 10u);  // Update every 30ms
+    }
+    
+    if(grey_handle) {draw_bitmap_close_window(grey_handle); grey_handle = NULL;}
+    if(r_handle) {draw_bitmap_close_window(r_handle); r_handle = NULL;}
+    if(g_handle) {draw_bitmap_close_window(g_handle); g_handle = NULL;}
+    if(b_handle) {draw_bitmap_close_window(b_handle); b_handle = NULL;}
+
+
+    printf("%s exited\n", param->name);
+    return NULL;
 }
-int main(int argc, char * argv[] )
+void *egg_detector(void * arg)
 {
-    
-
-    pthread_t tk; //key input thread
-    pthread_t tc; //motor controll thread
-    pthread_t ts; //speed control thread
-    pthread_t td; //directin control thread
-    pthread_t ti; //IR_sensor thread
-    pthread_t tp; //video capture thread 
-    pthread_t t_rbg; //rgb img with green cross
-    pthread_t t_grey;
-    pthread_t t_bw;
-    pthread_t t_reduced;
-    bool quit_flag = false;
-
-    struct fifo_t key_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t speed_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t dir_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t IR_sensor_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t motor_control_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t rgb_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t greyscale_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t bw_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t reduced_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-
-    static struct image_t       image;
-    unsigned char               * IMG_RAW;
-    struct pixel_format_RGB     * IMG_DATA;
-    unsigned char               * RGB_IMG_raw;
-    struct pixel_format_RGB     * RGB_IMG_data;
-    unsigned char               * GREYSCALE_IMG_raw;
-    struct pixel_format_RGB     * GREYSCALE_IMG_data;
-    unsigned char               * BW_IMG_raw;
-    struct pixel_format_RGB     * BW_IMG_data;
-    unsigned char               * REDUCED_IMG_raw;
-    struct pixel_format_RGB     * REDUCED_IMG_data;
-
-    IMG_RAW = (unsigned char *)malloc(IMAGE_SIZE+1);
-    RGB_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-    GREYSCALE_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-    BW_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-    REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
-
-    IMG_DATA = (struct pixel_format_RGB*)IMG_RAW;
-    RGB_IMG_data = (struct pixel_format_RGB *)RGB_IMG_raw;
-    GREYSCALE_IMG_data = (struct pixel_format_RGB*)GREYSCALE_IMG_raw;
-    BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
-    REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
-
-    /*intial the parameter of motor_speed_thread    */
-    struct motor_speed_thread_param motor_speed_param= 
-    {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag,25};
-    /*intial the parameter of motor_direction_thread    */
-    struct motor_direction_thread_param motor_direction_param = 
-    {"direction", NULL,5,6,22,23,&dir_fifo,&quit_flag, 's'};
-    /*intial the parameter of key_input_thread   q */
-    struct key_thread_param key_param = {
-      "key",
-      &key_fifo,    
-      &quit_flag};
-    /*intial the parameter of motor_control_thread    */
-    struct motor_control_thread_param     con_param             = {"control", &key_fifo, &speed_fifo, &dir_fifo, &reduced_img_fifo,&img_fifo,&quit_flag, true};
-    /*intialize the parameter of IR_sensor_thread
-      - initialize to line tracing mode
-    */
-    struct IR_Sensor_param                IR_sensor_param      =  {"IR Senssor", &IR_sensor_fifo,&dir_fifo,NULL,24,25,&quit_flag};
-    
-    struct img_capture_thread_param  img_capture_param = 
+    struct egg_detector_thread_param *param = (struct egg_detector_thread_param*)arg;
+    struct  timespec  timer_state; 
+    printf("%s thread started \n",param->name);
+    wait_period_initialize( &timer_state );
+    struct draw_bitmap_multiwindow_handle_t *handle =NULL;
+    unsigned char * egg_buffer = (unsigned char *)malloc(IMAGE_SIZE+1);
+    struct pixel_format_RGB * egg_data = (struct pixel_format_RGB *)egg_buffer;
+    int x = 0;
+    int y = 0;
+    bool pause_thread = true;
+    int min_x = IMG_WIDTH, min_y = IMG_HEIGHT;
+    int max_x = 0, max_y = 0;
+    while(!(*param->quit_flag))
     {
-      "img capture",
-      &img_fifo,
-      &rgb_img_fifo,
-      &greyscale_img_fifo,
-      &bw_img_fifo,
-      &reduced_img_fifo,
-      &image,
-      IMG_RAW,
-      IMG_DATA,
-      &quit_flag
-    };     
+      struct thread_command cmd = {0, 0};
+      if(!FIFO_EMPTY(param->egg_fifo))
+      {
+          FIFO_REMOVE(param->egg_fifo,&cmd);
+          //printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+          switch (cmd.command)
+          {
+            case 'w': 
+              pause_thread = false;
+              printf("starting egg detection \n");
+            case 's': 
+              pause_thread = true;
+              printf("stop egg detection \n");
+            case 'e':
+              if(handle == NULL)
+              {
+                handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
+              }
+              else{
+                draw_bitmap_close_window(handle);
+                handle = NULL;
+              }
+              break;
+            case 'u':
+            {
+              memcpy(egg_buffer,param->RGB_IMG_raw,IMAGE_SIZE);
+              to_black_white(egg_data, IMAGE_SIZE/3, EGG_THRESHOLD);
+              x = 0;
+              y = 0;
+              min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
+              int count = 0;
+              EggBlob eggs[MAX_EGGS];
+              int found = find_egg_blobs(egg_data,eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
+              //printf("found %d eggs \n", found);
+              int max_egg = 0;
+              for (int i = 0; i < found; i++) {
+                int min_x = eggs[i].min_x;
+                int max_x = eggs[i].max_x;
+                int min_y = eggs[i].min_y;
+                int max_y = eggs[i].max_y;
 
-    struct img_process_thread_param       rgb_param =
-    {
-      "rgb img",
-      &rgb_img_fifo,
-      IMG_RAW,
-      RGB_IMG_raw,
-      RGB_IMG_data,
-      320,
-      240,
-      &quit_flag,
-      true
-    };
-    struct img_process_thread_param       greyscale_param=
-    {
-      "greyscale img",
-      &greyscale_img_fifo,
-      IMG_RAW,
-      GREYSCALE_IMG_raw,
-      GREYSCALE_IMG_data,
-      320,
-      240,
-      &quit_flag,
-      true
-    } ;
-    struct img_process_thread_param       bw_param=
-    {
-      "black and white img",
-      &bw_img_fifo,
-      IMG_RAW,
-      BW_IMG_raw,
-      BW_IMG_data,
-      320,
-      240,
-      &quit_flag,
-      true
-    };
+                // Draw red bounding box
+                for (int x = min_x; x <= max_x; x++) {
+                    egg_data[min_y * IMG_WIDTH + x] = (struct pixel_format_RGB){255, 0, 0};
+                    egg_data[max_y * IMG_WIDTH + x] = (struct pixel_format_RGB){255, 0, 0};
+                }
+                for (int y = min_y; y <= max_y; y++) {
+                    egg_data[y * IMG_WIDTH + min_x] = (struct pixel_format_RGB){255, 0, 0};
+                    egg_data[y * IMG_WIDTH + max_x] = (struct pixel_format_RGB){255, 0, 0};
+                }
+                if(eggs[i].size > eggs[max_egg].size)
+                {
+                  max_egg = i;
+                }
+                //printf("Egg %d at center (%d, %d), size %d\n", i+1, eggs[i].center_x, eggs[i].center_y, eggs[i].size);
+              }
+              if(!pause_thread)
+              {
+                int max_egg_x = eggs[max_egg].center_x - IMG_WIDTH/2;
+                if(eggs[max_egg].size > STOP_THRESH) //needs tp
+                {
+                  if(!FIFO_FULL(param->dir_fifo))
+                  {
+                    cmd.command = 's';
+                    FIFO_INSERT(param->dir_fifo,cmd);
+                    //TODO grab the egg;
+                    
+                    break;
+                  }
+                }
+                
+                if(max_egg_x < -60)
+                {
+                  struct thread_command cmd = {0,0};
+                  if(!FIFO_FULL(param->dir_fifo))
+                  {
+                    cmd.command = 'a';
+                    FIFO_INSERT(param->dir_fifo,cmd);
+                    break;
+                  }
+                }
 
-    struct reduced_img_thread_param reduced_param=
-    {
-      "reduced img",
-      &reduced_img_fifo,
-      &dir_fifo,
-      IMG_RAW,
-      REDUCED_IMG_raw,
-      REDUCED_IMG_data,
-      32,
-      24,
-      &quit_flag,
-      true
-    };
-    struct io_peripherals *io;
-    io = import_registers();
-    if (io != NULL)
-    {
-        /* print where the I/O memory was actually mapped to */
-        printf( "mem at 0x%8.8X\n", (unsigned int*)io );
-
-        set_gpio_context(io->gpio);  // save gpio context
-        signal(SIGINT, sigint_handler);
-
-        enable_pwm_clock(io->cm, io->pwm);
-        set_gpio(io);
-        /*enables pwm function*/
-        enable_pwm(io);
-       
-
-        motor_direction_param.gpio   = io->gpio;
-        motor_speed_param.gpio       = io->gpio;
-        motor_speed_param.pwm        = io->pwm;   
-        IR_sensor_param.gpio         = io->gpio;
-
-        /* set initial direction  - stop */
-        GPIO_CLR(io->gpio, 22); 
-        GPIO_CLR(io->gpio, 23);
-        GPIO_CLR(io->gpio, 05);
-        GPIO_CLR(io->gpio, 06);
-        //start the gui thread
-        draw_bitmap_start(argc,argv);
-
-        // Create three threads td, ts, tk, and tc, and run them in parallel
-        pthread_create(&ts, NULL, Motor_Speed_Thread, (void *)&motor_speed_param);
-        pthread_create(&td, NULL, Motor_Direction_Thread, (void *)&motor_direction_param);
-        pthread_create(&tk, NULL, KeyRead,   (void *)&key_param);
-        pthread_create(&tc, NULL, Motor_Control,   (void *)&con_param);
-        pthread_create(&ti, NULL, IR_Sensor, (void *)&IR_sensor_param);
-        pthread_create(&tp,NULL,  video_capture, (void* )&img_capture_param);
-        pthread_create(&t_rbg, NULL, video_with_cross, (void *)&rgb_param);
-
-        pthread_create(&t_grey,NULL, greyscale_video, (void*)&greyscale_param);
-        pthread_create(&t_bw,NULL, black_and_white, (void*)&bw_param);
-        pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
-
-
-        // Wait to finish ts, td, tc, and tk threads
-        pthread_join(ts, NULL);
-        pthread_join(td, NULL);
-        pthread_join(tk, NULL);
-        pthread_join(tc, NULL);
-        pthread_join(ti, NULL);
-        pthread_join(tp, NULL);
-        pthread_join(t_rbg,NULL);
-        pthread_join(t_grey,NULL);
-        pthread_join(t_bw,NULL);
-        pthread_join(t_reduced,NULL);
-        
-        printf("trying to free buffers \n");
-        free(RGB_IMG_raw);
-        printf("rgb buffer freed succesfully \n");
-        free(IMG_RAW);
-        printf("original image freed succesfully \n");
-        free(GREYSCALE_IMG_raw);
-        printf("greyscale image buffer freed succesfully \n");
-        free(BW_IMG_raw);
-        printf("bw image buffer freed successsfully \n");
-        free(REDUCED_IMG_raw);
-        printf("reduced img buffer freed successfully");
-    
-
-        /* main task finished  */
-
-        /* clean the GPIO pins */
-        io->gpio->GPFSEL2.field.FSEL2 = GPFSEL_INPUT;
-        io->gpio->GPFSEL2.field.FSEL3 = GPFSEL_INPUT;
-
-
-        io->gpio->GPFSEL0.field.FSEL5 = GPFSEL_INPUT;
-        io->gpio->GPFSEL0.field.FSEL6 = GPFSEL_INPUT;
-
-        io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_INPUT;
-        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_OUTPUT;
-  }
-  else
-  {
-    ; /* warning message already issued */
-  }
-
-  printf( "main function done\n" );
-
-  return 0;
+                if(max_egg_x > 60)
+                {
+                  cmd.command = 'd';
+                  FIFO_INSERT(param->dir_fifo,cmd);
+                  break;
+                }
+              }
+            }
+          }
+      }
+        //draw the center of the egg
+      if(handle) draw_bitmap_display(handle,egg_data);
+      wait_period(&timer_state, 10u);
+    }
+    free(egg_buffer);
+    printf("%s exited \n",param->name);
+    return NULL;
 }
