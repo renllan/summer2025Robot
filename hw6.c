@@ -1281,105 +1281,149 @@ void *egg_detector(void * arg)
     bool pause_thread = true;
     int min_x = IMG_WIDTH, min_y = IMG_HEIGHT;
     int max_x = 0, max_y = 0;
+    int decision_q[MAX_DECISION_SIZE] = {0}; 
+    bool queue_filled = false;
+    int frames_seen = 0;
+    bool stopped = false;
+    bool centered = false;
     while(!(*param->quit_flag))
     {
       struct thread_command cmd = {0, 0};
       if(!FIFO_EMPTY(param->egg_fifo))
       {
-          FIFO_REMOVE(param->egg_fifo,&cmd);
-          
-          switch (cmd.command)
-          {
-            case 'w': 
-              pause_thread = false;
-              printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
-              printf("starting egg detection \n");
-              break;
-            case 's': 
-              pause_thread = true;
-              printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
-              printf("stop egg detection \n");
-              break;
-            case 'e':
-              if(handle == NULL)
-              {
-                handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
-              }
-              else{
-                draw_bitmap_close_window(handle);
-                handle = NULL;
-              }
-              break;
-            case 'u':
+        FIFO_REMOVE(param->egg_fifo,&cmd);
+        switch (cmd.command)
+        {
+          case 'w': 
+            pause_thread = false;
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf("starting egg detection \n");
+            break;
+          case 's': 
+            pause_thread = true;
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf("stop egg detection \n");
+            break;
+          case 'e':
+            if(handle == NULL)
             {
-              memcpy(egg_buffer,param->RGB_IMG_raw,IMAGE_SIZE);
-              to_black_white(egg_data, IMAGE_SIZE/3, EGG_THRESHOLD);
-              x = 0;
-              y = 0;
-              min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
-              int count = 0;
-              EggBlob eggs[MAX_EGGS];
-              int found = find_egg_blobs(egg_data,eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
-              //printf("found %d eggs \n", found);
-              int max_egg = 0;
-              for (int i = 0; i < found; i++) {
-                int min_x = eggs[i].min_x;
-                int max_x = eggs[i].max_x;
-                int min_y = eggs[i].min_y;
-                int max_y = eggs[i].max_y;
+              handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
+            }
+            else{
+              draw_bitmap_close_window(handle);
+              handle = NULL;
+            }
+            break;
+          case 'u':
+          {
+            frames_seen++;
+            if (frames_seen >= MAX_DECISION_SIZE) {
+              queue_filled = true;
+            }
+            memcpy(egg_buffer,param->RGB_IMG_raw,IMAGE_SIZE);
+            to_black_white(egg_data, IMAGE_SIZE/3, EGG_THRESHOLD);
+            x = 0;
+            y = 0;
+            min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
+            int count = 0;
+            EggBlob eggs[MAX_EGGS];
+            int found = find_egg_blobs(egg_data,eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
+            printf("found %d eggs \n", found);
+            int max_egg = 0;
 
-                // Draw red bounding box
-                draw_bbox(min_x,min_y,max_x,max_y, egg_data,(struct pixel_format_RGB){255, 0, 0});
-                if(eggs[i].size > eggs[max_egg].size)
-                {
-                  max_egg = i;
-                }
-                //printf("Egg %d at center (%d, %d), size %d\n", i+1, eggs[i].center_x, eggs[i].center_y, eggs[i].size);
+            for (int i = 0; i < found; i++) {
+              int min_x = eggs[i].min_x;
+              int max_x = eggs[i].max_x;
+              int min_y = eggs[i].min_y;
+              int max_y = eggs[i].max_y;
+
+              // Draw red bounding box
+              draw_bbox(min_x,min_y,max_x,max_y, egg_data,(struct pixel_format_RGB){255, 0, 0});
+              if(eggs[i].size > eggs[max_egg].size)
+              {
+                max_egg = i;
               }
+              //printf("Egg %d at center (%d, %d), size %d\n", i+1, eggs[i].center_x, eggs[i].center_y, eggs[i].size);
+              for (int i = 0; i < MAX_DECISION_SIZE - 1; i++) {
+                decision_q[i] = decision_q[i + 1];
+              }
+
+              
+            }
+            if(found > 0){
               int min_x = eggs[max_egg].min_x;
               int max_x = eggs[max_egg].max_x;
               int min_y = eggs[max_egg].min_y;
               int max_y = eggs[max_egg].max_y;
               draw_bbox(min_x,min_y,max_x,max_y,egg_data,(struct pixel_format_RGB){0, 255, 0});
-              if(!pause_thread)
-              {
-                int max_egg_x = eggs[max_egg].center_x - IMG_WIDTH/2;
-                printf("largest egg is at %d \n", max_egg_x);
-                if(eggs[max_egg].size > STOP_THRESH) //needs tp
+              decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
+            }
+            else{
+              decision_q[MAX_DECISION_SIZE-1] = -1;
+              if(!FIFO_FULL(param->dir_fifo))
                 {
-                  if(!FIFO_FULL(param->dir_fifo))
-                  {
-                    printf("egg is close to robot to grab \n");
-                    cmd.command = 's';
-                    FIFO_INSERT(param->dir_fifo,cmd);
-                    //TODO grab the egg;
-                    
-                    break;
-                  }
-                }
-                
-                if(max_egg_x < -60)
-                {
-                  struct thread_command cmd = {0,0};
-                  if(!FIFO_FULL(param->dir_fifo))
-                  {
-                    printf("largest egg detected at the left\n");
-                    cmd.command = 'a';
-                    FIFO_INSERT(param->dir_fifo,cmd);
-                    break;
-                  }
-                }
-
-                if(max_egg_x > 60)
-                {
-                  cmd.command = 'd';
-                  printf("largest egg detected at the right\n");
+                  printf("egg is close to robot to grab \n");
+                  cmd.command = 's';
                   FIFO_INSERT(param->dir_fifo,cmd);
+                  cmd.command = 'a';
+                  FIFO_INSERT(param->dir_fifo,cmd);
+                  
+                }
+            }
+            printf("largest egg size is is at %d \n", eggs[max_x].center_x);
+
+            if(!pause_thread && frames_seen)
+            {
+              int left = 0, right = 0, center = 0;
+
+              for (int i = 0; i < MAX_DECISION_SIZE; i++) {
+                  if (decision_q[i] > 0 && decision_q[i] < CENTER_L) left++;
+                  else if (decision_q[i] > CENTER_R) right++;
+                  else center++;
+              }
+              
+              if(eggs[max_egg].size > STOP_THRESH) //needs tp
+              {
+                if(!FIFO_FULL(param->dir_fifo))
+                {
+                  printf("egg is close to robot to grab \n");
+                  cmd.command = 's';
+                  if(!stopped)
+                  {
+                    FIFO_INSERT(param->dir_fifo,cmd);
+                  }
+                  stopped = true;
+                  
                   break;
                 }
               }
+              else if (left >= 3) {
+                if (!FIFO_FULL(param->dir_fifo)) {
+                    printf("queue decision: largest egg detected on the left\n");
+                    cmd.command = 'a';
+                    FIFO_INSERT(param->dir_fifo, cmd);
+                }
+              } else if (right >= 3) {
+                if (!FIFO_FULL(param->dir_fifo)) {
+                    printf("queue decision: largest egg detected on the right\n");
+                    cmd.command = 'd';
+                    FIFO_INSERT(param->dir_fifo, cmd);
+                }
+              }
+              else{
+                centered = true;
+              }
+              if(stopped && center)
+              {
+                printf("robot is close enough to the egg \n");
+                //todo: evan grab the egg
+                stopped = false;
+                centered = false;
+
+              }
             }
           }
+        }
       }
         //draw the center of the egg
       if(handle) draw_bitmap_display(handle,egg_data);
