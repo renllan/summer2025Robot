@@ -42,12 +42,16 @@
 #define SCALE_REDUCTION_PER_AXIS  2   /* the image size reduction ratio (note that 640*480*3*8*FPS = your bandwidth usage, at 24FPS, that is 177MPBS) */
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)/(SCALE_REDUCTION_PER_AXIS*SCALE_REDUCTION_PER_AXIS)
-#define EGG_THRESHOLD 200
+
+#define EGG_THRESHOLD 210
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
-#define MAX_EGGS 5
-#define STOP_THRESH 5000
+#define MAX_EGGS 10
+#define STOP_THRESH 2500
+#define MAX_DECISION_SIZE 4
+#define CENTER_L 90
+#define CENTER_R 150
 
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);

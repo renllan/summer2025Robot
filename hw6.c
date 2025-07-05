@@ -590,6 +590,7 @@ void sigint_handler(int signum){
     set_gpio_context(NULL);
 }
 
+
 void *video_capture(void * arg){
   struct img_capture_thread_param *param = (struct img_capture_thread_param*)arg;
   printf("%s thread starting\n", param->name);
@@ -780,8 +781,6 @@ void *video_with_cross(void * arg){
         {
           //memcpy(param->RGB_IMG_raw,param->ORIG_IMG_raw, IMAGE_SIZE);
           //draw cross
-          struct timeval tv;
-          long long prev_ms = (long long)(tv.tv_sec) * 1000 + (tv.tv_usec) / 1000;
           
           for(size_t i= 160; i< IMAGE_SIZE/3; i+=param->width)
           {
@@ -860,6 +859,7 @@ void *greyscale_video(void * arg){
   printf("%s exited \n",param->name);
   return NULL;
 }
+
 
 void *reduced_video(void * arg){
   struct reduced_img_thread_param *param = (struct reduced_img_thread_param*)arg;
@@ -1018,6 +1018,72 @@ void *reduced_video(void * arg){
   }
   free(reduced_raw);
   printf("%s exited \n", param->name);
+  return NULL;
+}
+void *single_channel(void *arg){
+  struct reduced_img_thread_param *param = (struct reduced_img_thread_param*)arg;
+  printf("%s thread started \n",param->name);
+  struct draw_bitmap_multiwindow_handle_t *r_handle = NULL;
+  struct draw_bitmap_multiwindow_handle_t *g_handle = NULL;
+  struct draw_bitmap_multiwindow_handle_t *b_handle = NULL;
+
+  unsigned char r_img[IMAGE_SIZE];
+  unsigned char g_img[IMAGE_SIZE];
+  unsigned char b_img[IMAGE_SIZE];
+
+  struct pixel_format_RGB * r_data = (struct pixel_format_RGB*)r_img;
+  struct pixel_format_RGB * g_data = (struct pixel_format_RGB*)g_img;
+  struct pixel_format_RGB * b_data = (struct pixel_format_RGB*)b_img;
+  struct thread_command cmd = {0,0};
+  printf("%s thread started\n", param->name);
+
+   while(!(*param->quit_flag)) {
+        // Process commands
+    if(!(FIFO_EMPTY(param->img_cmd_fifo))) {
+      FIFO_REMOVE(param->img_cmd_fifo, &cmd);
+    
+    switch(cmd.command){
+      case 'l':
+        if(!r_handle){
+          r_handle = draw_bitmap_create_window(param->width,param->height);
+          g_handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
+          b_handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
+        }
+        else{
+            draw_bitmap_close_window(r_handle);
+            draw_bitmap_close_window(g_handle);
+            draw_bitmap_close_window(b_handle);
+            r_handle = NULL;
+            g_handle = NULL;
+            b_handle = NULL;
+        }
+        break;
+      
+      
+      case 'u':
+          memcpy(r_img,param->RGB_IMG_raw,IMAGE_SIZE);
+          memcpy(g_img,param->RGB_IMG_raw,IMAGE_SIZE);
+          memcpy(b_img,param->RGB_IMG_raw,IMAGE_SIZE);
+
+          for(int i = 0; i < IMAGE_SIZE;i++){
+            r_data[i] = (struct pixel_format_RGB ){r_data[i].R,0,0};
+            g_data[i] = (struct pixel_format_RGB ){0,g_data[i].R,0};
+            b_data[i] = (struct pixel_format_RGB ){0,0,b_data[i].R};
+          }
+          break;
+      }
+
+      if (r_handle) draw_bitmap_display(r_handle, r_data);
+      if (g_handle) draw_bitmap_display(g_handle, g_data);
+      if (b_handle) draw_bitmap_display(b_handle, b_data);
+    }
+  }
+  if (r_handle) {draw_bitmap_close_window(r_handle); r_handle = NULL;}
+  if (g_handle) {draw_bitmap_close_window(g_handle); g_handle = NULL;}
+  if (b_handle) {draw_bitmap_close_window(b_handle); b_handle = NULL;}
+  
+
+  printf("%s exited\n", param->name);
   return NULL;
 }
 
@@ -1286,6 +1352,7 @@ void *egg_detector(void * arg)
     int frames_seen = 0;
     bool stopped = false;
     bool centered = false;
+    bool egg_found = false;
     while(!(*param->quit_flag))
     {
       struct thread_command cmd = {0, 0};
@@ -1357,32 +1424,35 @@ void *egg_detector(void * arg)
               int max_y = eggs[max_egg].max_y;
               draw_bbox(min_x,min_y,max_x,max_y,egg_data,(struct pixel_format_RGB){0, 255, 0});
               decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
+              printf("largest egg size is is at %d \n", eggs[max_egg].center_x);
+              egg_found = true;
             }
             else{
               decision_q[MAX_DECISION_SIZE-1] = -1;
-              if(!FIFO_FULL(param->dir_fifo))
-                {
-                  printf("egg is close to robot to grab \n");
+              egg_found = false;
+              printf("did not find any eggs \n");
+            }
+            
+
+            if(!pause_thread && frames_seen)
+            {
+              int left = 0, right = 0, center,not_found = 0;
+              
+              for (int i = 0; i < MAX_DECISION_SIZE; i++) {
+                  if (decision_q[i] > 0 && decision_q[i] < CENTER_L) left++;
+                  else if (decision_q[i] > CENTER_R) right++;
+                  else if (decision_q[i] == -1) not_found++;
+                  else center++;
+              }
+              if(not_found > 3){
+                if(!FIFO_FULL(param->dir_fifo)){
                   cmd.command = 's';
                   FIFO_INSERT(param->dir_fifo,cmd);
                   cmd.command = 'a';
                   FIFO_INSERT(param->dir_fifo,cmd);
-                  
-                }
-            }
-            printf("largest egg size is is at %d \n", eggs[max_x].center_x);
-
-            if(!pause_thread && frames_seen)
-            {
-              int left = 0, right = 0, center = 0;
-
-              for (int i = 0; i < MAX_DECISION_SIZE; i++) {
-                  if (decision_q[i] > 0 && decision_q[i] < CENTER_L) left++;
-                  else if (decision_q[i] > CENTER_R) right++;
-                  else center++;
+                }  
               }
-              
-              if(eggs[max_egg].size > STOP_THRESH) //needs tp
+              else if(eggs[max_egg].size > STOP_THRESH) //needs tp
               {
                 if(!FIFO_FULL(param->dir_fifo))
                 {
@@ -1402,16 +1472,32 @@ void *egg_detector(void * arg)
                     printf("queue decision: largest egg detected on the left\n");
                     cmd.command = 'a';
                     FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 's';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 'w';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
                 }
               } else if (right >= 3) {
                 if (!FIFO_FULL(param->dir_fifo)) {
                     printf("queue decision: largest egg detected on the right\n");
                     cmd.command = 'd';
                     FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 's';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 'w';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
                 }
               }
               else{
                 centered = true;
+                printf("egg is close to center of robot \n");
+                if (!FIFO_FULL(param->dir_fifo)) {
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 's';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
+
+                }
               }
               if(stopped && center)
               {
@@ -1419,7 +1505,10 @@ void *egg_detector(void * arg)
                 //todo: evan grab the egg
                 stopped = false;
                 centered = false;
-
+                if (!FIFO_FULL(param->dir_fifo)) {
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->dir_fifo, cmd);
+                }
               }
             }
           }
