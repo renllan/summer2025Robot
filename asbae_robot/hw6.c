@@ -339,7 +339,6 @@ void *Control(void * arg)
               if(!FIFO_FULL(param->img_cmd_fifo))
               {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
               printf("switched to mode 1 \n");
-              break;
             }
             else if(cmd1.argument == '2'){
               
@@ -353,12 +352,12 @@ void *Control(void * arg)
                 FIFO_INSERT(param->motor_control_fifo,cmd2);
               }
               printf("switched to mode 2 \n");
-              break;
               
             }
             else{printf("invalid mode \n");
             
             }
+            cmd2.argument = 0;
             break;
           
           default: //if no command ente
@@ -385,7 +384,7 @@ void *Motor_Speed_Thread(void * args)
 
   // start 10ms timed wait
   bool busy= false;
-  bool busy_count =0;
+  int busy_count =0;
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
   printf("motor speed started \n");
@@ -397,7 +396,7 @@ void *Motor_Speed_Thread(void * args)
         
         struct thread_command cmd = {0,0}; 
         FIFO_REMOVE(param->speed_fifo,&cmd);
-        printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+        printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
         switch (cmd.command)
         {
         case 's':
@@ -410,6 +409,7 @@ void *Motor_Speed_Thread(void * args)
         case 'b':
           busy = true;
           busy_count = cmd.argument;
+          printf("speed thread busy count = %d\n", busy_count);
           break;
         default:
           break;
@@ -418,10 +418,13 @@ void *Motor_Speed_Thread(void * args)
       
     }
     else{
-      busy_count --;
+      printf("%s thread is busy, \n");
       if(busy_count == 0){
         busy =false;
       } 
+      else{
+        busy_count --;
+      }
     }
      wait_period( &timer_state, 10u );
   }
@@ -441,7 +444,7 @@ void *Motor_Direction_Thread(void * arg)
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
   bool busy = false;
-  bool busy_count = 0;
+  int busy_count = 0;
   printf("direction thread started \n");
   while(! (*param->quit_flag))
   {
@@ -452,12 +455,13 @@ void *Motor_Direction_Thread(void * arg)
       if(!FIFO_EMPTY(param->dir_fifo))
       {
         FIFO_REMOVE(param->dir_fifo,&cmd);
-        printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+        printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
         switch (cmd.command)
         {
           case 'b':{
             busy = true;
             busy_count = cmd.argument;
+            printf("direction thread busy count = %d \n", busy_count);
             break;
           }
           case 'p':{
@@ -508,7 +512,7 @@ void *Motor_Direction_Thread(void * arg)
       }
     }
     else{
-      
+      printf("%s thread is busy \n",param->name);
       if(busy_count == 0){
         busy =false;
       } 
@@ -519,6 +523,7 @@ void *Motor_Direction_Thread(void * arg)
     
     wait_period( &timer_state, 10u ); 
   }
+  printf("%s thread ended \n",param->name);
   return NULL;
 }
 void *Motor_Control(void * arg){
@@ -530,11 +535,11 @@ void *Motor_Control(void * arg){
   wait_period( &timer_state, 100u );
   printf("motor control thread started \n");
   char prev_dir = 's';
-  while(!(param->quit_flag)){
+  while(!(*param->quit_flag)){
     if(!FIFO_EMPTY(param->motor_control_fifo))
     {
       FIFO_REMOVE(param->motor_control_fifo,&cmd1);
-      printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
+      printf( "\n %s= %c  %d\n", param->name, cmd1.command, cmd1.argument);
       switch (cmd1.command)
       {
       case 'w':
@@ -568,24 +573,25 @@ void *Motor_Control(void * arg){
         break;
       case 'a':
       //change the direction first
-        int busy2 = param->angle;
+        int busy2 = param->angle*3;
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'a';
           cmd2.argument = 0;
           FIFO_INSERT(param->dir_fifo,cmd2);
-          cmd2.command= 'b';cmd2.argument = busy2;
+          cmd2.command= 'b';
+          cmd2.argument = busy2;
           FIFO_INSERT(param->dir_fifo,cmd2);
-          cmd2.command = prev_dir,cmd2.argument = 0;
+          cmd2.command = prev_dir,
+          cmd2.argument = 0;
           FIFO_INSERT(param->dir_fifo,cmd2);
         }
         if(!FIFO_FULL(param->speed_fifo)){
-          cmd2.command = 's';
+          
           cmd2.argument = 50;
-          FIFO_INSERT(param->speed_fifo,cmd2);
-          cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
-          cmd2.command= 'b';cmd2.argument = busy2;
-          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command= 'b';
+          cmd2.argument = busy2;
+          FIFO_INSERT(param->speed_fifo,cmd2);
           cmd2.command = 's';
           cmd2.argument = param->pwm_val;
           FIFO_INSERT(param->speed_fifo,cmd2);
@@ -600,7 +606,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
-        int busy1 = param->angle;
+        int busy1 = param->angle*3;
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
           cmd2.argument = 0;
@@ -611,13 +617,11 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->dir_fifo,cmd2);
         }
         if(!FIFO_FULL(param->speed_fifo)){
-          cmd2.command = 's';
+          
           cmd2.argument = 50;
-          FIFO_INSERT(param->speed_fifo,cmd2);
-          cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
           cmd2.command= 'b';cmd2.argument = busy1;
-          FIFO_INSERT(param->dir_fifo,cmd2);
+          FIFO_INSERT(param->speed_fifo,cmd2);
           cmd2.command = 's';
           cmd2.argument = param->pwm_val;
           FIFO_INSERT(param->speed_fifo,cmd2);
@@ -704,7 +708,8 @@ void *Motor_Control(void * arg){
 
     wait_period( &timer_state, 10u ); /* 10ms */
   }
-  return 0;
+  printf("%s thread exited \n",param->name);
+  return NULL;
 }
 void set_gpio_context(volatile struct gpio_register * gpio) {
     static volatile struct gpio_register * saved_gpio = NULL;
