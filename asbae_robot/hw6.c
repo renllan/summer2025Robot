@@ -129,9 +129,9 @@ void *IR_Sensor(void* arg)
   return NULL;
 }
 
-void *Motor_Control(void * arg)
+void *Control(void * arg)
 {
-  struct  motor_control_thread_param * param = (struct motor_control_thread_param *)arg;
+  struct  control_thread_param * param = (struct control_thread_param *)arg;
   struct  thread_command cmd1 = {0, 0};  // copy of input, cmd from key_thread
   struct  thread_command cmd2 = {0, 0};  // copy of output, cmd to put on LED_thread
   struct  timespec  timer_state; 
@@ -148,7 +148,7 @@ void *Motor_Control(void * arg)
 *  and fill the Red LED command FIFO queue and Green LED command FIFO queue,
 *  for the LED on/off control.  
 *  A simple and short LED on/off control programming is possible   */
-
+  printf("control thread started \n");
   while (!*(param->quit_flag))
   {
     if (!(FIFO_EMPTY( param->key_fifo )))
@@ -176,46 +176,49 @@ void *Motor_Control(void * arg)
           }break;
         }
         case 'c':
-        {
+        
           cmd2.command ='c';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
-        }
-        case 'v':{
+        
+        case 'v':
           cmd2.command ='v';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
-        }
-        case 'b':{
+        
+        case 'b':
           cmd2.command ='b';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
-          }break;
-        }
-        case 'n':{
+          }
+          break;
+        
+        case 'n':
           cmd2.command ='n';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
-        }
+        
         case 'w':
-        {
+        
           if(param->mode)
           {
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {
+              FIFO_INSERT(param->motor_control_fifo,cmd2);
+            }
             break;
           }
           else{ //mode2
@@ -223,23 +226,27 @@ void *Motor_Control(void * arg)
             cmd2.argument = 0;
             if(!FIFO_FULL(param->img_cmd_fifo))
             {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
-          }              
-        }
-        case 'a':{
+          } 
+          break;             
+        
+        case 'a':
           if(param->mode) { 
-            cmd2.command = 'a';
-            cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            
+
+              cmd2.command = 'a';
+              cmd2.argument = 0;
+              if(!FIFO_FULL(param->motor_control_fifo))
+             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+            
           }
-            break;
-        }
-        case 's':{
+          break;
+        
+        case 's':
             cmd2.command = 's';
             cmd2.argument = 0;
             if(param->mode){
-              if(!FIFO_FULL(param->dir_fifo)){
-                {FIFO_INSERT(param->dir_fifo,cmd2);}
+              if(!FIFO_FULL(param->motor_control_fifo)){
+                {FIFO_INSERT(param->motor_control_fifo,cmd2);}
                 break;
               }
             }
@@ -249,86 +256,80 @@ void *Motor_Control(void * arg)
                 break;
               }
             } 
-          }
+            break;
+          
           case 'd':
-          {
+          
             if(param->mode)
             {  
               cmd2.command = 'd';
               cmd2.argument = 0;
-              if(!FIFO_FULL(param->dir_fifo))
-              {FIFO_INSERT(param->dir_fifo,cmd2);}
-            }
-              break;
-          }
-          case 'i':
-          {
-              cmd2.command = 'i';
-              cmd2.argument = 0;
-              if(!FIFO_FULL(param->speed_fifo))
-              {FIFO_INSERT(param->speed_fifo,cmd2);}
-              if(!FIFO_FULL(param->dir_fifo)){
-                cmd2.command = 'k';
-                cmd2.argument = 25000;
-                FIFO_INSERT(param->dir_fifo,cmd2);}
-              break;
-          }
-          case 'j':
-          {
-            cmd2.command = 'j';
-            cmd2.argument = 0;
-            if(!FIFO_FULL(param->speed_fifo))
-            {FIFO_INSERT(param->speed_fifo,cmd2);}
-            if(!FIFO_FULL(param->dir_fifo)){
-              cmd2.command = 'o';
-              cmd2.argument = 25000;
-              FIFO_INSERT(param->dir_fifo,cmd2);
+              if(!FIFO_FULL(param->motor_control_fifo))
+              {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+              
             }
             break;
-          }
+          
+          case 'i':
+          
+            cmd2.command = 'i';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+            break;
+          
+          case 'j':
+          
+            cmd2.command = 'j';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+            
+            break;
+          
           case 'x':
           { 
             cmd2.command = 'x';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
           }
           case 'o':
           { 
             cmd2.command = 'o';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
           }
-          case 'k':{
+          case 'k':
+            
             cmd2.command = 'k';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
           
-          }
           case 'q':
           {
-              cmd2.command = 'q';
-              cmd2.argument = 0;
-              *param->quit_flag = true;
-              if(! (FIFO_FULL(param->dir_fifo)) && ! (FIFO_FULL(param->speed_fifo)))
-              {
-                FIFO_INSERT(param->dir_fifo,cmd2);
-                FIFO_INSERT(param->speed_fifo,cmd2);
-              }
-              break;
+            cmd2.command = 'q';
+            cmd2.argument = 0;
+            *param->quit_flag = true;
+            if(! (FIFO_FULL(param->motor_control_fifo)) && ! (FIFO_FULL(param->motor_control_fifo)))
+            {
+              FIFO_INSERT(param->motor_control_fifo,cmd2);
+              FIFO_INSERT(param->motor_control_fifo,cmd2);
+            }
+            break;
           }  
           case 'm':
-          {
+          
             //pause the car first when switching mode
             cmd2.command = 's';
             cmd2.argument= 0;
-            if(!FIFO_FULL(param->dir_fifo))
-            {FIFO_INSERT(param->dir_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             
             
             if(cmd1.argument == '1'){
@@ -347,13 +348,19 @@ void *Motor_Control(void * arg)
               cmd2.argument = 0;
               if(!FIFO_FULL(param->img_cmd_fifo))
               {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
-              
+              if(!FIFO_FULL(param->motor_control_fifo))
+              {
+                FIFO_INSERT(param->motor_control_fifo,cmd2);
+              }
               printf("switched to mode 2 \n");
               break;
               
             }
-            else{printf("invalid mode \n");}
-          }
+            else{printf("invalid mode \n");
+            
+            }
+            break;
+          
           default: //if no command ente
           {
               printf("invalid command \n");
@@ -377,53 +384,46 @@ void *Motor_Speed_Thread(void * args)
              // similar to interrupt occuring every 10ms
 
   // start 10ms timed wait
+  bool busy= false;
+  bool busy_count =0;
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
+  printf("motor speed started \n");
   while(!(*(param->quit_flag)))
   {
-    if(!FIFO_EMPTY(param->speed_fifo))
+    if(!busy)
     {
-      FIFO_REMOVE(param->speed_fifo, &cmd);
-      printf( " %s= %d  %d\n", param->name,(*param->pwm_val_l), (*param->pwm_val_r));
-
-      switch(cmd.command)
-      {
-        case 'i':
-          if(*param->pwm_val_l < 100 && *param->pwm_val_r < 100)
-          {
-            (*param->pwm_val_l) = (*param->pwm_val_l) +5;
-            (*param->pwm_val_r) = (*param->pwm_val_r) +5;
-          }
-          else{printf("Motor at is already at maximum speed\n");}
+      if(!FIFO_EMPTY(param->speed_fifo)){
+        
+        struct thread_command cmd = {0,0}; 
+        FIFO_REMOVE(param->speed_fifo,&cmd);
+        printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+        switch (cmd.command)
+        {
+        case 's':
+          /* code */
+          int speed = cmd.argument;
+          param->pwm->DAT1 = speed;
+          param->pwm->DAT2 = speed;
           break;
-        case 'j':
-          if(*param->pwm_val_l >40 && *param->pwm_val_r >40)
-          {
-            (*param->pwm_val_l) = (*param->pwm_val_l) -5;
-            (*param->pwm_val_r) = (*param->pwm_val_r) -5;
-          }
-          else{printf("motor is already at minimum speed \n");}
+        
+        case 'b':
+          busy = true;
+          busy_count = cmd.argument;
           break;
-        case 'u':
-          param->pwm->DAT1 = (*param->pwm_val_l);
-          param->pwm->DAT2 = (*param->pwm_val_l);
         default:
-          printf("invalid speed command\n");
           break;
-      }
-      if((*param->pwm_val_l) >=35)
-      {
-        param->pwm->DAT1 = (*param->pwm_val_l);
-        param->pwm->DAT2 = (*param->pwm_val_l);
-      }
-      else{
-        param->pwm->DAT1 = 0;
-        param->pwm->DAT2 = 0;
+        }
       }
       
     }
-    wait_period( &timer_state, 10u );
-    
+    else{
+      busy_count --;
+      if(busy_count == 0){
+        busy =false;
+      } 
+    }
+     wait_period( &timer_state, 10u );
   }
   printf("speed thread exit \n");
   return NULL;
@@ -434,163 +434,277 @@ void *Motor_Direction_Thread(void * arg)
   struct  motor_direction_thread_param * param = (struct motor_direction_thread_param *)arg;
   struct  thread_command cmd = {0, 0};
   struct  timespec  timer_state; 
-  int turn_angle_pause_time = 500000;
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
 
   // start 10ms timed wait
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
-
+  bool busy = false;
+  bool busy_count = 0;
+  printf("direction thread started \n");
   while(! (*param->quit_flag))
   {
-    if(!(FIFO_EMPTY(param->dir_fifo)))
+    if(!busy)
     {
-      FIFO_REMOVE(param->dir_fifo,&cmd);
-      printf( " %s= %d  %c\n", param->name, cmd.command, cmd.command);
-
-      switch(cmd.command)
+      //pop from fifo
+      struct thread_command cmd = {0,0};
+      if(!FIFO_EMPTY(param->dir_fifo))
       {
-        case 'o':
+        FIFO_REMOVE(param->dir_fifo,&cmd);
+        printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+        switch (cmd.command)
         {
-            if(turn_angle_pause_time < 5000000)
-            {
-                turn_angle_pause_time += cmd.argument > 0? cmd.argument: 50000;;
-            }
-            else{
-                printf("already at maximum angle \n");
-            }
+          case 'b':{
+            busy = true;
+            busy_count = cmd.argument;
             break;
-        }
-        case 'k':
-        {
-            if(turn_angle_pause_time > 100000)
-            {
-              turn_angle_pause_time -= cmd.argument > 0? cmd.argument: 50000; 
-            }
-            else{
-                printf("already at minimum angle\n");
-            }
-            break;
-        }
-        
-        case 'w':{
-          if(param->state == 'x')
-          {
-            GPIO_SET(param->gpio,param->pin_1);
-            GPIO_SET(param->gpio,param->pin_2);
-            GPIO_SET(param->gpio,param->pin_3);
-            GPIO_SET(param->gpio,param->pin_4);
-            usleep(100000); //pause for 0.1sec
           }
-          param->forward= 'w'; 
-          param->state = 'w';
-          
-          break;
-        }
-        case 'a':
-        {
-          param->state = 'a';
-          break;
-        }
-        case 's':
-        {
-          param->state = 's';
-          param->forward = 's';
-          break;
-        }
-        case 'd':
-        {
-          param->state = 'd';
-          break;
-        }
-        case 'x':
-        {
-          if(param->state == 'w')
-          {
+          case 'p':{
             GPIO_CLR(param->gpio,param->pin_1);
             GPIO_CLR(param->gpio,param->pin_2);
             GPIO_CLR(param->gpio,param->pin_3);
             GPIO_CLR(param->gpio,param->pin_4);
-            usleep(100000); //pause for 0.1sec
+            break;
           }
-          param->forward = 'x';
-          param->state = 'x';
-          break;
+          case 'w':{
+            GPIO_SET(param->gpio,param->pin_1);
+            GPIO_CLR(param->gpio,param->pin_2);
+            GPIO_SET(param->gpio,param->pin_3);
+            GPIO_CLR(param->gpio,param->pin_4);
+            break;
+          }
+          case 'a':{
+            GPIO_CLR(param->gpio,param->pin_1);
+            GPIO_SET(param->gpio,param->pin_2);
+            GPIO_SET(param->gpio,param->pin_3);
+            GPIO_CLR(param->gpio,param->pin_4);
+            
+            break;
+          }
+          case 's':{
+            GPIO_SET(param->gpio,param->pin_1);
+            GPIO_SET(param->gpio,param->pin_2);
+            GPIO_SET(param->gpio,param->pin_3);
+            GPIO_SET(param->gpio,param->pin_4);
+            break;
+          }
+          case 'd':{
+            GPIO_SET(param->gpio,param->pin_1);
+            GPIO_CLR(param->gpio,param->pin_2);
+            GPIO_CLR(param->gpio,param->pin_3);
+            GPIO_SET(param->gpio,param->pin_4);
+            
+            break;
+          }
+          case 'x':{
+            GPIO_CLR(param->gpio,param->pin_1);
+            GPIO_SET(param->gpio,param->pin_2);
+            GPIO_CLR(param->gpio,param->pin_3);
+            GPIO_SET(param->gpio,param->pin_4);
+            break;
+          }
         }
-        default:
-        {
-          printf("invalid direction command\n");
-        }
-
       }
     }
-    switch(param->state)
-    {
-      case 'w':{
-        GPIO_SET(param->gpio,param->pin_1);
-        GPIO_CLR(param->gpio,param->pin_2);
-        GPIO_SET(param->gpio,param->pin_3);
-        GPIO_CLR(param->gpio,param->pin_4);
-        break;
-      }
-      case 'a':{
-        (*param->pwm_val_r) -=15;
-        if(!FIFO_FULL(param->speed_fifo)){
-          struct thread_command cmd2 = {'u',0};
-          FIFO_INSERT(param->speed_fifo,cmd2);
-        }
-        GPIO_CLR(param->gpio,param->pin_1);
-        GPIO_SET(param->gpio,param->pin_2);
-        GPIO_SET(param->gpio,param->pin_3);
-        GPIO_CLR(param->gpio,param->pin_4);
-        usleep(turn_angle_pause_time);
-        (*param->pwm_val_r) +=15;
-        if(!FIFO_FULL(param->speed_fifo)){
-          struct thread_command cmd2 = {'u',0};
-          FIFO_INSERT(param->speed_fifo,cmd2);
-        }
-        param->state = param->forward;
-        break;
-      }
-      case 's':{
-        GPIO_CLR(param->gpio,param->pin_1);
-        GPIO_CLR(param->gpio,param->pin_2);
-        GPIO_CLR(param->gpio,param->pin_3);
-        GPIO_CLR(param->gpio,param->pin_4);
-        break;
-      }
-      case 'd':{
-        (*param->pwm_val_l) -=15;
-        if(!FIFO_FULL(param->speed_fifo)){
-          struct thread_command cmd2 = {'u',0};
-          FIFO_INSERT(param->speed_fifo,cmd2);
-        }
-        GPIO_SET(param->gpio,param->pin_1);
-        GPIO_CLR(param->gpio,param->pin_2);
-        GPIO_CLR(param->gpio,param->pin_3);
-        GPIO_SET(param->gpio,param->pin_4);
-        usleep(turn_angle_pause_time);
-        (*param->pwm_val_l) +=15;
-        if(!FIFO_FULL(param->speed_fifo)){
-          struct thread_command cmd2 = {'u',0};
-          FIFO_INSERT(param->speed_fifo,cmd2);
-        }
-        param->state = param->forward;
-        break;
-      }
-      case 'x':{
-        GPIO_CLR(param->gpio,param->pin_1);
-        GPIO_SET(param->gpio,param->pin_2);
-        GPIO_CLR(param->gpio,param->pin_3);
-        GPIO_SET(param->gpio,param->pin_4);
-        break;
+    else{
+      
+      if(busy_count == 0){
+        busy =false;
+      } 
+      else{
+        busy_count --;
       }
     }
     
     wait_period( &timer_state, 10u ); 
   }
   return NULL;
+}
+void *Motor_Control(void * arg){
+  struct motor_control_thread_param *param = (struct motor_control_thread_param*)arg;
+  struct thread_command cmd1 = {0};
+  struct thread_command  cmd2 = {0};
+  struct  timespec  timer_state; 
+  wait_period_initialize( &timer_state );
+  wait_period( &timer_state, 100u );
+  printf("motor control thread started \n");
+  char prev_dir = 's';
+  while(!(param->quit_flag)){
+    if(!FIFO_EMPTY(param->motor_control_fifo))
+    {
+      FIFO_REMOVE(param->motor_control_fifo,&cmd1);
+      printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
+      switch (cmd1.command)
+      {
+      case 'w':
+        /* code */
+        if (prev_dir == 'x'){
+          if(!FIFO_FULL(param->speed_fifo)){
+            cmd2.command = 's';
+            cmd2.argument = param->pwm_val/2;
+            FIFO_INSERT(param->speed_fifo,cmd2);
+            cmd2.argument = 0;
+            FIFO_INSERT(param->speed_fifo,cmd2);
+          }
+        }
+        if(!FIFO_FULL(param->dir_fifo)){
+          cmd2.argument = 0;
+          cmd2.command = 'p';
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command  = 'w';
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }
+        if(prev_dir == 'x'){
+          if(!FIFO_FULL(param->speed_fifo)){
+              cmd2.command = 's';
+              cmd2.argument = param->pwm_val/2;
+              FIFO_INSERT(param->speed_fifo,cmd2);
+              cmd2.argument = param->pwm_val;
+              FIFO_INSERT(param->speed_fifo,cmd2);
+          }
+        }
+        prev_dir ='w';
+        break;
+      case 'a':
+      //change the direction first
+        int busy2 = param->angle;
+        if(!FIFO_FULL(param->dir_fifo)){
+          cmd2.command   = 'a';
+          cmd2.argument = 0;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command= 'b';cmd2.argument = busy2;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command = prev_dir,cmd2.argument = 0;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }
+        if(!FIFO_FULL(param->speed_fifo)){
+          cmd2.command = 's';
+          cmd2.argument = 50;
+          FIFO_INSERT(param->speed_fifo,cmd2);
+          cmd2.argument = 100;
+          FIFO_INSERT(param->speed_fifo,cmd2);  
+          cmd2.command= 'b';cmd2.argument = busy2;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command = 's';
+          cmd2.argument = param->pwm_val;
+          FIFO_INSERT(param->speed_fifo,cmd2);
+        }
+        break;
+      case 's':
+        if(!FIFO_FULL(param->dir_fifo)){
+          cmd2.command   = 's';
+          cmd2.argument = 0;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }
+        prev_dir = 's';
+        break;
+      case 'd':
+        int busy1 = param->angle;
+        if(!FIFO_FULL(param->dir_fifo)){
+          cmd2.command   = 'd';
+          cmd2.argument = 0;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command= 'b';cmd2.argument = busy1;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command = prev_dir,cmd2.argument = 0;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }
+        if(!FIFO_FULL(param->speed_fifo)){
+          cmd2.command = 's';
+          cmd2.argument = 50;
+          FIFO_INSERT(param->speed_fifo,cmd2);
+          cmd2.argument = 100;
+          FIFO_INSERT(param->speed_fifo,cmd2);  
+          cmd2.command= 'b';cmd2.argument = busy1;
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command = 's';
+          cmd2.argument = param->pwm_val;
+          FIFO_INSERT(param->speed_fifo,cmd2);
+        }
+        break;
+      case 'x':
+        if (prev_dir == 'd'){
+          if(!FIFO_FULL(param->speed_fifo)){
+            cmd2.command = 's';
+            cmd2.argument = param->pwm_val/2;
+            FIFO_INSERT(param->speed_fifo,cmd2);
+            cmd2.argument = 0;
+            FIFO_INSERT(param->speed_fifo,cmd2);
+          }
+        }
+        if(!FIFO_FULL(param->dir_fifo)){
+          cmd2.argument = 0;
+          cmd2.command = 'p';
+          FIFO_INSERT(param->dir_fifo,cmd2);
+          cmd2.command  = 'x';
+          FIFO_INSERT(param->dir_fifo,cmd2);
+        }
+        if(prev_dir == 'd'){
+          if(!FIFO_FULL(param->speed_fifo)){
+              cmd2.command = 's';
+              cmd2.argument = param->pwm_val/2;
+              FIFO_INSERT(param->speed_fifo,cmd2);
+              cmd2.argument = param->pwm_val;
+              FIFO_INSERT(param->speed_fifo,cmd2);
+          }
+        }
+        prev_dir = 'x';
+        break;
+      case 'i':
+        if(param->pwm_val < 95){
+          param->pwm_val +=5;
+          if(!FIFO_FULL(param->speed_fifo)){
+            cmd2.command = 's';
+            cmd2.argument = param->pwm_val;
+            FIFO_INSERT(param->speed_fifo,cmd2);
+          } 
+        }
+        else{
+          printf("already at maximum speed \n");
+        }
+        break;
+      case 'j':
+        if(param->pwm_val > 5){
+          param->pwm_val -=5;
+          if(param->pwm_val > 5){
+            param->pwm_val -=5;
+            if(!FIFO_FULL(param->speed_fifo)){
+              cmd2.command = 's';
+              cmd2.argument = param->pwm_val;
+              FIFO_INSERT(param->speed_fifo,cmd2);
+            } 
+          }
+          else{
+            printf("already at minimum speed \n");
+          }
+        }
+        break;
+      case 'o':
+        if(param->angle <85){
+          param->angle +=5;
+        }
+        else{
+          printf("already at maximum angle \n");
+        }
+        break;
+        
+      case 'k':
+        if(param->angle >5){
+          param->angle -=5;
+        }
+        else{
+          printf("already at maximum angle \n");
+        }
+        break;
+      default:
+        break;
+      }
+    }
+
+    wait_period( &timer_state, 10u ); /* 10ms */
+  }
+  return 0;
 }
 void set_gpio_context(volatile struct gpio_register * gpio) {
     static volatile struct gpio_register * saved_gpio = NULL;
@@ -648,8 +762,7 @@ void *video_capture(void * arg){
     while(! *param->quit_flag)
     {
       counter++;
-      if(counter%25 == 0)
-      {
+      
         if (video_interface_get_image(handle_video, param->image))
         {
 
@@ -683,7 +796,7 @@ void *video_capture(void * arg){
         {
           printf("did not get image \n");
         }
-      }
+      
 
       struct thread_command cmd1 = {0,0};
       struct thread_command cmd2 = {0,0};
@@ -1381,6 +1494,7 @@ void *egg_detector(void * arg)
     bool stopped = false;
     bool centered = false;
     bool egg_found = false;
+    int turn_cool_down =0;
     while(!(*param->quit_flag))
     {
       struct thread_command cmd = {0, 0};
@@ -1423,7 +1537,7 @@ void *egg_detector(void * arg)
             int count = 0;
             EggBlob eggs[MAX_EGGS];
             int found = find_egg_blobs(egg_data,eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
-            printf("found %d eggs \n", found);
+            //printf("found %d eggs \n", found);
             int max_egg = 0;
 
             for (int i = 0; i < found; i++) {
@@ -1452,13 +1566,13 @@ void *egg_detector(void * arg)
               int max_y = eggs[max_egg].max_y;
               draw_bbox(min_x,min_y,max_x,max_y,egg_data,(struct pixel_format_RGB){0, 255, 0});
               decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
-              printf("largest egg size is is at %d \n", eggs[max_egg].size);
+              //printf("largest egg size is is at %d \n", eggs[max_egg].size);
               egg_found = true;
             }
             else{
               decision_q[MAX_DECISION_SIZE-1] = -1;
               egg_found = false;
-              printf("did not find any eggs \n");
+              //printf("did not find any eggs \n");
             }
             
 
@@ -1472,6 +1586,7 @@ void *egg_detector(void * arg)
                   else if (decision_q[i] == -1) not_found++;
                   else center++;
               }
+              
               if(eggs[max_egg].size > STOP_THRESH) //check if the egg is close enough
               {
                 if(!FIFO_FULL(param->dir_fifo))
@@ -1483,29 +1598,39 @@ void *egg_detector(void * arg)
                     FIFO_INSERT(param->dir_fifo,cmd);
                   }
                   stopped = true;
-                  
-                  
-                
                 }
               }
-              if(not_found > 3){
+              // else{
+              //   if(!FIFO_FULL(param->dir_fifo))
+              //   {
+              //     printf("egg is not close to robot\n");
+              //     cmd.command = 'w';
+              //     if(stopped)
+              //     {
+              //       FIFO_INSERT(param->dir_fifo,cmd);
+              //     }
+              //     stopped = false;
+              //   }
+              // }
+              if(turn_cool_down > 0)
+              {
+                turn_cool_down--;
+              }
+              else if(not_found > 3){
                 if(!FIFO_FULL(param->dir_fifo)){
-                  cmd.command = 'w';
-                  FIFO_INSERT(param->dir_fifo,cmd);
+                  
                   cmd.command = 'a';
                   FIFO_INSERT(param->dir_fifo,cmd);
-                  cmd.command = 's';
-                  FIFO_INSERT(param->dir_fifo,cmd);
+                  turn_cool_down = TURN_COOLDOWN_FRAMES;
                 }  
               }
                
               
-              else if (left >= 3) {
+              else if (left >= 2) {
                 if (!FIFO_FULL(param->dir_fifo)) {
                     
                     printf("queue decision: largest egg detected on the left\n");                    
-                    cmd.command = 'w';
-                    FIFO_INSERT(param->dir_fifo, cmd);
+                    
                     
                     cmd.command = 'a';
                     FIFO_INSERT(param->dir_fifo, cmd);
@@ -1514,16 +1639,16 @@ void *egg_detector(void * arg)
                       cmd.command = 's';
                       FIFO_INSERT(param->dir_fifo, cmd);
                     }
-                    centered = false;
+                    //centered = false;
+                    turn_cool_down = TURN_COOLDOWN_FRAMES;
                     
                    
                 }
-              } else if (right >= 3) {
+              } else if (right >= 2) {
                 if (!FIFO_FULL(param->dir_fifo)) {
                     printf("queue decision: largest egg detected on the right\n");
                     
-                    cmd.command = 'w';
-                    FIFO_INSERT(param->dir_fifo, cmd);    
+                       
                     cmd.command = 'd';
                     FIFO_INSERT(param->dir_fifo, cmd);
                     if(stopped)
@@ -1531,27 +1656,29 @@ void *egg_detector(void * arg)
                       cmd.command = 's';
                       FIFO_INSERT(param->dir_fifo, cmd);
                     }
-                    centered= false;
+                    //centered= false;
                     // cmd.command = 's';
                     // FIFO_INSERT(param->dir_fifo, cmd);
                     // cmd.command = 'w';
                     // FIFO_INSERT(param->dir_fifo, cmd);
+                    turn_cool_down = TURN_COOLDOWN_FRAMES;
                 }
               }
-              else if(center >1){
+              else if(center >=2){
                 centered = true;
                 // printf("egg is close to center of robot \n");
                 // if (!FIFO_FULL(param->dir_fifo)) {
-                    cmd.command = 'w';
-                    FIFO_INSERT(param->dir_fifo, cmd);
-                    cmd.command = 'w';
-                    FIFO_INSERT(param->dir_fifo, cmd);
-                    cmd.command = 's';
-                    FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 'w';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 'w';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
+                    // cmd.command = 's';
+                    // FIFO_INSERT(param->dir_fifo, cmd);
 
                 // }
+                printf("egg is at the center of the robot\n");
               }
-              if(stopped && center)
+              if(stopped && centered)
               {
                 printf("robot is close enough to grab the egg \n");
                 //todo: evan grab the egg

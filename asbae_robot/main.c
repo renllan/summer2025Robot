@@ -2,7 +2,8 @@
 int main(int argc, char * argv[] )
 {
     pthread_t tk; //key input thread
-    pthread_t tc; //motor controll thread
+    pthread_t tc; //motor control thread
+    pthread_t tmc;
     pthread_t ts; //speed control thread
     pthread_t td; //directin control thread
     pthread_t ti; //IR_sensor thread
@@ -15,11 +16,12 @@ int main(int argc, char * argv[] )
     pthread_t t_egg;
     bool quit_flag = false;
 
+    struct fifo_t motor_control_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t key_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t speed_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t dir_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t IR_sensor_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t motor_control_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
+    struct fifo_t control_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t rgb_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t greyscale_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
@@ -52,21 +54,36 @@ int main(int argc, char * argv[] )
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
     REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
 
-    int pwm_val_l = 25;
-    int pwm_val_r = 25;
+    /*initialize the parameter of motor control thread*/
+    struct motor_control_thread_param motor_ctl_param = {
+      "motor control",
+      &motor_control_fifo,
+      &speed_fifo,
+      &dir_fifo,
+      15,
+      20,
+      &quit_flag
+    };
     /*intial the parameter of motor_speed_thread    */
     struct motor_speed_thread_param motor_speed_param= 
-    {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag, &pwm_val_l,&pwm_val_r};
+    {"speed", NULL,NULL,12,13,&speed_fifo,&quit_flag};
     /*intial the parameter of motor_direction_thread    */
     struct motor_direction_thread_param motor_direction_param = 
-    {"direction", NULL,5,6,22,23,&dir_fifo,&speed_fifo,&quit_flag, 's','s',&pwm_val_l,&pwm_val_r};
+    {"direction", NULL,5,6,22,23,&dir_fifo,&quit_flag};
     /*intial the parameter of key_input_thread   q */
     struct key_thread_param key_param = {
       "key",
       &key_fifo,    
       &quit_flag};
     /*intial the parameter of motor_control_thread    */
-    struct motor_control_thread_param     con_param             = {"control", &key_fifo, &speed_fifo, &dir_fifo, &reduced_img_fifo,&img_fifo,&quit_flag, true};
+    struct control_thread_param     con_param            
+     = {"control", 
+      &key_fifo,
+       &control_fifo, 
+       &IR_sensor_fifo,
+       &img_fifo,
+       &motor_control_fifo,
+       &quit_flag, true};
     /*intialize the parameter of IR_sensor_thread
       - initialize to line tracing mode
     */
@@ -74,7 +91,7 @@ int main(int argc, char * argv[] )
     struct egg_detector_thread_param      egg_param = {
         "egg datection", 
         &egg_fifo, 
-        &dir_fifo, 
+        &motor_control_fifo, 
         BW_IMG_raw,
         BW_IMG_data, 
         &quit_flag};              
@@ -136,7 +153,7 @@ int main(int argc, char * argv[] )
     {
       "reduced img",
       &reduced_img_fifo,
-      &dir_fifo,
+      &motor_control_fifo,
       REDUCED_IMG_raw,
       REDUCED_IMG_data,
       32,
@@ -188,7 +205,7 @@ int main(int argc, char * argv[] )
         pthread_create(&ts, NULL, Motor_Speed_Thread, (void *)&motor_speed_param);
         pthread_create(&td, NULL, Motor_Direction_Thread, (void *)&motor_direction_param);
         pthread_create(&tk, NULL, KeyRead,   (void *)&key_param);
-        pthread_create(&tc, NULL, Motor_Control,   (void *)&con_param);
+        pthread_create(&tc, NULL, Control,   (void *)&con_param);
         pthread_create(&ti, NULL, IR_Sensor, (void *)&IR_sensor_param);
         pthread_create(&tp,NULL,  video_capture, (void* )&img_capture_param);
         pthread_create(&t_rbg, NULL, video_with_cross, (void *)&rgb_param);
@@ -197,7 +214,7 @@ int main(int argc, char * argv[] )
         pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
         pthread_create(&t_hist,NULL, video_histogram, (void*)&hist_param );
         pthread_create(&t_egg, NULL, egg_detector, (void * )&egg_param);
-
+        pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
         // Wait to finish ts, td, tc, and tk threads
         pthread_join(ts, NULL);
         pthread_join(td, NULL);
@@ -211,6 +228,7 @@ int main(int argc, char * argv[] )
         pthread_join(t_reduced,NULL);
         pthread_join(t_hist,NULL);
         pthread_join(t_egg,NULL);
+        pthread_join(tmc,NULL);
         
         printf("trying to free buffers \n");
         free(RGB_IMG_raw);

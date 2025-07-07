@@ -42,13 +42,13 @@
 #define SCALE_REDUCTION_PER_AXIS  2   /* the image size reduction ratio (note that 640*480*3*8*FPS = your bandwidth usage, at 24FPS, that is 177MPBS) */
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)/(SCALE_REDUCTION_PER_AXIS*SCALE_REDUCTION_PER_AXIS)
-
+#define TURN_COOLDOWN_FRAMES 5
 #define EGG_THRESHOLD 210
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 1800
+#define STOP_THRESH 2500
 #define MAX_DECISION_SIZE 4
 #define CENTER_L 90
 #define CENTER_R 150
@@ -68,7 +68,7 @@ void *IR_Sensor(void* arg);
 void *KeyRead(void * arg);
 void *greyscale_video(void * arg);
 void *egg_detector(void * arg);
-
+void *Control(void* arg);
 void sigint_handler(int signum);
 
 struct thread_command
@@ -114,8 +114,6 @@ struct motor_speed_thread_param
   int                             pin_2;
   struct fifo_t                 * speed_fifo;
   bool                          * quit_flag;
-  int                           * pwm_val_l;
-  int                           * pwm_val_r;
 };
 
 struct motor_direction_thread_param
@@ -125,27 +123,35 @@ struct motor_direction_thread_param
   int                            pin_1; //AI1
   int                            pin_2; //AI2
   int                            pin_3; //BI1
-  int                            pin_4; //BI2              
-  struct fifo_t                  *dir_fifo;
-  struct fifo_t                  *speed_fifo;
+  int                            pin_4; //BI2 
+  struct fifo_t                  *dir_fifo;             
   bool                           *quit_flag;
-  char                           state; 
-  char                           forward;//true forward, false backward
-  int                            *pwm_val_l;
-  int                            *pwm_val_r;
+};
+
+struct control_thread_param
+{
+  const char                    * name;
+  struct fifo_t                 * key_fifo;
+  struct fifo_t                 * control_fifo;
+  struct fifo_t                 * IR_sensor_fifo;
+  struct fifo_t                 * img_cmd_fifo;
+  struct fifo_t                 * motor_control_fifo;
+  bool                          * quit_flag;
+  bool                          mode; //mode true: mode1,false: mode2  
 };
 
 struct motor_control_thread_param
 {
   const char                    * name;
-  struct fifo_t                 * key_fifo;
+  struct fifo_t                 * motor_control_fifo;
   struct fifo_t                 * speed_fifo;
   struct fifo_t                 * dir_fifo;
-  struct fifo_t                 * IR_sensor_fifo;
-  struct fifo_t                 * img_cmd_fifo;
-  bool                          * quit_flag;
-  bool                          mode; //mode true: mode1,false: mode2                     
+  int                            angle;
+  int                            pwm_val;
+  bool                          *quit_flag;  
 };
+
+
 
 struct img_process_thread_param
 {
