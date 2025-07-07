@@ -4,7 +4,6 @@ void *KeyRead(void * arg)
   struct  key_thread_param * param = (struct key_thread_param *)arg;
   struct  thread_command cmd = {0, 0};
   int     keyhit1 = 0;
-  int     keyhit2 = 0;
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function, 
              // similar to interrupt occuring every 10ms
@@ -29,18 +28,6 @@ void *KeyRead(void * arg)
         {
           break;            // nothing placed on param->key_fifo
         }
-        break;
-        case 'm':
-        {
-          usleep(100000);
-          keyhit2 = get_pressed_key();
-          cmd.command  =  keyhit1;
-          cmd.argument = keyhit2;
-          if (!(FIFO_FULL( param->key_fifo )))
-          {FIFO_INSERT( param->key_fifo, cmd );}
-          else {printf( "key_fifo queue full\n" );}
-          break;
-        }
         case 113:  // 'q' for quit
         {
           cmd.command = 113;
@@ -56,7 +43,6 @@ void *KeyRead(void * arg)
         default:
         {
           cmd.command  = keyhit1;  // other key hit
-          cmd.argument = keyhit2;
           if (!(FIFO_FULL( param->key_fifo )))
           {FIFO_INSERT( param->key_fifo, cmd );}
           else {printf( "key_fifo queue full\n" );}
@@ -142,7 +128,7 @@ void *Control(void * arg)
   // start 10ms timed wait, ie. set interrupt
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
-
+  bool change = false;
 /* Pick up incoming key presses every 10ms, 100 times/sec,
 *  from the key input FIFO queues, and generate LED on/off commands, 
 *  and fill the Red LED command FIFO queue and Green LED command FIFO queue,
@@ -157,6 +143,33 @@ void *Control(void * arg)
       printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
       switch (cmd1.command)
       {
+        case '1': 
+          if(change)
+          {
+            param->mode = true; 
+            cmd2.command = 's';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+            printf("switched to mode 1 \n");
+          } 
+          change = false;
+          break;
+        case '2':
+          if(change)
+          {
+            param->mode = false;
+            cmd2.command = 'w';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {
+              FIFO_INSERT(param->motor_control_fifo,cmd2);
+            }
+            printf("switched to mode 2 \n");change = false;
+          }
+          break;
         case 'h':
         {
           cmd2.command =cmd1.command;
@@ -330,36 +343,8 @@ void *Control(void * arg)
             cmd2.argument= 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-            
-            
-            if(cmd1.argument == '1'){
-              param->mode = true; 
-              cmd2.command = 's';
-              cmd2.argument = 0;
-              if(!FIFO_FULL(param->img_cmd_fifo))
-              {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
-              printf("switched to mode 1 \n");
-            }
-            else if(cmd1.argument == '2'){
-              
-              param->mode = false;
-              cmd2.command = 'w';
-              cmd2.argument = 0;
-              if(!FIFO_FULL(param->img_cmd_fifo))
-              {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
-              if(!FIFO_FULL(param->motor_control_fifo))
-              {
-                FIFO_INSERT(param->motor_control_fifo,cmd2);
-              }
-              printf("switched to mode 2 \n");
-              
-            }
-            else{printf("invalid mode \n");
-            
-            }
-            cmd2.argument = 0;
+            change = true;
             break;
-          
           default: //if no command ente
           {
               printf("invalid command \n");
@@ -390,10 +375,8 @@ void *Motor_Speed_Thread(void * args)
   printf("motor speed started \n");
   while(!(*(param->quit_flag)))
   {
-    if(!busy)
-    {
+    if(!busy){
       if(!FIFO_EMPTY(param->speed_fifo)){
-        
         struct thread_command cmd = {0,0}; 
         FIFO_REMOVE(param->speed_fifo,&cmd);
         printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
@@ -418,15 +401,14 @@ void *Motor_Speed_Thread(void * args)
       
     }
     else{
-      printf("%s thread is busy, \n");
+      printf("%s thread is busy\n",param->name);
       if(busy_count == 0){
         busy =false;
-      } 
-      else{
+      }else{
         busy_count --;
       }
     }
-     wait_period( &timer_state, 10u );
+    wait_period( &timer_state, 10u );
   }
   printf("speed thread exit \n");
   return NULL;
@@ -587,7 +569,7 @@ void *Motor_Control(void * arg){
         }
         if(!FIFO_FULL(param->speed_fifo)){
           
-          cmd2.argument = 50;
+          cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
           cmd2.command= 'b';
           cmd2.argument = busy2;
@@ -618,7 +600,7 @@ void *Motor_Control(void * arg){
         }
         if(!FIFO_FULL(param->speed_fifo)){
           
-          cmd2.argument = 50;
+          cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
           cmd2.command= 'b';cmd2.argument = busy1;
           FIFO_INSERT(param->speed_fifo,cmd2);
