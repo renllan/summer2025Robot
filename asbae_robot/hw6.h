@@ -53,6 +53,27 @@
 #define CENTER_L 100
 #define CENTER_R 140
 
+// Arm macros constants
+#define SPIN_RESET 90
+#define BACK_FORTH_RESET 125
+#define UP_DOWN_RESET 75
+#define SPIN_MIN 0 // max left
+#define SPIN_MAX 180 // max right
+#define BACK_FORTH_MIN 35 // max back
+#define BACK_FORTH_MAX 125 // max forward
+#define UP_DOWN_MIN 85 // max up
+#define UP_DOWN_MAX 130 // max down
+#define PWM_SERVO_RESET 90 // 180 for other car
+#define PWM_SERVO_LEFT 105 // 120 for other car
+#define PWM_SERVO_RIGHT 15 // 60 for other car
+#define PWM_SERVO_MIN 0 // 0 for other car
+#define PWM_SERVO_MAX 180 // 180 for other car
+#define CLAW_OPEN 450 // 500 for other car
+#define CLAW_CLOSE 800 // 800 for other car
+#define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
+#define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
+#define ARM_CLAW_TIMEOUT 500 // Timeout for arm claw commands in milliseconds
+
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);
 void enable_pwm(struct io_peripherals *io) ;
