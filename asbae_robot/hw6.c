@@ -197,8 +197,8 @@ void *Control(void * arg)
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
         
-        case 'v':
-          cmd2.command ='v';
+        case 'v': case 'l':
+          cmd2.command =cmd1.command;
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
@@ -401,7 +401,6 @@ void *Motor_Speed_Thread(void * args)
       
     }
     else{
-      printf("%s thread is busy\n",param->name);
       if(busy_count == 0){
         busy =false;
       }else{
@@ -494,7 +493,6 @@ void *Motor_Direction_Thread(void * arg)
       }
     }
     else{
-      printf("%s thread is busy \n",param->name);
       if(busy_count == 0){
         busy =false;
       } 
@@ -555,7 +553,7 @@ void *Motor_Control(void * arg){
         break;
       case 'a':
       //change the direction first
-        int busy2 = param->angle*3;
+        int busy2 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'a';
           cmd2.argument = 0;
@@ -569,6 +567,7 @@ void *Motor_Control(void * arg){
         }
         if(!FIFO_FULL(param->speed_fifo)){
           
+          cmd2.command = 's';
           cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
           cmd2.command= 'b';
@@ -588,7 +587,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
-        int busy1 = param->angle*3;
+        int busy1 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
           cmd2.argument = 0;
@@ -600,6 +599,7 @@ void *Motor_Control(void * arg){
         }
         if(!FIFO_FULL(param->speed_fifo)){
           
+          cmd2.command ='s';
           cmd2.argument = 100;
           FIFO_INSERT(param->speed_fifo,cmd2);  
           cmd2.command= 'b';cmd2.argument = busy1;
@@ -669,6 +669,7 @@ void *Motor_Control(void * arg){
       case 'o':
         if(param->angle <85){
           param->angle +=5;
+          printf("current angle = %d", param->angle);
         }
         else{
           printf("already at maximum angle \n");
@@ -678,9 +679,10 @@ void *Motor_Control(void * arg){
       case 'k':
         if(param->angle >5){
           param->angle -=5;
+          printf("current angle = %d", param->angle);
         }
         else{
-          printf("already at maximum angle \n");
+          printf("already at min angle \n");
         }
         break;
       default:
@@ -722,10 +724,10 @@ void sigint_handler(int signum){
 void *video_capture(void * arg){
   struct img_capture_thread_param *param = (struct img_capture_thread_param*)arg;
   printf("%s thread starting\n", param->name);
-  struct video_interface_handle_t *         handle_video;
+  struct video_interface_handle_t *         handle_video1;
   struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB = NULL;
 
-  handle_video = video_interface_open( "/dev/video0" );
+  handle_video1 = video_interface_open( "/dev/video0" );
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
@@ -733,12 +735,12 @@ void *video_capture(void * arg){
   // start 10ms timed wait
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 100u ); /* 500 ms */
-  video_interface_print_modes( handle_video);
-  if (video_interface_set_mode_auto( handle_video ))
+  video_interface_print_modes( handle_video1);
+  if (video_interface_set_mode_auto( handle_video1))
   {
-    int scaled_width      = handle_video->configured_width/SCALE_REDUCTION_PER_AXIS;
-    int scaled_height     = handle_video->configured_height/SCALE_REDUCTION_PER_AXIS;
-    printf("img size = %d x %d\n", handle_video->configured_width,handle_video->configured_height);
+    int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
+    int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
+    printf("img size = %d x %d\n", handle_video1->configured_width,handle_video1->configured_height);
     printf("original img size = %d x %d\n", scaled_width,scaled_height);
     printf("size of image_t %d\n", IMAGE_SIZE);
     
@@ -750,15 +752,15 @@ void *video_capture(void * arg){
     {
       counter++;
       
-        if (video_interface_get_image(handle_video, param->image))
+        if (video_interface_get_image(handle_video1, param->image))
         {
 
           //
           
           scale_image_data(
             (struct pixel_format_RGB *)param->image,
-            handle_video->configured_height,
-            handle_video->configured_width,
+            handle_video1->configured_height,
+            handle_video1->configured_width,
             param->img_data,
             SCALE_REDUCTION_PER_AXIS,
             SCALE_REDUCTION_PER_AXIS );
@@ -775,6 +777,7 @@ void *video_capture(void * arg){
             FIFO_INSERT(param->reduced_cmd_fifo,cmd);
             FIFO_INSERT(param->hist_fifo,cmd);
             FIFO_INSERT(param->egg_fifo,cmd);
+            FIFO_INSERT(param->single_channel_fifo,cmd);
             
             
           //draw_bitmap_display(handle_GUI_RGB, param->img_data);
@@ -793,6 +796,13 @@ void *video_capture(void * arg){
         printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
         switch(cmd1.command)
         {
+          case 'l':
+            cmd2 =cmd1;
+            if(!FIFO_FULL(param->single_channel_fifo))
+            {
+              FIFO_INSERT(param->single_channel_fifo,cmd2);
+            }
+            break;
           case 'e':
           {
             cmd2 = cmd1;
@@ -945,7 +955,7 @@ void *greyscale_video(void * arg){
 
   struct  timespec  timer_state; 
   wait_period_initialize( &timer_state );
-  wait_period( &timer_state, 500u ); /* 500 ms */
+  wait_period( &timer_state, 100u ); /* 500 ms */
 
   while(!(*param->quit_flag))
   {
@@ -1149,7 +1159,7 @@ void *reduced_video(void * arg){
   return NULL;
 }
 void *single_channel(void *arg){
-  struct reduced_img_thread_param *param = (struct reduced_img_thread_param*)arg;
+  struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
   printf("%s thread started \n",param->name);
   struct draw_bitmap_multiwindow_handle_t *r_handle = NULL;
   struct draw_bitmap_multiwindow_handle_t *g_handle = NULL;
@@ -1164,14 +1174,17 @@ void *single_channel(void *arg){
   struct pixel_format_RGB * b_data = (struct pixel_format_RGB*)b_img;
   struct thread_command cmd = {0,0};
   printf("%s thread started\n", param->name);
-
-   while(!(*param->quit_flag)) {
+  struct  timespec  timer_state; 
+  wait_period_initialize( &timer_state );
+  wait_period( &timer_state, 100u ); /* 500 ms */
+  while(!(*param->quit_flag)) {
         // Process commands
     if(!(FIFO_EMPTY(param->img_cmd_fifo))) {
       FIFO_REMOVE(param->img_cmd_fifo, &cmd);
     
     switch(cmd.command){
       case 'l':
+        printf("%s cmd = %c, %d",param->name,cmd.command,cmd.argument);
         if(!r_handle){
           r_handle = draw_bitmap_create_window(param->width,param->height);
           g_handle = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
@@ -1193,10 +1206,10 @@ void *single_channel(void *arg){
           memcpy(g_img,param->RGB_IMG_raw,IMAGE_SIZE);
           memcpy(b_img,param->RGB_IMG_raw,IMAGE_SIZE);
 
-          for(int i = 0; i < IMAGE_SIZE;i++){
+          for(int i = 0; i < IMAGE_SIZE/3;i++){
             r_data[i] = (struct pixel_format_RGB ){r_data[i].R,0,0};
             g_data[i] = (struct pixel_format_RGB ){0,g_data[i].R,0};
-            b_data[i] = (struct pixel_format_RGB ){0,0,b_data[i].R};
+            b_data[i] = (struct pixel_format_RGB ){0,0,b_data[i].G};
           }
           break;
       }
@@ -1205,7 +1218,8 @@ void *single_channel(void *arg){
       if (g_handle) draw_bitmap_display(g_handle, g_data);
       if (b_handle) draw_bitmap_display(b_handle, b_data);
     }
-  }
+    wait_period( &timer_state, 10u );
+  } 
   if (r_handle) {draw_bitmap_close_window(r_handle); r_handle = NULL;}
   if (g_handle) {draw_bitmap_close_window(g_handle); g_handle = NULL;}
   if (b_handle) {draw_bitmap_close_window(b_handle); b_handle = NULL;}
@@ -1578,7 +1592,7 @@ void *egg_detector(void * arg)
               {
                 if(!FIFO_FULL(param->dir_fifo))
                 {
-                  printf("egg is close to robot\n");
+                  printf("egg size is %d egg is close to robot\n",eggs[max_egg].size);
                   cmd.command = 's';
                   if(!stopped)
                   {
@@ -1603,17 +1617,21 @@ void *egg_detector(void * arg)
               {
                 turn_cool_down--;
               }
-              else if(not_found > 3){
+              else if(not_found > MAX_DECISION_SIZE/2){
                 if(!FIFO_FULL(param->dir_fifo)){
                   
                   cmd.command = 'a';
                   FIFO_INSERT(param->dir_fifo,cmd);
+                  cmd.command ='w';
+                  FIFO_INSERT(param->dir_fifo,cmd);
                   turn_cool_down = TURN_COOLDOWN_FRAMES;
+                  printf("did not find any egg \n");
+                  stopped = false;
                 }  
               }
                
               
-              else if (left >= 2) {
+              else if (left >= MAX_DECISION_SIZE/2) {
                 if (!FIFO_FULL(param->dir_fifo)) {
                     
                     printf("queue decision: largest egg detected on the left\n");                    
@@ -1621,28 +1639,20 @@ void *egg_detector(void * arg)
                     
                     cmd.command = 'a';
                     FIFO_INSERT(param->dir_fifo, cmd);
-                    if(stopped)
-                    {
-                      cmd.command = 's';
-                      FIFO_INSERT(param->dir_fifo, cmd);
-                    }
+                    
                     //centered = false;
                     turn_cool_down = TURN_COOLDOWN_FRAMES;
                     
                    
                 }
-              } else if (right >= 2) {
+              } else if (right >= MAX_DECISION_SIZE/2) {
                 if (!FIFO_FULL(param->dir_fifo)) {
                     printf("queue decision: largest egg detected on the right\n");
                     
                        
                     cmd.command = 'd';
                     FIFO_INSERT(param->dir_fifo, cmd);
-                    if(stopped)
-                    {
-                      cmd.command = 's';
-                      FIFO_INSERT(param->dir_fifo, cmd);
-                    }
+                    
                     //centered= false;
                     // cmd.command = 's';
                     // FIFO_INSERT(param->dir_fifo, cmd);
@@ -1651,7 +1661,7 @@ void *egg_detector(void * arg)
                     turn_cool_down = TURN_COOLDOWN_FRAMES;
                 }
               }
-              else if(center >=2){
+              else if(center >=MAX_DECISION_SIZE/2){
                 centered = true;
                 // printf("egg is close to center of robot \n");
                 // if (!FIFO_FULL(param->dir_fifo)) {
@@ -1674,6 +1684,13 @@ void *egg_detector(void * arg)
                 // if (!FIFO_FULL(param->dir_fifo)) {
                 //     cmd.command = 'w';
                 //     FIFO_INSERT(param->dir_fifoS, cmd);
+                if(!FIFO_FULL(param->dir_fifo))
+                {
+                  cmd.command ='s';
+                  FIFO_INSERT(param->dir_fifo,cmd);
+                }
+                
+
                 // }
                 break;
               }

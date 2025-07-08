@@ -42,16 +42,16 @@
 #define SCALE_REDUCTION_PER_AXIS  2   /* the image size reduction ratio (note that 640*480*3*8*FPS = your bandwidth usage, at 24FPS, that is 177MPBS) */
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)/(SCALE_REDUCTION_PER_AXIS*SCALE_REDUCTION_PER_AXIS)
-#define TURN_COOLDOWN_FRAMES 5
+#define TURN_COOLDOWN_FRAMES 15
 #define EGG_THRESHOLD 210
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 2500
-#define MAX_DECISION_SIZE 4
-#define CENTER_L 90
-#define CENTER_R 150
+#define STOP_THRESH 3500
+#define MAX_DECISION_SIZE 10
+#define CENTER_L 100
+#define CENTER_R 140
 
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);
@@ -70,6 +70,7 @@ void *greyscale_video(void * arg);
 void *egg_detector(void * arg);
 void *Control(void* arg);
 void sigint_handler(int signum);
+void *single_channel(void * arg);
 
 struct thread_command
 {
@@ -187,6 +188,7 @@ struct img_capture_thread_param
   struct fifo_t               * reduced_cmd_fifo;
   struct fifo_t               * hist_fifo;
   struct fifo_t               * egg_fifo;
+  struct fifo_t               * single_channel_fifo;
   struct image_t              *image;
   unsigned char               *img_raw;
   struct pixel_format_RGB     *img_data;

@@ -14,6 +14,8 @@ int main(int argc, char * argv[] )
     pthread_t t_reduced;
     pthread_t t_hist;
     pthread_t t_egg;
+    pthread_t t_sc;
+
     bool quit_flag = false;
 
     struct fifo_t motor_control_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
@@ -29,6 +31,8 @@ int main(int argc, char * argv[] )
     struct fifo_t reduced_img_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t hist_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t egg_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
+    struct fifo_t single_channel_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
+
 
     static struct image_t       image;
     unsigned char               * IMG_RAW;
@@ -105,6 +109,7 @@ int main(int argc, char * argv[] )
       &reduced_img_fifo,
       &hist_fifo,
       &egg_fifo,
+      &single_channel_fifo,
       &image,
       IMG_RAW,
       IMG_DATA,
@@ -114,6 +119,16 @@ int main(int argc, char * argv[] )
       REDUCED_IMG_raw,
       &quit_flag
     };     
+    struct img_process_thread_param       single_channel_param = {
+      "single channel",
+      &single_channel_fifo,
+      RGB_IMG_raw,
+      RGB_IMG_data,
+      320,
+      240,
+      &quit_flag,
+      true
+    };
 
     struct img_process_thread_param       rgb_param =
     {
@@ -215,6 +230,7 @@ int main(int argc, char * argv[] )
         pthread_create(&t_hist,NULL, video_histogram, (void*)&hist_param );
         pthread_create(&t_egg, NULL, egg_detector, (void * )&egg_param);
         pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
+        pthread_create(&t_sc,NULL, single_channel, (void*)&single_channel_param);
         // Wait to finish ts, td, tc, and tk threads
         pthread_join(ts, NULL);
         pthread_join(td, NULL);
@@ -229,6 +245,7 @@ int main(int argc, char * argv[] )
         pthread_join(t_hist,NULL);
         pthread_join(t_egg,NULL);
         pthread_join(tmc,NULL);
+        pthread_join(t_sc,NULL);
         
         printf("trying to free buffers \n");
         free(RGB_IMG_raw);
