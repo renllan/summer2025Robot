@@ -1,6 +1,45 @@
 #include "hw6.h"
 int main(int argc, char * argv[] )
 {
+  // Open UART for communication
+    int uart_fd = open_uart("/dev/ttyUSB0", B9600);  // Same baudrate as in the Python script
+
+    // Variables for angles and XYZ positions
+    int angles[3];
+    //int xyz[3]; // Uncomment if you want to use XYZ positions
+
+    /* 
+     * Initialize angles to [90, 135, 75] (RESET POSITION)
+     * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
+     * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
+     * [2] moves arm up and down, 90 is level; below is up and above is down
+     */
+    printf("Setting angles to [90, 135, 75]\n\n");
+    angles[0] = SPIN_RESET;
+    angles[1] = BACK_FORTH_RESET;
+    angles[2] = UP_DOWN_RESET;
+    set_angles(uart_fd, angles, ARM_TIMEOUT);
+    
+    /*
+     * Initialize claw to CLAW_OPEN (open position)
+     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
+     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
+     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
+     */
+    printf("Setting claw to CLAW_OPEN\n\n");
+    int claw_pos = CLAW_OPEN;
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+
+    /*
+     * Initialize PWM servo to 180 degrees
+     * This is equivalent to setting the servo to the parallel position with the claw motor facing backwards
+     * Angle is turned clockwise
+     * For example, servo will be turned 30 degrees clockwise from 0 (claw motor facing forward) if 30 degrees is set
+     */
+    printf("Setting PWM servo\n");
+    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT);
+    sleep(1); // Delay to assure reset position is reached
+
     pthread_t tk; //key input thread
     pthread_t tc; //motor control thread
     pthread_t tmc;
