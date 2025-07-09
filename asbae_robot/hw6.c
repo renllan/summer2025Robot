@@ -202,12 +202,22 @@ void *Control(void * arg)
         }
         case 'e':
         {
-          cmd2.command =cmd1.command;
-          cmd2.argument = 0;
-          if(!FIFO_FULL(param->img_cmd_fifo))
-          {
-            FIFO_INSERT(param->img_cmd_fifo,cmd2);
-          }break;
+          if (param->mode == 1 || param->mode == 2) {
+            cmd2.command =cmd1.command;
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {
+              FIFO_INSERT(param->img_cmd_fifo,cmd2);
+            }break;
+          } else if (param->mode == 3) {
+            cmd2.command = 'e';
+            cmd2.argument = 0; // not needed for pwm servo left turn
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            break;
+          }
+          // other modes omitted for simplicity
+          break;
         }
         case 'c':
         {
@@ -222,18 +232,6 @@ void *Control(void * arg)
             if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
             break;
           }
-          break;
-        }
-        case 'e': //turn pwm servo left
-        {
-          if (param->mode == 3) {
-            cmd2.command = 'e';
-            cmd2.argument = 0; // not needed for pwm servo left turn
-            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
-            else printf("pwm_servo_fifo queue full\nHW6> ");
-            break;
-          }
-          // other modes omitted for simplicity
           break;
         }
         case 'r': //turn pwm servo right
