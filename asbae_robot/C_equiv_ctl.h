@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <errno.h>
-#include "wait_period.h"
+#include "../include/wait_period.h"
 
 #define PACKET_HEADER1 0xAA
 #define PACKET_HEADER2 0x55
