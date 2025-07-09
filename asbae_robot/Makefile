@@ -15,6 +15,7 @@ SOURCES = main.c\
 		      ../include/keypress.c\
           scale_image_data.c\
           to_black_white.c\
+          C_equiv_ctl.c\
 
 
 OBJECTS = $(patsubst %.cpp,%.o,$(patsubst %.c,%.o,$(SOURCES)))

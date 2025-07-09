@@ -9,6 +9,10 @@
 #include <pthread.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <linux/videodev2.h>
+#include <time.h>
+#include <cairo/cairo.h>
+#include <gtk/gtk.h>
 #include "to_black_white.h"
 #include "find_egg_blobs.h"
 #include "../include/keypress.h"
@@ -26,10 +30,6 @@
 #include "../include/MPU6050.h"
 #include "../include/MPU9250.h"
 #include "../include/wait_key.h"
-#include <linux/videodev2.h>
-#include <time.h>
-#include <cairo/cairo.h>
-#include <gtk/gtk.h>
 #include "pixel_format_RGB.h"
 #include "video_interface.h"
 #include "wait_key.h"
