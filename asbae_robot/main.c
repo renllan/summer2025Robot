@@ -15,6 +15,9 @@ int main(int argc, char * argv[] )
     pthread_t t_hist;
     pthread_t t_egg;
     pthread_t t_sc;
+    pthread_t tarm; // thread for arm control
+    pthread_t tpwm; // thread for PWM servo control
+    pthread_t tclaw; // thread for claw control
 
     bool quit_flag = false;
 
@@ -32,7 +35,9 @@ int main(int argc, char * argv[] )
     struct fifo_t hist_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t egg_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t single_channel_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-
+    struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for arm control commands
+    struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
+    struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
 
     static struct image_t       image;
     unsigned char               * IMG_RAW;
@@ -87,7 +92,33 @@ int main(int argc, char * argv[] )
        &IR_sensor_fifo,
        &img_fifo,
        &motor_control_fifo,
-       &quit_flag, true};
+       &arm_fifo, // FIFO for arm control commands
+       &pwm_servo_fifo, // FIFO for PWM servo control commands
+       &claw_fifo, // FIFO for claw control commands
+       &quit_flag, 
+       true};
+
+    /*initial the parameters of the arm*/
+    struct arm_thread_param arm_param = {
+      "arm",
+      &arm_fifo,
+      uart_fd, // pass the UART file descriptor to the arm control thread
+      &quit_flag
+    };
+    /*initial the parameters of the pwm servo*/
+    struct arm_thread_param pwm_param = {
+      "pwm_servo",
+      &pwm_servo_fifo,
+      uart_fd, // pass the UART file descriptor to the PWM servo control thread
+      &quit_flag
+    };
+    /*initial the parameters of the claw*/
+    struct arm_thread_param claw_param = {
+      "claw",
+      &claw_fifo,
+      uart_fd, // pass the UART file descriptor to the claw control thread
+      &quit_flag
+    };
     /*intialize the parameter of IR_sensor_thread
       - initialize to line tracing mode
     */
@@ -202,7 +233,6 @@ int main(int argc, char * argv[] )
         /*enables pwm function*/
         enable_pwm(io);
        
-
         motor_direction_param.gpio   = io->gpio;
         motor_speed_param.gpio       = io->gpio;
         motor_speed_param.pwm        = io->pwm;   
@@ -231,6 +261,9 @@ int main(int argc, char * argv[] )
         pthread_create(&t_egg, NULL, egg_detector, (void * )&egg_param);
         pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
         pthread_create(&t_sc,NULL, single_channel, (void*)&single_channel_param);
+        pthread_create(&tarm, NULL, Arm_Thread, (void *)&arm_param);
+        pthread_create(&tclaw, NULL, Claw_Thread, (void *)&claw_param);
+        pthread_create(&tpwm, NULL, PWM_Servo_Thread, (void *)&pwm_param);
         // Wait to finish ts, td, tc, and tk threads
         pthread_join(ts, NULL);
         pthread_join(td, NULL);
@@ -246,6 +279,9 @@ int main(int argc, char * argv[] )
         pthread_join(t_egg,NULL);
         pthread_join(tmc,NULL);
         pthread_join(t_sc,NULL);
+        pthread_join(tarm, NULL);
+        pthread_join(tclaw, NULL);
+        pthread_join(tpwm, NULL);
         
         printf("trying to free buffers \n");
         free(RGB_IMG_raw);
@@ -259,7 +295,6 @@ int main(int argc, char * argv[] )
         free(REDUCED_IMG_raw);
         printf("reduced img buffer freed successfully");
     
-
         /* main task finished  */
 
         /* clean the GPIO pins */

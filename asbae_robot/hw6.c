@@ -143,10 +143,11 @@ void *Control(void * arg)
       printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
       switch (cmd1.command)
       {
-        case '1': 
+        case '1':
+        {
           if(change)
           {
-            param->mode = true; 
+            param->mode = 1; 
             cmd2.command = 's';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->img_cmd_fifo))
@@ -155,10 +156,12 @@ void *Control(void * arg)
           } 
           change = false;
           break;
+        }
         case '2':
+        {
           if(change)
           {
-            param->mode = false;
+            param->mode = 2;
             cmd2.command = 'w';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->img_cmd_fifo))
@@ -170,6 +173,24 @@ void *Control(void * arg)
             printf("switched to mode 2 \n");change = false;
           }
           break;
+        }
+        case '3':
+        {
+          if(change)
+          {
+            param->mode = 3;
+            cmd2.command = 's';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {
+              FIFO_INSERT(param->motor_control_fifo,cmd2);
+            }
+            printf("switched to mode 3 \n");change = false;
+          }
+          break;
+        }
         case 'h':
         {
           cmd2.command =cmd1.command;
@@ -189,23 +210,55 @@ void *Control(void * arg)
           }break;
         }
         case 'c':
-        
+        {
           cmd2.command ='c';
           cmd2.argument = 0;
-          if(!FIFO_FULL(param->img_cmd_fifo))
-          {
-            FIFO_INSERT(param->img_cmd_fifo,cmd2);
-          }break;
-        
+          if (param->mode == 1 || param->mode == 2) {
+            if(!FIFO_FULL(param->img_cmd_fifo))
+            {
+              FIFO_INSERT(param->img_cmd_fifo,cmd2);
+            }break;
+          } else if (param->mode == 3) {
+            if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
+            break;
+          }
+          break;
+        }
+        case 'e': //turn pwm servo left
+        {
+          if (param->mode == 3) {
+            cmd2.command = 'e';
+            cmd2.argument = 0; // not needed for pwm servo left turn
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            break;
+          }
+          // other modes omitted for simplicity
+          break;
+        }
+        case 'r': //turn pwm servo right
+        {
+          if (param->mode == 3) {
+            cmd2.command = 'r';
+            cmd2.argument = 0; // not needed for pwm servo right turn
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            break;
+          }
+          // other modes omitted for simplicity
+          break;
+        }
         case 'v': case 'l':
+        {
           cmd2.command =cmd1.command;
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
-        
+        }       
         case 'b':
+        {
           cmd2.command ='b';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
@@ -213,18 +266,19 @@ void *Control(void * arg)
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }
           break;
-        
+        }
         case 'n':
+        {          
           cmd2.command ='n';
           cmd2.argument = 0;
           if(!FIFO_FULL(param->img_cmd_fifo))
           {
             FIFO_INSERT(param->img_cmd_fifo,cmd2);
           }break;
-        
+        }
         case 'w':
-        
-          if(param->mode)
+        {
+          if(param->mode == 1)
           {
             cmd2.command = 'w';
             cmd2.argument = 0;
@@ -234,121 +288,208 @@ void *Control(void * arg)
             }
             break;
           }
-          else{ //mode2
+          else if(param->mode == 2) { //mode2
             cmd2.command = 'w';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->img_cmd_fifo))
             {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
           } 
+          else if(param->mode == 3) { //mode3
+            cmd2.command = 'w';
+            cmd2.argument = 2; // move forward/backward servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
+          }
           break;             
-        
+        }
         case 'a':
-          if(param->mode) { 
-            
-
+        {
+          if(param->mode == 1) { 
               cmd2.command = 'a';
               cmd2.argument = 0;
               if(!FIFO_FULL(param->motor_control_fifo))
              {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-            
+             break;
+          }
+          else if (param->mode == 3) {
+            cmd2.command = 'a';
+            cmd2.argument = 1; // move spin servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
           }
           break;
-        
+        }
         case 's':
-            cmd2.command = 's';
-            cmd2.argument = 0;
-            if(param->mode){
-              if(!FIFO_FULL(param->motor_control_fifo)){
-                {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-                break;
-              }
-            }
-            else{ //mode2
-              if(!FIFO_FULL(param->img_cmd_fifo)){
-                {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
-                break;
-              }
-            } 
-            break;
-          
-          case 'd':
-          
-            if(param->mode)
-            {  
-              cmd2.command = 'd';
-              cmd2.argument = 0;
-              if(!FIFO_FULL(param->motor_control_fifo))
+        {
+          cmd2.command = 's';
+          cmd2.argument = 0;
+          if(param->mode == 1){
+            if(!FIFO_FULL(param->motor_control_fifo)){
               {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-              
+              break;
             }
+          }
+          else if (param->mode == 2) { //mode2
+            if(!FIFO_FULL(param->img_cmd_fifo)){
+              {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+              break;
+            }
+          } 
+          else if (param->mode == 3) { //mode3
+            if (!(FIFO_FULL(param->arm_fifo))) FIFO_INSERT( param->arm_fifo, cmd2 );
+            else {
+                printf( "arm_fifo queue full\nHW6> " );
+                break;
+            }
+            if (!(FIFO_FULL(param->pwm_servo_fifo))) FIFO_INSERT( param->pwm_servo_fifo, cmd2 );
+            else {
+                printf( "pwm_servo_fifo queue full\nHW6> " );
+                break;
+            }
+            if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
+            else printf( "claw_fifo queue full\nHW6> " );
             break;
-          
-          case 'i':
-          
+          }
+          break;
+        }
+        case 'd':
+        {
+          if(param->mode == 1)
+          {  
+            cmd2.command = 'd';
+            cmd2.argument = 0;
+            if(!FIFO_FULL(param->motor_control_fifo))
+            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+            break;
+          }
+          else if (param->mode == 3) {
+            cmd2.command = 'd';
+            cmd2.argument = 1; // move spin servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
+          }
+          break;
+        }
+        case 'i':
+        {
+          if (param->mode == 1 || param->mode == 2) {
             cmd2.command = 'i';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
-          
-          case 'j':
-          
+          } else if (param->mode == 3) {
+            cmd2.command = 'i';
+            cmd2.argument = 3; // move up/down servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
+          }
+          break;
+        }
+        case 'j':
+        {
+          if (param->mode == 1 || param->mode == 2) {
             cmd2.command = 'j';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-            
             break;
-          
-          case 'x':
-          { 
+          } else if (param->mode == 3) {
+            cmd2.command = 'j';
+            cmd2.argument = 3; // move up/down servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
+          }
+        }
+        case 'x':
+        {
+          if (param->mode == 1 || param->mode == 2) {
             cmd2.command = 'x';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
+          } else if (param->mode == 3) {
+            cmd2.command = 'x';
+            cmd2.argument = 2; // move forward/backward servo
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            break;
           }
-          case 'o':
-          { 
+        }
+        case 'o':
+        { 
+          if (param->mode == 1 || param->mode == 2) {
             cmd2.command = 'o';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
+          } else if (param->mode == 3) {
+            cmd2.command = 'o';
+            cmd2.argument = 5;
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else {
+                printf("arm_fifo queue full\nHW6> ");
+                break;
+            }
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            break;
           }
-          case 'k':
-            
+        }
+        case 'k':
+        {
+          if (param->mode == 1 || param->mode == 2) {
             cmd2.command = 'k';
             cmd2.argument = 0;
             if(!FIFO_FULL(param->motor_control_fifo))
             {FIFO_INSERT(param->motor_control_fifo,cmd2);}
             break;
-          
-          case 'q':
-          {
-            cmd2.command = 'q';
-            cmd2.argument = 0;
-            *param->quit_flag = true;
-            if(! (FIFO_FULL(param->motor_control_fifo)) && ! (FIFO_FULL(param->motor_control_fifo)))
-            {
-              FIFO_INSERT(param->motor_control_fifo,cmd2);
-              FIFO_INSERT(param->motor_control_fifo,cmd2);
+          } else if (param->mode == 3) {
+            cmd2.command = 'k';
+            cmd2.argument = 5;
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else {
+                printf("arm_fifo queue full\nHW6> ");
+                break;
             }
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
             break;
-          }  
-          case 'm':
-          
-            //pause the car first when switching mode
-            cmd2.command = 's';
-            cmd2.argument= 0;
-            if(!FIFO_FULL(param->motor_control_fifo))
-            {FIFO_INSERT(param->motor_control_fifo,cmd2);}
-            change = true;
-            break;
-          default: //if no command ente
-          {
-              printf("invalid command \n");
           }
+      }
+        case 'q':
+        {
+          cmd2.command = 'q';
+          cmd2.argument = 0;
+          *param->quit_flag = true;
+          if(! (FIFO_FULL(param->motor_control_fifo)) && ! (FIFO_FULL(param->motor_control_fifo)))
+          {
+            FIFO_INSERT(param->motor_control_fifo,cmd2);
+            FIFO_INSERT(param->motor_control_fifo,cmd2);
+          }
+          break;
+        }  
+        case 'm':
+        {
+          //pause the car first when switching mode
+          cmd2.command = 's';
+          cmd2.argument= 0;
+          if(!FIFO_FULL(param->motor_control_fifo))
+          {FIFO_INSERT(param->motor_control_fifo,cmd2);}
+          change = true;
+          break;
+        }
+        default: //if no command entered
+        {
+            printf("invalid command \n");
+        }
       }
     }
     wait_period( &timer_state, 10u ); /* 10ms */
@@ -359,6 +500,231 @@ void *Control(void * arg)
   return NULL;
 
 }
+
+void *Arm_Thread(void * args)
+{
+  struct arm_thread_param * param = (struct arm_thread_param * )args;
+  struct  thread_command cmd = {0, 0};
+  int angles[3] = {
+      SPIN_RESET, // 90 degrees
+      BACK_FORTH_RESET, // 135 degrees
+      UP_DOWN_RESET // 75 degrees
+  }; // initiail angles for the arm
+  int angle_change = 5; // angle change for each command
+  // used to wake up every 10ms with wait_period() function,
+  // similar to interrupt occuring every 10ms
+  struct  timespec  timer_state;
+
+  // start 10ms timed wait, ie. set interrupt
+  wait_period_initialize( &timer_state );
+  wait_period( &timer_state, 10u ); /* 10ms */
+  while (!*(param->quit_flag))
+  {
+    if (!(FIFO_EMPTY(param->fifo)))
+    {
+      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
+      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
+      switch (cmd.command)
+      {
+        case 'w': // move arm forward
+        {
+          if (angles[cmd.argument - 1] - angle_change < BACK_FORTH_MIN) angles[cmd.argument - 1] = BACK_FORTH_MIN; // set to minimum angle
+          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+          printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'x': // move arm backward
+        {
+          if (angles[cmd.argument - 1] + angle_change > BACK_FORTH_MAX) angles[cmd.argument - 1] = BACK_FORTH_MAX; // set to maximum angle
+          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+          printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'd': // turn right
+        {
+          if (angles[cmd.argument - 1] - angle_change < SPIN_MIN) angles[cmd.argument - 1] = SPIN_MIN; // set to minimum angle
+          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+          printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'a': // turn left
+        {
+          if (angles[cmd.argument - 1] + angle_change > SPIN_MAX) angles[cmd.argument - 1] = SPIN_MAX; // set to maximum angle
+          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+          printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'i': // move arm up
+        {
+          if (angles[cmd.argument - 1] - angle_change < UP_DOWN_MIN) angles[cmd.argument - 1] = UP_DOWN_MIN; // set to minimum angle
+          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+          printf("Moving up, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'j': // move arm down
+        {
+          if (angles[cmd.argument - 1] + angle_change > UP_DOWN_MAX) angles[cmd.argument - 1] = UP_DOWN_MAX; // set to maximum angle
+          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+          printf("Moving down, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        case 'o': // increase angle by 5
+        {
+          if (angle_change + cmd.argument > 180) angle_change = 180; // set to maximum angle
+          else angle_change += cmd.argument; // increase angle by cmd.argument degrees
+          printf("Increasing angle change to %d degrees\n", angle_change);
+          break;
+        }
+        case 'k': // decrease angle by 5
+        {
+          if (angle_change - cmd.argument < 0) angle_change = 0; // set to minimum angle
+          else angle_change -= cmd.argument; // decrease angle by cmd.argument degrees
+          printf("Decreasing angle change to %d degrees\n", angle_change);
+          break;
+        }
+        case 's': // reset arm to initial angles
+        {
+          angles[0] = SPIN_RESET;
+          angles[1] = BACK_FORTH_RESET;
+          angles[2] = UP_DOWN_RESET;
+          printf("Resetting arm to initial angles\n");
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
+        default:
+        {
+          printf("Invalid command for arm thread: %c\n", cmd.command);
+        }
+      }
+    }
+    wait_period( &timer_state, 10u ); /* 10ms */
+  }
+  printf( "Arm thread function done\n" );
+  return NULL;
+}
+
+void *Claw_Thread(void * args)
+{
+  struct arm_thread_param * param = (struct arm_thread_param * )args;
+  struct  thread_command cmd = {0, 0};
+  int claw_pos = CLAW_OPEN; // initial claw position
+  // used to wake up every 10ms with wait_period() function,
+  // similar to interrupt occuring every 10ms
+  struct  timespec  timer_state;
+
+  // start 10ms timed wait, ie. set interrupt
+  wait_period_initialize( &timer_state );
+  wait_period( &timer_state, 10u ); /* 10ms */
+  while (!*(param->quit_flag))
+  {
+    if (!(FIFO_EMPTY(param->fifo)))
+    {
+      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
+      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
+      switch (cmd.command)
+      {
+        case 'c': // toggle claw
+        {
+          claw_pos = (claw_pos == CLAW_OPEN) ? CLAW_CLOSE : CLAW_OPEN; // toggle claw position
+          printf("Toggling claw, new position: %d\n", claw_pos);
+          set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+          break;
+        }
+        case 's': // reset claw to open position
+        {
+          claw_pos = CLAW_OPEN;
+          printf("Resetting claw to open position\n");
+          set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+          break;
+        }
+        default:
+        {
+          printf("Invalid command for claw thread: %c\n", cmd.command);
+        }
+      }
+    }
+    wait_period( &timer_state, 10u ); /* 10ms */
+  }
+  printf( "Claw thread function done\n" );
+  return NULL;
+}
+
+void *PWM_Servo_Thread(void * args)
+{
+  struct arm_thread_param * param = (struct arm_thread_param * )args;
+  struct  thread_command cmd = {0, 0};
+  int pwm_servo_angle = PWM_SERVO_RESET; // initial pwm servo angle
+  int angle_change = 5; // angle change for each command
+  // used to wake up every 10ms with wait_period() function,
+  // similar to interrupt occuring every 10ms
+  struct  timespec  timer_state;
+
+  // start 10ms timed wait, ie. set interrupt
+  wait_period_initialize( &timer_state );
+  wait_period( &timer_state, 10u ); /* 10ms */
+  while (!*(param->quit_flag))
+  {
+    if (!(FIFO_EMPTY(param->fifo)))
+    {
+      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
+      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
+      switch (cmd.command)
+      {
+        case 'e': // turn pwm servo left
+        {
+          if (pwm_servo_angle - angle_change < PWM_SERVO_MIN) pwm_servo_angle = PWM_SERVO_MIN; // set to minimum angle
+          else pwm_servo_angle -= angle_change; // decrease angle by angle_change degrees
+          printf("Turning pwm servo left, new angle: %d\n", pwm_servo_angle);
+          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          break;
+        }
+        case 'r': // turn pwm servo right
+        {
+          if (pwm_servo_angle + angle_change > PWM_SERVO_MAX) pwm_servo_angle = PWM_SERVO_MAX; // set to maximum angle
+          else pwm_servo_angle += angle_change; // increase angle by angle_change degrees
+          printf("Turning pwm servo right, new angle: %d\n", pwm_servo_angle);
+          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          break;
+        }
+        case 'o': // increase pwm servo angle by 5 degrees
+        {
+          if (angle_change + cmd.argument > PWM_SERVO_MAX) angle_change = PWM_SERVO_MAX; // set to maximum angle
+          else angle_change += cmd.argument; // increase angle by angle_change degrees
+          printf("Increasing pwm servo angle to %d degrees\n", angle_change);
+          break;
+        }
+        case 'k': // decrease pwm servo angle by 5 degrees
+        {
+          if (angle_change - cmd.argument < PWM_SERVO_MIN) angle_change = PWM_SERVO_MIN; // set to minimum angle
+          else angle_change -= cmd.argument; // decrease angle by angle_change degrees
+          printf("Decreasing pwm servo angle to %d degrees\n", angle_change);
+          break;
+        }
+        case 's': // reset pwm servo to initial angle
+        {
+          pwm_servo_angle = PWM_SERVO_RESET;
+          printf("Resetting pwm servo to initial angle\n");
+          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          break;
+        }
+        default:
+        {
+          printf("Invalid command for pwm servo thread: %c\n", cmd.command);
+        }
+      }
+    }
+    wait_period( &timer_state, 10u ); /* 10ms */
+  }
+  printf( "PWM Servo thread function done\n" );
+  return NULL;
+}
+
 void *Motor_Speed_Thread(void * args)
 {
   struct motor_speed_thread_param * param = (struct motor_speed_thread_param * )args;
@@ -506,6 +872,7 @@ void *Motor_Direction_Thread(void * arg)
   printf("%s thread ended \n",param->name);
   return NULL;
 }
+
 void *Motor_Control(void * arg){
   struct motor_control_thread_param *param = (struct motor_control_thread_param*)arg;
   struct thread_command cmd1 = {0};
@@ -695,6 +1062,7 @@ void *Motor_Control(void * arg){
   printf("%s thread exited \n",param->name);
   return NULL;
 }
+
 void set_gpio_context(volatile struct gpio_register * gpio) {
     static volatile struct gpio_register * saved_gpio = NULL;
     if (gpio != NULL) {
@@ -716,10 +1084,10 @@ void set_gpio_context(volatile struct gpio_register * gpio) {
         exit(0);
     }
 }
+
 void sigint_handler(int signum){
     set_gpio_context(NULL);
 }
-
 
 void *video_capture(void * arg){
   struct img_capture_thread_param *param = (struct img_capture_thread_param*)arg;
@@ -998,7 +1366,6 @@ void *greyscale_video(void * arg){
   return NULL;
 }
 
-
 void *reduced_video(void * arg){
   struct reduced_img_thread_param *param = (struct reduced_img_thread_param*)arg;
   printf("%s thread started \n",param->name);
@@ -1158,6 +1525,7 @@ void *reduced_video(void * arg){
   printf("%s exited \n", param->name);
   return NULL;
 }
+
 void *single_channel(void *arg){
   struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
   printf("%s thread started \n",param->name);
@@ -1298,6 +1666,7 @@ void enable_pwm(struct io_peripherals *io) {
     io->pwm->CTL.field.PWEN1 = 1;
     io->pwm->CTL.field.PWEN2 = 1;
 }
+
 void set_gpio(struct io_peripherals *io)
 {
   /* set the pin function to OUTPUT for GPIO22 - */
@@ -1318,6 +1687,7 @@ void set_gpio(struct io_peripherals *io)
   io->gpio->GPFSEL1.field.FSEL2 = GPFSEL_ALTERNATE_FUNCTION0;
   io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
 }
+
 void *video_histogram(void *arg) 
 {
     struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
@@ -1464,6 +1834,7 @@ void *video_histogram(void *arg)
     printf("%s exited\n", param->name);
     return NULL;
 }
+
 void draw_bbox(int min_x,int min_y, int max_x, int max_y, struct pixel_format_RGB *egg_data,struct pixel_format_RGB color)
 {
   for (int x = min_x; x <= max_x; x++) {
@@ -1475,6 +1846,7 @@ void draw_bbox(int min_x,int min_y, int max_x, int max_y, struct pixel_format_RG
       egg_data[y * IMG_WIDTH + max_x] = color;
   }
 }
+
 void *egg_detector(void * arg)
 {
     struct egg_detector_thread_param *param = (struct egg_detector_thread_param*)arg;

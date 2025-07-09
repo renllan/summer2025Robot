@@ -35,6 +35,7 @@
 #include "wait_key.h"
 #include "scale_image_data.h"
 #include "draw_bitmap_multiwindow.h"
+#include "C_equiv_ctl.h"
 
 
 #define FIFO_LENGTH  1024
@@ -92,6 +93,9 @@ void *egg_detector(void * arg);
 void *Control(void* arg);
 void sigint_handler(int signum);
 void *single_channel(void * arg);
+void *Arm_Thread(void * args);
+void *Claw_Thread(void * args);
+void *PWM_Servo_Thread(void * args);
 
 struct thread_command
 {
@@ -100,6 +104,15 @@ struct thread_command
 };
 
 FIFO_TYPE(struct thread_command, FIFO_LENGTH, fifo_t);
+
+struct arm_thread_param
+{
+  const char                    *name;
+  struct fifo_t                 *fifo;
+  int                            uart_fd; // UART file descriptor for arm control
+  bool                          *quit_flag;
+};
+
 struct egg_detector_thread_param{
 
   const char                  *name;
@@ -109,6 +122,7 @@ struct egg_detector_thread_param{
   struct pixel_format_RGB     * RGB_IMG_data;
   bool                        *quit_flag;
 };
+
 struct IR_Sensor_param
 {
   const char                  *name;
@@ -158,8 +172,11 @@ struct control_thread_param
   struct fifo_t                 * IR_sensor_fifo;
   struct fifo_t                 * img_cmd_fifo;
   struct fifo_t                 * motor_control_fifo;
+  struct fifo_t                 * arm_fifo; // FIFO for arm control commands
+  struct fifo_t                 * pwm_servo_fifo; // FIFO for PWM control commands
+  struct fifo_t                 * claw_fifo; // FIFO for claw control commands
   bool                          * quit_flag;
-  bool                          mode; //mode true: mode1,false: mode2  
+  int                           mode; //mode 1: mode1, 2: mode2, 3: mode3
 };
 
 struct motor_control_thread_param
@@ -172,8 +189,6 @@ struct motor_control_thread_param
   int                            pwm_val;
   bool                          *quit_flag;  
 };
-
-
 
 struct img_process_thread_param
 {
