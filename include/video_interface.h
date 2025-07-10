@@ -18,8 +18,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 // image format
 #if 1
-#define IMAGE_WIDTH   640
-#define IMAGE_HEIGHT  480
+#define IMAGE_WIDTH   320
+#define IMAGE_HEIGHT  240
 #else
 #define IMAGE_WIDTH   1920
 #define IMAGE_HEIGHT  1080
