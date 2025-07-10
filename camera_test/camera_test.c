@@ -19,9 +19,8 @@ void save_rgb_image_as_ppm(const char* filename, struct pixel_format_RGB* img_da
 }
 
 int main(int argc, char * argv[]){
-    struct video_interface_handle_t *         handle_video1  = draw_bitmap_create_window( IMG_WIDTH, IMG_HEIGHT );;
-    struct video_interface_handle_t*          handle_video2 =draw_bitmap_create_window( IMG_WIDTH, IMG_HEIGHT );;
-    
+    struct video_interface_handle_t *         handle_video1  = NULL;
+    struct video_interface_handle_t*          handle_video2 = NULL;
     static struct image_t       image;
     static struct image_t       image1; //arm camera feed
 
@@ -33,7 +32,7 @@ int main(int argc, char * argv[]){
     struct pixel_format_RGB     * IMG_DATA2;
     unsigned char               IMG_RAW3[IMAGE_SIZE];
     struct pixel_format_RGB     * IMG_DATA3;
-        draw_bitmap_start( argc, argv );
+    draw_bitmap_start( argc, argv );
 
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB
      = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
