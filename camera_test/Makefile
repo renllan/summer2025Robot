@@ -15,3 +15,8 @@ $(TARGET): $(OBJECTS)
 
 %.o: %.c
 	gcc $(CFLAGS) -c $< -o $@
+%.o: %.c
+	gcc $(CFLAGS) -c $< -o $@
+	
+../include/%.o: ../include/%.c
+	gcc $(CFLAGS) -c $< -o $@
