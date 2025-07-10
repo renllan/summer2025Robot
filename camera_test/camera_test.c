@@ -24,9 +24,10 @@ int main(int argc, char * argv[]){
         printf("failed to configure dev/video0 \n");
         return 1;
     }
+    
 
 
-    handle_video1 = video_interface_open( "/dev/video2" );
+    handle_video2 = video_interface_open( "/dev/video2" );
     video_interface_print_modes(handle_video1);
 
     if(!video_interface_set_mode_manual(handle_video1,3)){
