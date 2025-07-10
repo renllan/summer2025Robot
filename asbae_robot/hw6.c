@@ -1120,35 +1120,29 @@ void *video_capture(void * arg){
     while(! *param->quit_flag)
     {
       counter++;
-      
-      if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2, param->image1))
-      {//
-        scale_image_data(
-          (struct pixel_format_RGB *)param->image,
-          handle_video1->configured_height,
-          handle_video1->configured_width,
-          param->img_data,
-          SCALE_REDUCTION_PER_AXIS,
-          SCALE_REDUCTION_PER_AXIS
-        );
+      if(counter % 25 == 0)
+      {
+        if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2, param->image1))
+        {//
+          scale_image_data(
+            (struct pixel_format_RGB *)param->image,
+            handle_video1->configured_height,
+            handle_video1->configured_width,
+            param->img_data,
+            SCALE_REDUCTION_PER_AXIS,
+            SCALE_REDUCTION_PER_AXIS
+          );
 
         
-        scale_image_data(
-          (struct pixel_format_RGB *)param->image1,
-          handle_video1->configured_height,
-          handle_video1->configured_width,
-          param->img_data1,
-          SCALE_REDUCTION_PER_AXIS,
-          SCALE_REDUCTION_PER_AXIS
-        );
-        scale_image_data(
-          (struct pixel_format_RGB *)param->image,
-          handle_video1->configured_height,
-          handle_video1->configured_width,
-          param->img_data,
-          SCALE_REDUCTION_PER_AXIS,
-          SCALE_REDUCTION_PER_AXIS
-        );
+          scale_image_data(
+            (struct pixel_format_RGB *)param->image1,
+            handle_video1->configured_height,
+            handle_video1->configured_width,
+            param->img_data1,
+            SCALE_REDUCTION_PER_AXIS,
+            SCALE_REDUCTION_PER_AXIS
+          );
+        
           struct thread_command cmd = {'u',0};
           memcpy(param->rgb_raw,param->img_raw,IMAGE_SIZE);
           memcpy(param->greyscale_raw,param->img_raw,IMAGE_SIZE);
@@ -1164,11 +1158,13 @@ void *video_capture(void * arg){
           
           
         //draw_bitmap_display(handle_GUI_RGB, param->img_data);
+        }
+        else
+        {
+          printf("did not get robot image \n");
+        }
       }
-      else
-      {
-        printf("did not get robot image \n");
-      }
+      
       
 
       struct thread_command cmd1 = {0,0};
