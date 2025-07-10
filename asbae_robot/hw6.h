@@ -36,7 +36,9 @@
 #include "scale_image_data.h"
 #include "draw_bitmap_multiwindow.h"
 #include "C_equiv_ctl.h"
+#include "edge_detection.h"
 
+#define SINGLE_EGG 
 
 #define FIFO_LENGTH  1024
 #define PWM_RANGE 100
@@ -51,8 +53,15 @@
 #define MAX_EGGS 10
 #define STOP_THRESH 3500
 #define MAX_DECISION_SIZE 10
-#define CENTER_L 100
-#define CENTER_R 140
+#define CENTER_L 140
+#define CENTER_R 180
+#define ARM_STOP_THRESH 4000
+#define CENTER_F 100
+#define CENTER_B 140
+#define MAX_DECISION_THRESHOLD MAX_DECISION_SIZE/2
+
+#define WOOD_L
+#define WOOD_H
 
 // Arm macros constants
 #define SPIN_RESET 90
@@ -69,12 +78,19 @@
 #define PWM_SERVO_RIGHT 15 // 60 for other car
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
+
+#define SPIN_MOTOR_LEFT 0 
+#define SPIN_MOTOR_RIGHT 180
+#define FRONTBACK_MOTOR_RIGHT 0
+#define FRONTBACK_MOTOR_LEFT 180
+#define UPDOWN_MOTOR_L 0 
+#define UPDOWN_MOTOR_R 180
+
 #define CLAW_OPEN 450 // 500 for other car
 #define CLAW_CLOSE 800 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
 #define ARM_CLAW_TIMEOUT 500 // Timeout for arm claw commands in milliseconds
-
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);
 void enable_pwm(struct io_peripherals *io) ;
@@ -97,6 +113,11 @@ void *Arm_Thread(void * args);
 void *Claw_Thread(void * args);
 void *PWM_Servo_Thread(void * args);
 
+typedef struct{
+  int x;
+  int y;
+}point;
+
 struct thread_command
 {
     uint8_t command;
@@ -104,6 +125,8 @@ struct thread_command
 };
 
 FIFO_TYPE(struct thread_command, FIFO_LENGTH, fifo_t);
+
+void fifo_insert(struct fifo_t* fifo,struct thread_command cmd);
 
 struct arm_thread_param
 {
@@ -118,8 +141,11 @@ struct egg_detector_thread_param{
   const char                  *name;
   struct fifo_t               *egg_fifo;
   struct fifo_t               *dir_fifo;
-  unsigned char               * RGB_IMG_raw;
-  struct pixel_format_RGB     * RGB_IMG_data;
+  struct fifo_t               *control_fifo;
+  unsigned char               *RGB_IMG_raw;
+  struct pixel_format_RGB     *RGB_IMG_data;
+  unsigned char               *ARM_IMG_RAW;
+  struct pixel_format_RGB     *ARM_IMG_data;
   bool                        *quit_flag;
 };
 
@@ -185,9 +211,9 @@ struct motor_control_thread_param
   struct fifo_t                 * motor_control_fifo;
   struct fifo_t                 * speed_fifo;
   struct fifo_t                 * dir_fifo;
-  int                            angle;
-  int                            pwm_val;
-  bool                          *quit_flag;  
+  int                             angle;
+  int                             pwm_val;
+  bool                          * quit_flag;  
 };
 
 struct img_process_thread_param
@@ -224,10 +250,12 @@ struct img_capture_thread_param
   struct fifo_t               * reduced_cmd_fifo;
   struct fifo_t               * hist_fifo;
   struct fifo_t               * egg_fifo;
-  struct fifo_t               * single_channel_fifo;
   struct image_t              *image;
+  struct image_t              *image1;
   unsigned char               *img_raw;
   struct pixel_format_RGB     *img_data;
+  unsigned char               *img_raw1;
+  struct pixel_format_RGB     *img_data1;
   unsigned char               *rgb_raw;
   unsigned char               *greyscale_raw;
   unsigned char               *bw_raw;

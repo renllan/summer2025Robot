@@ -57,6 +57,7 @@ int main(int argc, char * argv[] )
     pthread_t tarm; // thread for arm control
     pthread_t tpwm; // thread for PWM servo control
     pthread_t tclaw; // thread for claw control
+    pthread_t tedge;
 
     bool quit_flag = false;
 
@@ -77,8 +78,12 @@ int main(int argc, char * argv[] )
     struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for arm control commands
     struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
     struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
+    struct fifo_t edge_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
 
     static struct image_t       image;
+    static struct image_t       image1; //arm camera feed
+    unsigned char               * IMG_RAW1;//arm image
+    struct pixel_format_RGB     * IMG_DATA1;
     unsigned char               * IMG_RAW;
     struct pixel_format_RGB     * IMG_DATA;
     unsigned char               * RGB_IMG_raw;
@@ -89,19 +94,27 @@ int main(int argc, char * argv[] )
     struct pixel_format_RGB     * BW_IMG_data;
     unsigned char               * REDUCED_IMG_raw;
     struct pixel_format_RGB     * REDUCED_IMG_data;
-
+    
+    IMG_RAW1 = (unsigned char *)malloc(IMAGE_SIZE+1);
     IMG_RAW = (unsigned char *)malloc(IMAGE_SIZE+1);
     RGB_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     GREYSCALE_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     BW_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
 
+    IMG_DATA1 = (struct pixel_format_RGB*)IMG_RAW;
     IMG_DATA = (struct pixel_format_RGB*)IMG_RAW;
     RGB_IMG_data = (struct pixel_format_RGB *)RGB_IMG_raw;
     GREYSCALE_IMG_data = (struct pixel_format_RGB*)GREYSCALE_IMG_raw;
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
     REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
 
+    struct img_process_thread_param edge ={
+      "edge detection",
+      &edge_fifo,
+      &dir_fifo,
+      
+    };
     /*initialize the parameter of motor control thread*/
     struct motor_control_thread_param motor_ctl_param = {
       "motor control",
@@ -166,8 +179,11 @@ int main(int argc, char * argv[] )
         "egg datection", 
         &egg_fifo, 
         &motor_control_fifo, 
+        &control_fifo,
         BW_IMG_raw,
-        BW_IMG_data, 
+        BW_IMG_data,
+        IMG_RAW1,
+        IMG_DATA1,
         &quit_flag};              
     struct img_capture_thread_param  img_capture_param = 
     {
@@ -179,10 +195,12 @@ int main(int argc, char * argv[] )
       &reduced_img_fifo,
       &hist_fifo,
       &egg_fifo,
-      &single_channel_fifo,
       &image,
+      &image1,
       IMG_RAW,
       IMG_DATA,
+      IMG_RAW1,
+      IMG_DATA1,
       RGB_IMG_raw,
       GREYSCALE_IMG_raw,
       BW_IMG_raw,
@@ -293,9 +311,9 @@ int main(int argc, char * argv[] )
         pthread_create(&ti, NULL, IR_Sensor, (void *)&IR_sensor_param);
         pthread_create(&tp,NULL,  video_capture, (void* )&img_capture_param);
         pthread_create(&t_rbg, NULL, video_with_cross, (void *)&rgb_param);
-        pthread_create(&t_grey,NULL, greyscale_video, (void*)&greyscale_param);
-        pthread_create(&t_bw,NULL, black_and_white, (void*)&bw_param);
-        pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
+        // pthread_create(&t_grey,NULL, greyscale_video, (void*)&greyscale_param);
+        // pthread_create(&t_bw,NULL, black_and_white, (void*)&bw_param);
+        // pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
         pthread_create(&t_hist,NULL, video_histogram, (void*)&hist_param );
         pthread_create(&t_egg, NULL, egg_detector, (void * )&egg_param);
         pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
@@ -311,9 +329,9 @@ int main(int argc, char * argv[] )
         pthread_join(ti, NULL);
         pthread_join(tp, NULL);
         pthread_join(t_rbg,NULL);
-        pthread_join(t_grey,NULL);
-        pthread_join(t_bw,NULL);
-        pthread_join(t_reduced,NULL);
+        // pthread_join(t_grey,NULL);
+        // pthread_join(t_bw,NULL);
+        // pthread_join(t_reduced,NULL);
         pthread_join(t_hist,NULL);
         pthread_join(t_egg,NULL);
         pthread_join(tmc,NULL);
@@ -351,7 +369,37 @@ int main(int argc, char * argv[] )
   {
     ; /* warning message already issued */
   }
+/* 
+     * Initialize angles to [90, 135, 75] (RESET POSITION)
+     * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
+     * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
+     * [2] moves arm up and down, 90 is level; below is up and above is down
+     */
+    printf("Setting angles to [90, 135, 75]\n\n");
+    angles[0] = SPIN_RESET;
+    angles[1] = BACK_FORTH_RESET;
+    angles[2] = UP_DOWN_RESET;
+    set_angles(uart_fd, angles, ARM_TIMEOUT);
+    
+    /*
+     * Initialize claw to CLAW_OPEN (open position)
+     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
+     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
+     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
+     */
+    printf("Setting claw to CLAW_OPEN\n\n");
+    int claw_pos = CLAW_OPEN;
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
 
+    /*
+     * Initialize PWM servo to 180 degrees
+     * This is equivalent to setting the servo to the parallel position with the claw motor facing backwards
+     * Angle is turned clockwise
+     * For example, servo will be turned 30 degrees clockwise from 0 (claw motor facing forward) if 30 degrees is set
+     */
+    printf("Setting PWM servo\n");
+    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT);
+    sleep(1); // Delay to assure reset position is reached
   printf( "main function done\n" );
 
   return 0;
