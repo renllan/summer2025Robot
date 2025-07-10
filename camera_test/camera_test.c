@@ -67,10 +67,10 @@ int main(int argc, char * argv[]){
         memcpy(IMG_RAW2, (unsigned char *)&image,IMAGE_SIZE);
         memcpy(IMG_RAW3, (unsigned char *)&image,IMAGE_SIZE);
 
-        save_rgb_image_as_ppm("cam1_cp1",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp2",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp3",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp4",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam1_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam1_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam1_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam1_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
 
         video_interface_get_image(handle_video2,&image1);
         memcpy(IMG_RAW1, (unsigned char*)&image1, IMAGE_SIZE);
@@ -78,10 +78,10 @@ int main(int argc, char * argv[]){
         memcpy(IMG_RAW2, (unsigned char *)&image1,IMAGE_SIZE);
         memcpy(IMG_RAW3, (unsigned char *)&image1,IMAGE_SIZE);
 
-        save_rgb_image_as_ppm("cam2_cp1",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp2",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp3",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp4",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam2_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam2_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam2_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
+        save_rgb_image_as_ppm("cam2_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
 
         
 
