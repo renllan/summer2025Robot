@@ -19,8 +19,8 @@ void save_rgb_image_as_ppm(const char* filename, struct pixel_format_RGB* img_da
 }
 
 int main(int argc, char * argv[]){
-    struct video_interface_handle_t *         handle_video1;
-    struct video_interface_handle_t*          handle_video2;
+    struct video_interface_handle_t *         handle_video1  = draw_bitmap_create_window( IMG_WIDTH, IMG_HEIGHT );;
+    struct video_interface_handle_t*          handle_video2 =draw_bitmap_create_window( IMG_WIDTH, IMG_HEIGHT );;
     
     static struct image_t       image;
     static struct image_t       image1; //arm camera feed
@@ -34,6 +34,12 @@ int main(int argc, char * argv[]){
     unsigned char               IMG_RAW3[IMAGE_SIZE];
     struct pixel_format_RGB     * IMG_DATA3;
 
+    struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB
+     = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
+
+    struct draw_bitmap_multiwindow_handle_t * handle_GUI_grey 
+    =  draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);;
+    
     IMG_DATA1 = (struct pixel_format_RGB*)&IMG_RAW1;
     IMG_DATA0 = (struct pixel_format_RGB*)&IMG_RAW0;
 
@@ -55,37 +61,33 @@ int main(int argc, char * argv[]){
         return 1;
     }
 
-    if(handle_video1 && handle_video2)
+   
+    while(handle_video1 && handle_video2)
     {
-        for(int  i = 0 ; i<4;i++)
-        {
-
-        }
+        
         video_interface_get_image(handle_video1,&image);
         memcpy(IMG_RAW0, (unsigned char *)&image,IMAGE_SIZE);
-        memcpy(IMG_RAW1, (unsigned char *)&image,IMAGE_SIZE);
-        memcpy(IMG_RAW2, (unsigned char *)&image,IMAGE_SIZE);
-        memcpy(IMG_RAW3, (unsigned char *)&image,IMAGE_SIZE);
+        // memcpy(IMG_RAW1, (unsigned char *)&image,IMAGE_SIZE);
+        // memcpy(IMG_RAW2, (unsigned char *)&image,IMAGE_SIZE);
+        // memcpy(IMG_RAW3, (unsigned char *)&image,IMAGE_SIZE);
 
-        save_rgb_image_as_ppm("cam1_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam1_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
-
+        // save_rgb_image_as_ppm("cam1_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam1_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam1_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam1_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
+        draw_bitmap_display(handle_GUI_grey,IMG_DATA0);
+        
         video_interface_get_image(handle_video2,&image1);
         memcpy(IMG_RAW1, (unsigned char*)&image1, IMAGE_SIZE);
-        memcpy(IMG_RAW0, (unsigned char *)&image1,IMAGE_SIZE);
-        memcpy(IMG_RAW2, (unsigned char *)&image1,IMAGE_SIZE);
-        memcpy(IMG_RAW3, (unsigned char *)&image1,IMAGE_SIZE);
+        draw_bitmap_display(IMG_DATA1,handle_GUI_RGB);
+        // memcpy(IMG_RAW0, (unsigned char *)&image1,IMAGE_SIZE);
+        // memcpy(IMG_RAW2, (unsigned char *)&image1,IMAGE_SIZE);
+        // memcpy(IMG_RAW3, (unsigned char *)&image1,IMAGE_SIZE);
 
-        save_rgb_image_as_ppm("cam2_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
-        save_rgb_image_as_ppm("cam2_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
-
-        
-
-
+        // save_rgb_image_as_ppm("cam2_cp1.ppm",IMG_DATA1,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam2_cp2.ppm",IMG_DATA2,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam2_cp3.ppm",IMG_DATA3,IMG_WIDTH,IMG_HEIGHT);
+        // save_rgb_image_as_ppm("cam2_cp4.ppm",IMG_DATA0,IMG_WIDTH,IMG_HEIGHT);
     }
 }
 
