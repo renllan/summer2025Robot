@@ -388,7 +388,7 @@ int main(int argc, char * argv[] )
      * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
      */
     printf("Setting claw to CLAW_OPEN\n\n");
-    int claw_pos = CLAW_OPEN;
+    claw_pos = CLAW_OPEN;
     set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
 
     /*
