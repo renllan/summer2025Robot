@@ -2217,7 +2217,7 @@ void *egg_detector(void * arg)
       }
         //draw the center of the egg
       if(handle) draw_bitmap_display(handle,egg_data_1);
-      if(arm_handle) draw_bitmap_display(arm_handle, egg_buffer_2);
+      if(arm_handle) draw_bitmap_display(arm_handle, egg_data_2);
       wait_period(&timer_state, 10u);
     }
     free(egg_buffer_1);
