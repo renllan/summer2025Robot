@@ -1095,7 +1095,20 @@ void *video_capture(void * arg){
   struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB = NULL;
 
   handle_video1 = video_interface_open( "/dev/video0" );
+  video_interface_print_modes(handle_video1);
+
+  if(!video_interface_set_mode_manual(handle_video1,3)){
+    printf("failed to configure dev/video0 \n");
+    return NULL;
+  }
+
   handle_video2 = video_interface_open( "/dev/video2");
+  video_interface_print_modes(handle_video2);
+  if(!video_interface_set_mode_manual(handle_video2,3)){
+    printf("failed to configure dev/video2 \n");
+    return NULL;
+  }
+
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
@@ -1103,38 +1116,21 @@ void *video_capture(void * arg){
   // start 10ms timed wait
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 100u ); /* 500 ms */
-  video_interface_print_modes( handle_video1);
-  video_interface_print_modes(handle_video2);
-  if(video_interface_set_mode_auto(handle_video2))
-  {
-    printf("successfully configured figure camera 2");
-    
-  }
-  else{
-    printf("fail to configure camera 2 \n");
-    printf("video capture thread exit\n");
-    return NULL;
-
-  }
-  if (video_interface_set_mode_auto( handle_video1))
-  {
-    int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
-    int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
-    printf("img size = %d x %d\n", handle_video1->configured_width,handle_video1->configured_height);
-    printf("original img size = %d x %d\n", scaled_width,scaled_height);
-    printf("size of image_t %d\n", IMAGE_SIZE);
-    
-    int argc = 0;
-    char *argv[3];
-    int counter = 0;
-    printf("scaled height: %d scaled width %d", scaled_height,scaled_width);
-    while(! *param->quit_flag)
-    {
-      counter++;
-      if(counter % 25 == 0)
+  int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
+  int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
+  printf("img size = %d x %d\n", handle_video1->configured_width,handle_video1->configured_height);
+  printf("original img size = %d x %d\n", scaled_width,scaled_height);
+  printf("size of image_t %d\n", IMAGE_SIZE);
+  
+  int argc = 0;
+  char *argv[3];
+  int counter = 0;
+  printf("scaled height: %d scaled width %d", scaled_height,scaled_width);
+  while(! *param->quit_flag){
+    counter++;
+    if(counter % 25 == 0)
       {
-        if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2, param->image1))
-        {//
+        if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2, param->image1)){//
           scale_image_data(
             (struct pixel_format_RGB *)param->image,
             handle_video1->configured_height,
@@ -1176,100 +1172,93 @@ void *video_capture(void * arg){
         }
       }
       
-      
-
-      struct thread_command cmd1 = {0,0};
-      struct thread_command cmd2 = {0,0};
-      if(!FIFO_EMPTY(param->img_cmd_fifo))
+    struct thread_command cmd1 = {0,0};
+    struct thread_command cmd2 = {0,0};
+    if(!FIFO_EMPTY(param->img_cmd_fifo))
+    {
+      FIFO_REMOVE(param->img_cmd_fifo,&cmd1);
+      printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
+      switch(cmd1.command)
       {
-        FIFO_REMOVE(param->img_cmd_fifo,&cmd1);
-        printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
-        switch(cmd1.command)
+        
+        case 'e':
         {
-          
-          case 'e':
-          {
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->egg_fifo)){
-              FIFO_INSERT(param->egg_fifo,cmd2);
-            }
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->egg_fifo)){
+            FIFO_INSERT(param->egg_fifo,cmd2);
           }
-          case 'h':
-          {
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->hist_fifo))
-            {
-              FIFO_INSERT(param->hist_fifo,cmd1);
-            }
-            break;
-          }
-          case 'c':{
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->rgb_cmd_fifo))
-            {
-              FIFO_INSERT(param->rgb_cmd_fifo,cmd1);
-            }
-            break;
-          }
-          case 'v':{
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->greyscale_cmd_fifo))
-            {
-              FIFO_INSERT(param->greyscale_cmd_fifo,cmd1);
-            }
-            break;
-          }
-          case 'b':{
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->bw_cmd_fifo))
-            {
-              FIFO_INSERT(param->bw_cmd_fifo,cmd1);
-            }
-            break;
-          }
-          case 'n':{
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->reduced_cmd_fifo))
-            {
-              FIFO_INSERT(param->reduced_cmd_fifo,cmd1);
-            }
-            break;
-          }
-          case 'w':{
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
-            {
-              FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
-              FIFO_INSERT(param->egg_fifo,cmd2);
-
-            }
-            break;
-          }
-          case 's':
-          {
-            cmd2 = cmd1;
-            if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
-            {
-              FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
-              FIFO_INSERT(param->egg_fifo,cmd2);
-            }
-            break;
-          }
-          default:{break;}
         }
-      }
-      wait_period( &timer_state,10u );
-    }
-    
+        case 'h':
+        {
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->hist_fifo))
+          {
+            FIFO_INSERT(param->hist_fifo,cmd1);
+          }
+          break;
+        }
+        case 'c':{
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->rgb_cmd_fifo))
+          {
+            FIFO_INSERT(param->rgb_cmd_fifo,cmd1);
+          }
+          break;
+        }
+        case 'v':{
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->greyscale_cmd_fifo))
+          {
+            FIFO_INSERT(param->greyscale_cmd_fifo,cmd1);
+          }
+          break;
+        }
+        case 'b':{
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->bw_cmd_fifo))
+          {
+            FIFO_INSERT(param->bw_cmd_fifo,cmd1);
+          }
+          break;
+        }
+        case 'n':{
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->reduced_cmd_fifo))
+          {
+            FIFO_INSERT(param->reduced_cmd_fifo,cmd1);
+          }
+          break;
+        }
+        case 'w':{
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
+          {
+            FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
+            FIFO_INSERT(param->egg_fifo,cmd2);
 
-  }
-  else
-  {
-    printf( "failed to configure\n" );
-  }
+          }
+          break;
+        }
+        case 's':
+        {
+          cmd2 = cmd1;
+          if(!FIFO_FULL(param->egg_fifo) && !FIFO_FULL(param->reduced_cmd_fifo))
+          {
+            FIFO_INSERT(param->reduced_cmd_fifo,cmd2);
+            FIFO_INSERT(param->egg_fifo,cmd2);
+          }
+          break;
+        }
+        default:{break;}
+      }
+    }
+    wait_period( &timer_state,10u );
+  }  
   printf("video capture thread exit\n");
   return NULL;
 }
+
+  
 
 void *video_with_cross(void * arg){
   
