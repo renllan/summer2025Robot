@@ -2258,7 +2258,7 @@ void *bin_detector(void * arg){
           break;
         case 'u':
           if(thread_active){
-            edge_to_red(param->RGB_IMG_raw,bin_data);
+            edge_to_red(param->RGB_IMG_data,bin_data);
           }
           
           break;
