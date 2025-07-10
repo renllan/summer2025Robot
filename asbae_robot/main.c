@@ -58,6 +58,7 @@ int main(int argc, char * argv[] )
     pthread_t tpwm; // thread for PWM servo control
     pthread_t tclaw; // thread for claw control
     pthread_t tedge;
+    pthread_t t_arm_cam;
 
     bool quit_flag = false;
 
@@ -79,6 +80,7 @@ int main(int argc, char * argv[] )
     struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
     struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
     struct fifo_t edge_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
+    struct fifo_t arm_cam_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
 
     static struct image_t       image;
     static struct image_t       image1; //arm camera feed
@@ -115,6 +117,28 @@ int main(int argc, char * argv[] )
     //   &dir_fifo,
       
     // };
+
+    struct img_capture_thread_param arm_cam_param{
+      "arm cam capture",
+      &,
+      &rgb_img_fifo,
+      &greyscale_img_fifo,
+      &bw_img_fifo,
+      &reduced_img_fifo,
+      &hist_fifo,
+      &egg_fifo,
+      &image1,
+      IMG_RAW1,
+      IMG_DATA1,
+      RGB_IMG_raw,
+      GREYSCALE_IMG_raw,
+      BW_IMG_raw,
+      REDUCED_IMG_raw,
+      false,
+      &quit_flag  
+    };
+
+
     /*initialize the parameter of motor control thread*/
     struct motor_control_thread_param motor_ctl_param = {
       "motor control",
@@ -196,15 +220,13 @@ int main(int argc, char * argv[] )
       &hist_fifo,
       &egg_fifo,
       &image,
-      &image1,
       IMG_RAW,
       IMG_DATA,
-      IMG_RAW1,
-      IMG_DATA1,
       RGB_IMG_raw,
       GREYSCALE_IMG_raw,
       BW_IMG_raw,
       REDUCED_IMG_raw,
+      true,
       &quit_flag
     };     
     struct img_process_thread_param       single_channel_param = {
@@ -321,6 +343,7 @@ int main(int argc, char * argv[] )
         pthread_create(&tarm, NULL, Arm_Thread, (void *)&arm_param);
         pthread_create(&tclaw, NULL, Claw_Thread, (void *)&claw_param);
         pthread_create(&tpwm, NULL, PWM_Servo_Thread, (void *)&pwm_param);
+        pthread_create(&t_arm_cam, NULL,video_capture, (void*)&arm_cam_param);
         // Wait to finish ts, td, tc, and tk threads
         pthread_join(ts, NULL);
         pthread_join(td, NULL);

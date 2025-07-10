@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "enable_pwm_clock.h": "c",
+        "pixel_format_rgb.h": "c",
+        "c_equiv_ctl.h": "c"
+    }
+}

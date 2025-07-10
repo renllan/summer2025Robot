@@ -1,7 +1,0 @@
-valgrind \
-  --tool=memcheck \
-  --leak-check=full \              # report all leaks
-  --show-leak-kinds=all \          # report all kinds of leaks
-  --track-origins=yes \            # help find where uninitialized values come from
-  --verbose \                       # more detailed reporting
-  ./hw6 
