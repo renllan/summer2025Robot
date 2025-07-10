@@ -33,6 +33,7 @@ int main(int argc, char * argv[]){
     struct pixel_format_RGB     * IMG_DATA2;
     unsigned char               IMG_RAW3[IMAGE_SIZE];
     struct pixel_format_RGB     * IMG_DATA3;
+        draw_bitmap_start( argc, argv );
 
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB
      = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
