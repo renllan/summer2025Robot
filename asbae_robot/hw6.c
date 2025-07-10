@@ -1105,7 +1105,18 @@ void *video_capture(void * arg){
   wait_period( &timer_state, 100u ); /* 500 ms */
   video_interface_print_modes( handle_video1);
   video_interface_print_modes(handle_video2);
-  if (video_interface_set_mode_auto( handle_video1) && video_interface_set_mode_auto(handle_video2))
+  if(video_interface_set_mode_auto(handle_video2))
+  {
+    printf("successfully configured figure camera 2");
+    
+  }
+  else{
+    printf("fail to configure camera 2 \n");
+    printf("video capture thread exit\n");
+    return NULL;
+
+  }
+  if (video_interface_set_mode_auto( handle_video1))
   {
     int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
     int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
