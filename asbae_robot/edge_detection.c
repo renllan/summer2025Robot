@@ -15,7 +15,6 @@ void sobel_edge_detect(struct pixel_format_RGB * input, struct pixel_format_RGB*
         { 1,  2,  1}
     };
     unsigned char gray[HEIGHT][WIDTH];
-    int gx, gy, x, y, val;
 
     // Convert to grayscale
     for (y = 0; y < HEIGHT; y++) {
