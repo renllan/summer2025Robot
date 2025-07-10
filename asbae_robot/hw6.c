@@ -1095,7 +1095,7 @@ void *video_capture(void * arg){
   struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB = NULL;
 
   handle_video1 = video_interface_open( "/dev/video0" );
-  handle_video2 = video_interface_open(" /dev/video2");
+  handle_video2 = video_interface_open( "/dev/video2");
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
