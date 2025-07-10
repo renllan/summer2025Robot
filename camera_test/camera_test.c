@@ -79,7 +79,7 @@ int main(int argc, char * argv[]){
         
         video_interface_get_image(handle_video2,&image1);
         memcpy(IMG_RAW1, (unsigned char*)&image1, IMAGE_SIZE);
-        draw_bitmap_display(IMG_DATA1,handle_GUI_RGB);
+        draw_bitmap_display(handle_GUI_RGB,IMG_DATA1);
         // memcpy(IMG_RAW0, (unsigned char *)&image1,IMAGE_SIZE);
         // memcpy(IMG_RAW2, (unsigned char *)&image1,IMAGE_SIZE);
         // memcpy(IMG_RAW3, (unsigned char *)&image1,IMAGE_SIZE);
