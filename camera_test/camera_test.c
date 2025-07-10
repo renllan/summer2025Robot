@@ -12,8 +12,8 @@ int main(int argc, char * argv[]){
     unsigned char               IMG_RAW[IMAGE_SIZE];
     struct pixel_format_RGB     * IMG_DATA;
 
-    IMG_DATA1 = (unsigned char*)&IMG_RAW1;
-    IMG_DATA = (unsigned char*)&IMG_RAW;
+    IMG_DATA1 = (struct pixel_format_RGB*)&IMG_RAW1;
+    IMG_DATA = (struct pixel_format_RGB*)&IMG_RAW;
 
 
 
