@@ -109,12 +109,12 @@ int main(int argc, char * argv[] )
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
     REDUCED_IMG_data = (struct pixel_format_RGB*)REDUCED_IMG_raw;
 
-    struct img_process_thread_param edge ={
-      "edge detection",
-      &edge_fifo,
-      &dir_fifo,
+    // struct img_process_thread_param edge ={
+    //   "edge detection",
+    //   &edge_fifo,
+    //   &dir_fifo,
       
-    };
+    // };
     /*initialize the parameter of motor control thread*/
     struct motor_control_thread_param motor_ctl_param = {
       "motor control",
