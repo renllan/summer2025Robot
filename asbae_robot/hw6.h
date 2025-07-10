@@ -44,7 +44,7 @@
 #define PWM_RANGE 100
 #define SCALE_REDUCTION_PER_AXIS  2   /* the image size reduction ratio (note that 640*480*3*8*FPS = your bandwidth usage, at 24FPS, that is 177MPBS) */
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
-#define IMAGE_SIZE                sizeof(struct image_t)/(SCALE_REDUCTION_PER_AXIS*SCALE_REDUCTION_PER_AXIS)
+#define IMAGE_SIZE                sizeof(struct image_t)
 #define TURN_COOLDOWN_FRAMES 15
 #define EGG_THRESHOLD 210
 #define COUNT_THRESHOLD 500
@@ -251,15 +251,13 @@ struct img_capture_thread_param
   struct fifo_t               * hist_fifo;
   struct fifo_t               * egg_fifo;
   struct image_t              *image;
-  struct image_t              *image1;
   unsigned char               *img_raw;
   struct pixel_format_RGB     *img_data;
-  unsigned char               *img_raw1;
-  struct pixel_format_RGB     *img_data1;
   unsigned char               *rgb_raw;
   unsigned char               *greyscale_raw;
   unsigned char               *bw_raw;
   unsigned char               *reduced_raw;
+  bool                         camera_mode;
   bool                       * quit_flag;
 };
 
