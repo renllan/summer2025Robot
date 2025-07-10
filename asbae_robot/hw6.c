@@ -1121,7 +1121,7 @@ void *video_capture(void * arg){
     {
       counter++;
       
-        if (video_interface_get_image(handle_video1, param->image) &&video_interface_get_image(handle_video2, param->image))
+        if (video_interface_get_image(handle_video1, param->image) &&video_interface_get_image(handle_video2, param->image1))
         {
 
           //
@@ -1130,6 +1130,15 @@ void *video_capture(void * arg){
             handle_video1->configured_height,
             handle_video1->configured_width,
             param->img_data,
+            SCALE_REDUCTION_PER_AXIS,
+            SCALE_REDUCTION_PER_AXIS
+          );
+
+          scale_image_data(
+            (struct pixel_format_RGB *)param->image1,
+            handle_video1->configured_height,
+            handle_video1->configured_width,
+            param->img_data1,
             SCALE_REDUCTION_PER_AXIS,
             SCALE_REDUCTION_PER_AXIS
           );
