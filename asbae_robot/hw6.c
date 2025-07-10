@@ -1104,8 +1104,8 @@ void *video_capture(void * arg){
   
   
   handle_video2 = video_interface_open( "/dev/video2" );
-  video_interface_print_modes(handle_video1);
-  if(!video_interface_set_mode_manual(handle_video1,7)){
+  video_interface_print_modes(handle_video2);
+  if(!video_interface_set_mode_manual(handle_video2,7)){
     printf("failed to configure dev/video2 \n");
     return NULL;
   }
