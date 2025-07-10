@@ -1095,7 +1095,7 @@ void *video_capture(void * arg){
   struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB = NULL;
 
   handle_video1 = video_interface_open( "/dev/video0" );
-  handle_video2 = video_interface_open("/dev/video1");
+  handle_video2 = video_interface_open(" /dev/video1");
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function,
              // similar to interrupt occuring every 10ms
@@ -1105,7 +1105,7 @@ void *video_capture(void * arg){
   wait_period( &timer_state, 100u ); /* 500 ms */
   video_interface_print_modes( handle_video1);
   video_interface_print_modes(handle_video2);
-  if (video_interface_set_mode_auto( handle_video1) && video_interface_set_mode_auto( handle_video1))
+  if (video_interface_set_mode_auto( handle_video1) && video_interface_set_mode_auto( handle_video2))
   {
     int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
     int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
@@ -1121,11 +1121,10 @@ void *video_capture(void * arg){
     {
       counter++;
       
-        if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2,param->image1))
+        if (video_interface_get_image(handle_video1, param->image) &&video_interface_get_image(handle_video2, param->image))
         {
 
           //
-          
           scale_image_data(
             (struct pixel_format_RGB *)param->image,
             handle_video1->configured_height,
@@ -1134,17 +1133,6 @@ void *video_capture(void * arg){
             SCALE_REDUCTION_PER_AXIS,
             SCALE_REDUCTION_PER_AXIS
           );
-
-          scale_image_data(
-            (struct pixel_format_RGB *)param->image1,
-            handle_video1->configured_height,
-            handle_video1->configured_width,
-            param->img_data1,
-            SCALE_REDUCTION_PER_AXIS,
-            SCALE_REDUCTION_PER_AXIS
-          );
-
-
             struct thread_command cmd = {'u',0};
             memcpy(param->rgb_raw,param->img_raw,IMAGE_SIZE);
             memcpy(param->greyscale_raw,param->img_raw,IMAGE_SIZE);
@@ -1163,7 +1151,7 @@ void *video_capture(void * arg){
         }
         else
         {
-          printf("did not get image \n");
+          printf("did not get robot image \n");
         }
       
 
