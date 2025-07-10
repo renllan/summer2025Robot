@@ -80,12 +80,11 @@ int main(int argc, char * argv[] )
     struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
     struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
     struct fifo_t edge_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t arm_cam_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
 
     static struct image_t       image;
     static struct image_t       image1; //arm camera feed
-    unsigned char               * IMG_RAW1;//arm image
-    struct pixel_format_RGB     * IMG_DATA1;
+    unsigned char               * IMG_ARM_RAW1;//arm image
+    struct pixel_format_RGB     * IMG_ARM_DATA1;
     unsigned char               * IMG_RAW;
     struct pixel_format_RGB     * IMG_DATA;
     unsigned char               * RGB_IMG_raw;
@@ -97,15 +96,14 @@ int main(int argc, char * argv[] )
     unsigned char               * REDUCED_IMG_raw;
     struct pixel_format_RGB     * REDUCED_IMG_data;
     
-    IMG_RAW1 = (unsigned char *)malloc(IMAGE_SIZE+1);
+    IMG_ARM_RAW1 = (unsigned char *)malloc(IMAGE_SIZE+1);
     IMG_RAW = (unsigned char *)malloc(IMAGE_SIZE+1);
     RGB_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     GREYSCALE_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     BW_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
     REDUCED_IMG_raw = (unsigned char *)malloc(IMAGE_SIZE+1);
 
-    IMG_DATA1 = (struct pixel_format_RGB*)IMG_RAW;
-    IMG_DATA = (struct pixel_format_RGB*)IMG_RAW;
+    IMG_ARM_DATA1 = (struct pixel_format_RGB*)IMG_RAW;
     RGB_IMG_data = (struct pixel_format_RGB *)RGB_IMG_raw;
     GREYSCALE_IMG_data = (struct pixel_format_RGB*)GREYSCALE_IMG_raw;
     BW_IMG_data = (struct pixel_format_RGB*)BW_IMG_raw;
@@ -118,25 +116,7 @@ int main(int argc, char * argv[] )
       
     // };
 
-    struct img_capture_thread_param arm_cam_param{
-      "arm cam capture",
-      &,
-      &rgb_img_fifo,
-      &greyscale_img_fifo,
-      &bw_img_fifo,
-      &reduced_img_fifo,
-      &hist_fifo,
-      &egg_fifo,
-      &image1,
-      IMG_RAW1,
-      IMG_DATA1,
-      RGB_IMG_raw,
-      GREYSCALE_IMG_raw,
-      BW_IMG_raw,
-      REDUCED_IMG_raw,
-      false,
-      &quit_flag  
-    };
+ 
 
 
     /*initialize the parameter of motor control thread*/
@@ -206,8 +186,8 @@ int main(int argc, char * argv[] )
         &control_fifo,
         BW_IMG_raw,
         BW_IMG_data,
-        IMG_RAW1,
-        IMG_DATA1,
+        IMG_ARM_RAW1,
+        IMG_ARM_DATA1,
         &quit_flag};              
     struct img_capture_thread_param  img_capture_param = 
     {
@@ -220,13 +200,12 @@ int main(int argc, char * argv[] )
       &hist_fifo,
       &egg_fifo,
       &image,
-      IMG_RAW,
-      IMG_DATA,
+      &image1,
+      IMG_ARM_RAW1,
       RGB_IMG_raw,
       GREYSCALE_IMG_raw,
       BW_IMG_raw,
       REDUCED_IMG_raw,
-      true,
       &quit_flag
     };     
     struct img_process_thread_param       single_channel_param = {
@@ -302,7 +281,7 @@ int main(int argc, char * argv[] )
     if (io != NULL)
     {
         /* print where the I/O memory was actually mapped to */
-        printf( "mem at 0x%8.8X\n", (unsigned int*)io );
+        //printf( "mem at 0x%8.8X\n", (unsigned int*)io );
 
         set_gpio_context(io->gpio);  // save gpio context
         signal(SIGINT, sigint_handler);
@@ -343,7 +322,6 @@ int main(int argc, char * argv[] )
         pthread_create(&tarm, NULL, Arm_Thread, (void *)&arm_param);
         pthread_create(&tclaw, NULL, Claw_Thread, (void *)&claw_param);
         pthread_create(&tpwm, NULL, PWM_Servo_Thread, (void *)&pwm_param);
-        pthread_create(&t_arm_cam, NULL,video_capture, (void*)&arm_cam_param);
         // Wait to finish ts, td, tc, and tk threads
         pthread_join(ts, NULL);
         pthread_join(td, NULL);

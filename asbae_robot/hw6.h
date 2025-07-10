@@ -250,14 +250,13 @@ struct img_capture_thread_param
   struct fifo_t               * reduced_cmd_fifo;
   struct fifo_t               * hist_fifo;
   struct fifo_t               * egg_fifo;
-  struct image_t              *image;
-  unsigned char               *img_raw;
-  struct pixel_format_RGB     *img_data;
+  struct image_t              *image1;
+  struct image_t              *image2; //arm image
+  unsigned char               *arm_img_raw;
   unsigned char               *rgb_raw;
   unsigned char               *greyscale_raw;
   unsigned char               *bw_raw;
   unsigned char               *reduced_raw;
-  bool                         camera_mode;
   bool                       * quit_flag;
 };
 

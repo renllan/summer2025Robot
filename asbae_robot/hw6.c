@@ -1097,17 +1097,26 @@ void *video_capture(void * arg){
   handle_video1 = video_interface_open( "/dev/video0" );
   video_interface_print_modes(handle_video1);
 
-  if(!video_interface_set_mode_manual(handle_video1,3)){
+  if(!video_interface_set_mode_manual(handle_video1,7)){
     printf("failed to configure dev/video0 \n");
     return NULL;
   }
-
-  handle_video2 = video_interface_open( "/dev/video2");
-  video_interface_print_modes(handle_video2);
-  if(!video_interface_set_mode_manual(handle_video2,3)){
+  
+  
+  handle_video2 = video_interface_open( "/dev/video2" );
+  video_interface_print_modes(handle_video1);
+  if(!video_interface_set_mode_manual(handle_video1,7)){
     printf("failed to configure dev/video2 \n");
     return NULL;
   }
+
+
+  // handle_video2 = video_interface_open( "/dev/video2");
+  // video_interface_print_modes(handle_video2);
+  // if(!video_interface_set_mode_manual(handle_video2,3)){
+  //   printf("failed to configure dev/video2 \n");
+  //   return NULL;
+  // }
 
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function,
@@ -1118,9 +1127,9 @@ void *video_capture(void * arg){
   wait_period( &timer_state, 100u ); /* 500 ms */
   int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
   int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
-  printf("img size = %d x %d\n", handle_video1->configured_width,handle_video1->configured_height);
+  printf("img size = %ld x %ld\n", handle_video1->configured_width,handle_video1->configured_height);
   printf("original img size = %d x %d\n", scaled_width,scaled_height);
-  printf("size of image_t %d\n", IMAGE_SIZE);
+  printf("size of image_t %ld\n", IMAGE_SIZE);
   
   int argc = 0;
   char *argv[3];
@@ -1130,45 +1139,41 @@ void *video_capture(void * arg){
     counter++;
     if(counter % 25 == 0)
       {
-        if (video_interface_get_image(handle_video1, param->image) && video_interface_get_image(handle_video2, param->image1)){//
-          scale_image_data(
-            (struct pixel_format_RGB *)param->image,
-            handle_video1->configured_height,
-            handle_video1->configured_width,
-            param->img_data,
-            SCALE_REDUCTION_PER_AXIS,
-            SCALE_REDUCTION_PER_AXIS
-          );
+        if (video_interface_get_image(handle_video1, param->image1) && video_interface_get_image(handle_video2, param->image2)){//
+         
 
         
-          scale_image_data(
-            (struct pixel_format_RGB *)param->image1,
-            handle_video1->configured_height,
-            handle_video1->configured_width,
-            param->img_data1,
-            SCALE_REDUCTION_PER_AXIS,
-            SCALE_REDUCTION_PER_AXIS
-          );
-        
-          struct thread_command cmd = {'u',0};
-          memcpy(param->rgb_raw,param->img_raw,IMAGE_SIZE);
-          memcpy(param->greyscale_raw,param->img_raw,IMAGE_SIZE);
-          memcpy(param->bw_raw,param->img_raw,IMAGE_SIZE);
-          memcpy(param->reduced_raw,param->img_raw,IMAGE_SIZE);
+          // scale_image_data(
+          //   (struct pixel_format_RGB *)param->image1,
+          //   handle_video1->configured_height,
+          //   handle_video1->configured_width,
+          //   param->img_data1,
+          //   SCALE_REDUCTION_PER_AXIS,
+          //   SCALE_REDUCTION_PER_AXIS
+          // );
+         
+              
+            struct thread_command cmd = {'u',0};
+            memcpy(param->rgb_raw,(unsigned char *)param->image1,IMAGE_SIZE);
+            memcpy(param->greyscale_raw,(unsigned char*)param->image1,IMAGE_SIZE);
+            memcpy(param->bw_raw,(unsigned char *)param->image1,IMAGE_SIZE);
+            memcpy(param->reduced_raw,(unsigned char *)param->image1,IMAGE_SIZE);
+            memcpy(param->arm_img_raw, (unsigned char *)param->image2,IMAGE_SIZE);
+
+            FIFO_INSERT(param->rgb_cmd_fifo,cmd);
+            FIFO_INSERT(param->greyscale_cmd_fifo,cmd);
+            FIFO_INSERT(param->bw_cmd_fifo,cmd);
+            FIFO_INSERT(param->reduced_cmd_fifo,cmd);
+            FIFO_INSERT(param->hist_fifo,cmd);
+            FIFO_INSERT(param->egg_fifo,cmd);
           
-          FIFO_INSERT(param->rgb_cmd_fifo,cmd);
-          FIFO_INSERT(param->greyscale_cmd_fifo,cmd);
-          FIFO_INSERT(param->bw_cmd_fifo,cmd);
-          FIFO_INSERT(param->reduced_cmd_fifo,cmd);
-          FIFO_INSERT(param->hist_fifo,cmd);
-          FIFO_INSERT(param->egg_fifo,cmd);
+
           
           
-        //draw_bitmap_display(handle_GUI_RGB, param->img_data);
         }
         else
         {
-          printf("did not get robot image \n");
+          printf("did not image \n");
         }
       }
       
@@ -1932,6 +1937,9 @@ void *egg_detector(void * arg)
             break;
           }
           case 'u':{
+            memcpy(egg_buffer_1,param->RGB_IMG_raw,IMAGE_SIZE);
+            memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
+
             if(!mode3){
               // ---------------Robot Mode-----------------
               robot_frames_seen++;
