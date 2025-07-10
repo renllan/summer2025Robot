@@ -12,7 +12,8 @@ SOURCES = main.c\
           ../include/import_registers.c \
           ../include/enable_pwm_clock.c \
           ../include/wait_period.c \
-		      ../include/keypress.c\
+		../include/keypress.c\
+          ../include/video_interface.c\
           scale_image_data.c\
           to_black_white.c\
           C_equiv_ctl.c\
