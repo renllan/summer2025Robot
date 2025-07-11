@@ -309,7 +309,7 @@ int main(int argc, char * argv[] )
         //temp
         io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
         io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_ALTERNATE_FUNCTION5;
-        io->pwm->DAT1 = 100; // testing
+        io->pwm->DAT1 = 1000; // testing
         io->pwm->DAT2 = 100; // testing
         sleep(2);
         io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_INPUT;
