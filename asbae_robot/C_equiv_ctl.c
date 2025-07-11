@@ -353,7 +353,7 @@ void read_angles(int uart_fd) {
     write(uart_fd, command, 5);
     wait_period(&timer_state, 100u);
 
-    read_again_ang: size_t bytes_read = read(uart_fd, response, sizeof(response));
+    read_again_ang: bytes_read = read(uart_fd, response, sizeof(response));
     printf("bytes_read = %zd\n", bytes_read);
     int read_ct = READ_CT;
     if (bytes_read <= 0 && read_ct > 0) {
