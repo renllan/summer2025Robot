@@ -75,11 +75,11 @@ int main(int argc, char * argv[])
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
         memcpy(IMG_RAW2, (unsigned char *)&image, IMAGE_SIZE);
+        apply_expoential(IMG_DATA1);
 
         draw_bitmap_display(handle_GUI_RGB, IMG_DATA1);
         int max_egg = 0; //max egg index
         EggBlob eggs[MAX_EGGS];
-        apply_expoential(IMG_DATA1);
         to_black_white(IMG_DATA2, IMAGE_SIZE/3, EGG_THRESHOLD);
 
         int found = find_egg_blobs(IMG_DATA2, eggs,5, IMG_WIDTH, IMG_HEIGHT);
