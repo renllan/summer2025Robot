@@ -882,6 +882,7 @@ void *Motor_Speed_Thread(void * args)
           {
             break;
           }
+        }
       }
       
     }
