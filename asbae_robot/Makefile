@@ -7,7 +7,6 @@ TARGET = main
 SOURCES = main.c\
           hw6.c \
           find_egg_blobs.c\
-          video_interface.c \
           draw_bitmap_multiwindow.c \
           ../include/import_registers.c \
           ../include/enable_pwm_clock.c \
