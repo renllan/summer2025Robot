@@ -1,6 +1,6 @@
 #include "egg_sort.h"
 #include <math.h>
-
+#define min(a,b)((a)<(b) ? (a):(b))
 void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
@@ -49,11 +49,11 @@ int main(int argc, char * argv[])
 {
     struct video_interface_handle_t *         handle_video1  = NULL;
     unsigned char               IMG_RAW1[IMAGE_SIZE];//arm image
-    struct pixel_format_RGB     * IMG_DATA1;
+    struct pixel_format_RGB     * IMG_DATA1 = (struct pixel_format_RGB*)IMG_RAW1;
     static struct image_t       image;
 
     unsigned char               IMG_RAW2[IMAGE_SIZE];//arm image
-    struct pixel_format_RGB     * IMG_DATA2;
+    struct pixel_format_RGB     * IMG_DATA2 = (struct pixel_format_RGB*)IMG_RAW2;
 
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB
      = draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
