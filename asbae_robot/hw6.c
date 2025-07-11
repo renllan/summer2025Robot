@@ -2050,7 +2050,7 @@ void *egg_detector(void * arg)
                   if (!FIFO_FULL(param->dir_fifo)) {
                       
                       printf("robot queue decision: largest egg detected on the left\n");                    
-                      cmd.command = 'a';
+                      cmd.command = 'd';
                       FIFO_INSERT(param->dir_fifo, cmd);
                       //centered = false;
                       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
@@ -2058,7 +2058,7 @@ void *egg_detector(void * arg)
                 } else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->dir_fifo)) {
                       printf("robot queue decision: largest egg detected on the right\n");
-                      cmd.command = 'd';
+                      cmd.command = 'a';
                       FIFO_INSERT(param->dir_fifo, cmd);
                       turn_cool_down = TURN_COOLDOWN_FRAMES;
                   }
