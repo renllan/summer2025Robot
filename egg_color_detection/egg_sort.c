@@ -51,10 +51,10 @@ int main(int argc, char * argv[])
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_grey 
     =  draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
 
-    handle_video1 = video_interface_open("/dev/video0");
+    handle_video1 = video_interface_open("/dev/video2");
     
     if(!video_interface_set_mode_auto(handle_video1)){
-        printf("failed to configure dev/video0 \n");
+        printf("failed to configure dev/video2 \n");
         return 1;
     }
     draw_bitmap_start( argc, argv );
@@ -80,7 +80,7 @@ int main(int argc, char * argv[])
             int min_y = eggs[i].min_y;
             int max_y = eggs[i].max_y;
 
-            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA1, (struct pixel_format_RGB){255, 0, 0});
+            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA2, (struct pixel_format_RGB){255, 0, 0});
             if (eggs[i].size > eggs[max_egg].size) {
                 max_egg = i;
             }
@@ -91,7 +91,7 @@ int main(int argc, char * argv[])
             int max_x = eggs[max_egg].max_x;
             int min_y = eggs[max_egg].min_y;
             int max_y = eggs[max_egg].max_y;
-            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA1, (struct pixel_format_RGB){0, 255, 0});
+            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA2, (struct pixel_format_RGB){0, 255, 0});
 
             int center_x = eggs[max_egg].center_x;
             int center_y = eggs[max_egg].center_y;
