@@ -307,18 +307,11 @@ int main(int argc, char * argv[] )
         GPIO_CLR(io->gpio, 06);
 
         //temp
-        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
-        io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_ALTERNATE_FUNCTION5;
-        int i = 0;
-        while (i < 1000)
-        {
-          io->pwm->DAT1 = i; // testing
-          io->pwm->DAT2 = i; // testing
-          i++;
-        }
-        sleep(2);
-        io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_INPUT;
-        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
+        //io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
+        io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_OUTPUT;
+        GPIO_SET(io->gpio, 19); // set pin 9 to high
+        sleep(1); // wait for 1 second to ensure the pin is set
+        GPIO_CLR(io->gpio, 19); // set pin 10 to low
 
         //start the gui thread
         draw_bitmap_start(argc,argv);
