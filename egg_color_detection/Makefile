@@ -3,9 +3,9 @@ TARGET = egg_sort
 SOURCES = egg_sort.c \
           ../include/video_interface.c \
           ../include/draw_bitmap_multiwindow.c \
-          ../asbae/find_egg_blobs.c \
-          ../asbae/to_black_white.c \
-          ../asbae/draw_bbox.c
+          ../asbae_robot/find_egg_blobs.c \
+          ../asbae_robot/to_black_white.c \
+          ../asbae_robot/draw_bbox.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
@@ -23,7 +23,7 @@ $(TARGET): $(OBJECTS)
 ../include/%.o: ../include/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-../asbae/%.o: ../asbae/%.c
+../asbae_robot/%.o: ../asbae_robot/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
