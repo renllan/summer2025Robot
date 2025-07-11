@@ -2,7 +2,7 @@
 #define PIXEL_RATIO_H 80
 #define PIXEL_RATIO_L 60
 #define PIXEL_THRESH_H 15000
-#define PIXEL_THRESH_L 500
+#define PIXEL_THRESH_L 300
 #define ASPECT_H 5
 #define ASPECT_L  0.5
 
