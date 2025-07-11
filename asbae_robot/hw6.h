@@ -31,7 +31,7 @@
 #include "../include/MPU9250.h"
 #include "../include/wait_key.h"
 #include "pixel_format_RGB.h"
-#include "video_interface.h"
+#include "../include/video_interface.h"
 #include "wait_key.h"
 #include "scale_image_data.h"
 #include "draw_bitmap_multiwindow.h"
