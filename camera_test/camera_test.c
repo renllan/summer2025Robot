@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
     handle_video2 = video_interface_open( "/dev/video2" );
     video_interface_print_modes(handle_video2);
 
-    if(!video_interface_set_mode_(handle_video2)){
+    if(!video_interface_set_mode_auto(handle_video2)){
         printf("failed to configure dev/video0 \n");
         return 1;
     }

@@ -46,16 +46,16 @@
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)
 #define TURN_COOLDOWN_FRAMES 15
-#define EGG_THRESHOLD 210
+#define EGG_THRESHOLD 180  //
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 3500
+#define STOP_THRESH 2500  //needs to be tuned
 #define MAX_DECISION_SIZE 10
 #define CENTER_L 140
 #define CENTER_R 180
-#define ARM_STOP_THRESH 4000
+#define ARM_STOP_THRESH 4000  //needs to be tuned
 #define CENTER_F 100
 #define CENTER_B 140
 #define MAX_DECISION_THRESHOLD MAX_DECISION_SIZE/2
@@ -79,16 +79,12 @@
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
 
-// Drop left or right
-#define SPIN_MOTOR_TEMP_REST 90
 #define SPIN_MOTOR_LEFT 0 
 #define SPIN_MOTOR_RIGHT 180
-#define BACK_FORTH_MOTOR_TEMP_REST 90
-#define BACK_FORTH_MOTOR_RIGHT 0
-#define BACK_FORTH_MOTOR_LEFT 180
-#define UP_DOWN_MOTOR_TEMP_REST 90
-#define UP_DOWN_MOTOR_LEFT 0
-#define UP_DOWN_MOTOR_RIGHT 180
+#define FRONTBACK_MOTOR_RIGHT 0
+#define FRONTBACK_MOTOR_LEFT 180
+#define UPDOWN_MOTOR_L 0 
+#define UPDOWN_MOTOR_R 180
 
 #define CLAW_OPEN 450 // 500 for other car
 #define CLAW_CLOSE 800 // 800 for other car
@@ -137,7 +133,6 @@ struct arm_thread_param
   const char                    *name;
   struct fifo_t                 *fifo;
   int                            uart_fd; // UART file descriptor for arm control
-  int                           *drop_stage; // 0 set 90-90-90, 1 move left or right & twist PWM, 2 open claw and rest position
   bool                          *quit_flag;
 };
 
