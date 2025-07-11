@@ -57,6 +57,8 @@ int main(int argc, char * argv[])
         printf("failed to configure dev/video0 \n");
         return 1;
     }
+    draw_bitmap_start( argc, argv );
+
     
    while (handle_video1) {
         video_interface_get_image(handle_video1, &image);
