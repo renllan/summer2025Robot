@@ -1,4 +1,6 @@
 #include "egg_sort.h"
+#include <math.h>
+
 void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
@@ -35,6 +37,14 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 
 
 }
+void apply_expoential(struct pixel_format_RGB *img){
+    for(int i = 0; i< IMAGE_SIZE/3;i++)
+    {
+        img[i].R = min(255,exp(0.02*img[i].R)/255);
+        img[i].G = min(255,exp(0.02*img[i].G)/255);
+        img[i].B =min(255,exp(0.02*img[i].B)/255);
+    }
+}
 int main(int argc, char * argv[])
 {
     struct video_interface_handle_t *         handle_video1  = NULL;
@@ -63,14 +73,13 @@ int main(int argc, char * argv[])
    while (handle_video1) {
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
-        IMG_DATA1 = (struct pixel_format_RGB *)IMG_RAW1;
 
         memcpy(IMG_RAW2, (unsigned char *)&image, IMAGE_SIZE);
-        IMG_DATA2 = (struct pixel_format_RGB *)IMG_RAW2;
 
         draw_bitmap_display(handle_GUI_RGB, IMG_DATA1);
         int max_egg = 0; //max egg index
         EggBlob eggs[MAX_EGGS];
+        apply_expoential(IMG_DATA1);
         to_black_white(IMG_DATA2, IMAGE_SIZE/3, EGG_THRESHOLD);
 
         int found = find_egg_blobs(IMG_DATA2, eggs,5, IMG_WIDTH, IMG_HEIGHT);
