@@ -40,9 +40,9 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 void apply_expoential(struct pixel_format_RGB *img){
     for(int i = 0; i< IMAGE_SIZE/3;i++)
     {
-        img[i].R = min(255,exp(0.02*img[i].R)/255);
-        img[i].G = min(255,exp(0.02*img[i].G)/255);
-        img[i].B =min(255,exp(0.02*img[i].B)/255);
+        img[i].R = min(255,exp(0.02*img[i].R));
+        img[i].G = min(255,exp(0.02*img[i].G));
+        img[i].B =min(255,exp(0.02*img[i].B));
     }
 }
 int main(int argc, char * argv[])
