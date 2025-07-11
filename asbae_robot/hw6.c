@@ -1137,7 +1137,7 @@ void *video_capture(void * arg){
     counter++;
     if(counter % 10 == 0)
       {
-        if (video_interface_get_image(handle_video1, param->image2) 
+        if (video_interface_get_image(handle_video1, param->image1) 
         ){//
          
 
@@ -1174,7 +1174,7 @@ void *video_capture(void * arg){
         {
           printf("robot did not image \n");
         }
-        if(video_interface_get_image(handle_video2, param->image1)){
+        if(video_interface_get_image(handle_video2, param->image2)){
           struct thread_command cmd = {'u',1};
           
           memcpy(param->arm_img_raw, (unsigned char *)param->image2,IMAGE_SIZE);
