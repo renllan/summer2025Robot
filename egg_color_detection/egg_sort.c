@@ -56,43 +56,45 @@ int main(int argc, char * argv[])
         return 1;
     }
     
-    while(handle_video1){
+   while (handle_video1) {
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
-        memcpy(IMG_RAW2, (unsigned char *)&image, IMAGE_SIZE)
-        draw_bitmap_display(handle_GUI_RGB,IMG_DATA1);
+        IMG_DATA1 = (struct pixel_format_RGB *)IMG_RAW1;
+
+        memcpy(IMG_RAW2, (unsigned char *)&image, IMAGE_SIZE);
+        IMG_DATA2 = (struct pixel_format_RGB *)IMG_RAW2;
+
+        draw_bitmap_display(handle_GUI_RGB, IMG_DATA1);
         int max_egg = 0; //max egg index
         EggBlob eggs[MAX_EGGS];
         to_black_white(IMG_DATA2, IMAGE_SIZE/3, EGG_THRESHOLD);
-        
-        int found = find_egg_blobs(IMG_DATA2,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
+
+        int found = find_egg_blobs(IMG_DATA2, eggs,5, IMG_WIDTH, IMG_HEIGHT);
         for (int i = 0; i < found; i++) {
-                //for drawing the red bbox
             int min_x = eggs[i].min_x;
             int max_x = eggs[i].max_x;
             int min_y = eggs[i].min_y;
             int max_y = eggs[i].max_y;
 
-            // Draw red bounding box
-            draw_bbox(min_x,min_y,max_x,max_y, IMG_DATA1,(struct pixel_format_RGB){255, 0, 0});
-            if(eggs[i].size > eggs[max_egg].size){
+            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA1, (struct pixel_format_RGB){255, 0, 0});
+            if (eggs[i].size > eggs[max_egg].size) {
                 max_egg = i;
             }
-            //printf("Egg %d at center (%d, %d), size %d\n", i+1, eggs[i].center_x, eggs[i].center_y, eggs[i].size);
-        } 
-        if(found > 0){
+        }
+
+        if (found > 0) {
             int min_x = eggs[max_egg].min_x;
             int max_x = eggs[max_egg].max_x;
             int min_y = eggs[max_egg].min_y;
             int max_y = eggs[max_egg].max_y;
-            draw_bbox(min_x,min_y,max_x,max_y,IMG_DATA_1,(struct pixel_format_RGB){0, 255, 0});
-            //printf("largest egg size is is at %d \n", eggs[max_egg].size);
-            // egg_sort(eggs[max_egg].center_x, eggs[max_egg].center_y,param->RGB_IMG_DATA);
+            draw_bbox(min_x, min_y, max_x, max_y, IMG_DATA1, (struct pixel_format_RGB){0, 255, 0});
+
+            int center_x = eggs[max_egg].center_x;
+            int center_y = eggs[max_egg].center_y;
+            egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
         }
-        int center_x = eggs[max_egg].center_x;
-        int center_y = eggs[max_egg].center_y;
-        egg_sort(center_x,center_y,IMG_DATA_1);//display the egg sort
-        draw_bitmap_display(handle_GUI_grey,IMG_DATA_2);
+        draw_bitmap_display(handle_GUI_grey, IMG_DATA2);
     }
+
 
 }
