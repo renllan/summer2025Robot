@@ -341,6 +341,7 @@ void read_angles(int uart_fd) {
     struct timespec timer_state;
     wait_period_initialize(&timer_state);
     uint8_t command[5] = {PACKET_HEADER1, PACKET_HEADER2, FUNC_READ_ANGLE, 0x00, 0xEE};
+    ssize_t bytes_read;
     printf("Sending command: ");
     for (int i = 0; i < 5; i++) {
         printf("%02X ", command[i]);
@@ -352,7 +353,7 @@ void read_angles(int uart_fd) {
     write(uart_fd, command, 5);
     wait_period(&timer_state, 100u);
 
-    read_again_ang: ssize_t bytes_read = read(uart_fd, response, sizeof(response));
+    read_again_ang: bytes_read = read(uart_fd, response, sizeof(response));
     printf("bytes_read = %zd\n", bytes_read);
     int read_ct = READ_CT;
     if (bytes_read <= 0 && read_ct > 0) {
@@ -395,6 +396,7 @@ void read_xyz(int uart_fd) {
     struct timespec timer_state;
     wait_period_initialize(&timer_state);
     uint8_t command[5] = {PACKET_HEADER1, PACKET_HEADER2, FUNC_READ_XYZ, 0x00, 0xEC};
+    ssize_t bytes_read;
     printf("Sending command: ");
     for (int i = 0; i < 5; i++) {
         printf("%02X ", command[i]);
@@ -406,7 +408,7 @@ void read_xyz(int uart_fd) {
     write(uart_fd, command, 5);
     wait_period(&timer_state, 100u);
 
-    read_again_xyz: ssize_t bytes_read = read(uart_fd, response, sizeof(response));
+    read_again_xyz: bytes_read = read(uart_fd, response, sizeof(response));
     printf("bytes_read = %zd\n", bytes_read);
     int read_ct = READ_CT;
     if (bytes_read <= 0 && read_ct > 0) {
