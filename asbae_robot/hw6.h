@@ -46,16 +46,16 @@
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)
 #define TURN_COOLDOWN_FRAMES 15
-#define EGG_THRESHOLD 210
+#define EGG_THRESHOLD 210  //
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 3500
+#define STOP_THRESH 2500  //needs to be tuned
 #define MAX_DECISION_SIZE 10
 #define CENTER_L 140
 #define CENTER_R 180
-#define ARM_STOP_THRESH 4000
+#define ARM_STOP_THRESH 4000  //needs to be tuned
 #define CENTER_F 100
 #define CENTER_B 140
 #define MAX_DECISION_THRESHOLD MAX_DECISION_SIZE/2
