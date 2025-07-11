@@ -955,7 +955,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
-        int busy1 = (int)(param->angle*1.5);
+        busy1 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
           cmd2.argument = 0;
