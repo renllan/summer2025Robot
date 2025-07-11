@@ -920,6 +920,7 @@ void *Motor_Control(void * arg){
         prev_dir ='w';
         break;
       case 'a':
+      {
       //change the direction first
         busy2 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
@@ -946,6 +947,7 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
+      }
       case 's':
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 's';
@@ -977,6 +979,7 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
+      }
       case 'x':
         if (prev_dir == 'd'){
           if(!FIFO_FULL(param->speed_fifo)){
