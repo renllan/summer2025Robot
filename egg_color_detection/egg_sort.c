@@ -1,6 +1,8 @@
 #include "egg_sort.h"
 #include <math.h>
 #define min(a,b)((a)<(b) ? (a):(b))
+
+
 void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
@@ -40,9 +42,9 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 void apply_expoential(struct pixel_format_RGB *img){
     for(int i = 0; i< IMAGE_SIZE/3;i++)
     {
-        img[i].R = min(255,exp(0.02*img[i].R));
-        img[i].G = min(255,exp(0.02*img[i].G));
-        img[i].B =min(255,exp(0.02*img[i].B));
+        img[i].R = min(255,exp(5.5*img[i].R/255));
+        img[i].G = min(255,exp(5.5*img[i].G/255));
+        img[i].B =min(255,exp(5.5*img[i].B/255));
     }
 }
 int main(int argc, char * argv[])
@@ -61,10 +63,10 @@ int main(int argc, char * argv[])
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_grey 
     =  draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
 
-    handle_video1 = video_interface_open("/dev/video2");
+    handle_video1 = video_interface_open("/dev/video0");
     
     if(!video_interface_set_mode_auto(handle_video1)){
-        printf("failed to configure dev/video2 \n");
+        printf("failed to configure dev/video0 \n");
         return 1;
     }
     draw_bitmap_start( argc, argv );
@@ -75,7 +77,7 @@ int main(int argc, char * argv[])
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
         memcpy(IMG_RAW2, (unsigned char *)&image, IMAGE_SIZE);
-        apply_expoential(IMG_DATA1);
+        //apply_expoential(IMG_DATA1);
 
         draw_bitmap_display(handle_GUI_RGB, IMG_DATA1);
         int max_egg = 0; //max egg index
