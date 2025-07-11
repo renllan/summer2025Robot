@@ -1135,7 +1135,7 @@ void *video_capture(void * arg){
   printf("scaled height: %d scaled width %d", scaled_height,scaled_width);
   while(! *param->quit_flag){
     counter++;
-    if(counter % 25 == 0)
+    if(counter % 10 == 0)
       {
         if (video_interface_get_image(handle_video1, param->image1) 
         ){//
