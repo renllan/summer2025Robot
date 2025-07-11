@@ -1907,7 +1907,7 @@ void *egg_detector(void * arg)
     bool egg_found = false;
     int turn_cool_down = 0;
 
-    int arm_cool_down_x =0;
+    int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
     wait_period(&timer_state, 10u);
@@ -1927,7 +1927,6 @@ void *egg_detector(void * arg)
             break;
           }
           case 's':{
-            pause_thread = true;
             printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
             printf("stop egg detection \n");
             break;
@@ -1942,6 +1941,7 @@ void *egg_detector(void * arg)
               draw_bitmap_close_window(handle);
               draw_bitmap_close_window(arm_handle);
               handle = NULL;
+              arm_handle = NULL;
             }
             break;
           }
@@ -2241,7 +2241,12 @@ void *egg_detector(void * arg)
       if(arm_handle) draw_bitmap_display(arm_handle, egg_data_2);
       wait_period(&timer_state, 10u);
     }
+    if (handle) draw_bitmap_close_window(handle);
+    if(arm_handle) draw_bitmap_close_window(arm_handle);
     free(egg_buffer_1);
+    free(egg_buffer_2);
+    handle = NULL;
+    arm_handle = NULL;
     printf("%s exited \n",param->name);
     return NULL;
 }
