@@ -2067,7 +2067,7 @@ void *egg_detector(void * arg)
                   robot_centered = true;
                   printf("robot: egg is at the center of the robot\n");
                 }
-                if(robot_centered && robot_centered){
+                if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
