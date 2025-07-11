@@ -16,7 +16,9 @@ SOURCES = main.c\
           scale_image_data.c\
           to_black_white.c\
           C_equiv_ctl.c\
-          edge_detection.c
+          edge_detection.c\
+          draw_bbox.c
+
 
 
 OBJECTS = $(patsubst %.cpp,%.o,$(patsubst %.c,%.o,$(SOURCES)))

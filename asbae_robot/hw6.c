@@ -1998,7 +1998,9 @@ void *egg_detector(void * arg)
                 robot_decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
                 //printf("largest egg size is is at %d \n", eggs[max_egg].size);
                 egg_found = true;
+                // egg_sort(eggs[max_egg].center_x, eggs[max_egg].center_y,param->RGB_IMG_DATA);
               }
+
               else{
                 robot_decision_q[MAX_DECISION_SIZE-1] = -1;
                 egg_found = false;
@@ -2295,7 +2297,13 @@ void *bin_detector(void * arg){
   return NULL;
 }
 
-
+void *egg_sort(void* arg){
+  struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
+  
+  while(!(*param->quit_flag)){
+    
+  }
+}
 void fifo_insert(struct fifo_t* fifo, struct thread_command cmd){
   if(!FIFO_FULL(fifo)){
     FIFO_INSERT(fifo,cmd);
