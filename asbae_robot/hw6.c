@@ -1996,7 +1996,7 @@ void *egg_detector(void * arg)
                 int max_y = eggs[max_egg].max_y;
                 draw_bbox(min_x,min_y,max_x,max_y,egg_data_1,(struct pixel_format_RGB){0, 255, 0});
                 robot_decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
-                //printf("largest egg size is is at %d \n", eggs[max_egg].size);
+                printf("largest egg size is is at %d \n", eggs[max_egg].size);
                 egg_found = true;
               }
               else{
@@ -2075,6 +2075,7 @@ void *egg_detector(void * arg)
                     cmd.argument = 3;
                     FIFO_INSERT(param->control_fifo,cmd);
                     printf("switched robot mode to mode3 \n");
+                    mode3 = true;
                   }
                 }
               }
