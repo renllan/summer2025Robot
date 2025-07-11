@@ -1925,12 +1925,12 @@ void *egg_detector(void * arg)
         {
           case 'w':{
             pause_thread = false;
-            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);//robot image
             printf("starting egg detection \n");
             break;
           }
           case 's':{
-            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);//arm image
             printf("stop egg detection \n");
             break;
           }
@@ -2082,159 +2082,160 @@ void *egg_detector(void * arg)
                   }
                 }
               }
-            }else{
-              //-----------------------arm mode --------------------------
-              arm_frames_seen++;
-              if (arm_frames_seen >= MAX_DECISION_SIZE) {
-                arm_queue_filled = true;
-              }
-              memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
-              to_black_white(egg_data_2, IMAGE_SIZE/3, EGG_THRESHOLD);
-              min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
-              int count = 0;
-              EggBlob arm_eggs[1];
-              int found = find_egg_blobs(egg_data_2,arm_eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
-
-              int min_x = arm_eggs[0].min_x;
-              int max_x = arm_eggs[0].max_x;
-              int min_y = arm_eggs[0].min_y;
-              int max_y = arm_eggs[0].max_y;
-
-              // Draw red bounding box
-              draw_bbox(min_x,min_y,max_x,max_y, egg_data_2,(struct pixel_format_RGB){255, 0, 0});
-
-              for (int i = 0; i < MAX_DECISION_SIZE - 1; i++) {
-                arm_decision_q[i] = arm_decision_q[i + 1];
-              }
-              if(found){
-                arm_decision_q[MAX_DECISION_SIZE-1].x = arm_eggs[0].center_x;
-                arm_decision_q[MAX_DECISION_SIZE-1].y = arm_eggs[0].center_y;
-              }          
-              else{
-                arm_decision_q[MAX_DECISION_SIZE-1].x = -1;
-                arm_decision_q[MAX_DECISION_SIZE-1].y = -1;
-               }
-
-              if(arm_queue_filled && !pause_thread){ 
-                int left = 0, right = 0; int center_x =0 ;int not_found = 0; int front = 0; int back = 0,center_y =0;
-                for (int i = 0; i < MAX_DECISION_SIZE; i++) {
-                    if (arm_decision_q[i].x > 0 && arm_decision_q[i].x < CENTER_L) left++;
-                    else if (arm_decision_q[i].x > CENTER_R) right++;
-                    else if (arm_decision_q[i].x && arm_decision_q[i].y == -1) not_found++;
-                    else center_x++;
-
-                    int cur_y = arm_decision_q[i].y;
-                    if(cur_y > 0 && cur_y < CENTER_F) front ++;
-                    else if(cur_y > CENTER_B) back++;
-                    else center_y++;
-                }
-                
-                if(arm_eggs[0].size > ARM_STOP_THRESH){ //check if the egg is close enough
-                  printf("arm: egg size is %d egg is close to robot\n",arm_eggs[0].size);
-                  arm_stopped = true;    
-                }
-                else{
-
-                }
-                //check x direction
-                if(arm_cool_down_x > 0)
-                {
-                  arm_cool_down_x--;
-                }
-                else if(not_found > MAX_DECISION_SIZE/2){
-                  if(!FIFO_FULL(param->control_fifo)){
-                    
-                    cmd.command ='w';
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    turn_cool_down = TURN_COOLDOWN_FRAMES;
-                    printf("arm: robot did not find any egg \n");
-                    robot_stopped = false;
-                  }  
-                }
-                else if (left >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->control_fifo)) {
-                      
-                    printf("arm queue decision: largest egg detected on the left\n");                    
-                    cmd.command = 'a';
-                    FIFO_INSERT(param->control_fifo, cmd);
-                    //centered = false;
-                    turn_cool_down = TURN_COOLDOWN_FRAMES;                      
-                  }
-                } else if (right >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->control_fifo)) {
-                      printf("arm queue decision: largest egg detected on the right\n");
-                      cmd.command = 'd';
-                      FIFO_INSERT(param->control_fifo, cmd);
-                      turn_cool_down = TURN_COOLDOWN_FRAMES;
-                  }
-                }
-                else if(center_x >= MAX_DECISION_SIZE/2){
-                  arm_centered_x = true;
-                  printf("arm: egg is at the center of the of arm in the x direction \n");
-                }
-                //check y direction
-                if(arm_cool_down_y > 0){
-                  arm_cool_down_y--;
-                }
-                if(front >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too far front");
-                  cmd.command = 'x';
-                  cmd.command =0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(back >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too back");
-                  cmd.command ='w';
-                  cmd.argument = 0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(center_y >= MAX_DECISION_THRESHOLD){
-                  printf("arm: egg is at the center of the arm in the y direction \n");
-                  arm_centered_y =true;
-                }
-
-                if(arm_centered_x && arm_centered_y){
-                  if(arm_stopped)
-                  {
-                    printf("arm: arm is close enough to grab the egg \n");
-                  //todo: grab the egg
-                    cmd.command = 'c';
-                    cmd.argument = 0;
-                    //grab the egg
-                    fifo_insert(param->control_fifo,cmd);
-                    #ifdef SINGLE_EGG
-                      //flip 180 degree
-                      cmd.command = 'w';
-                      cmd.argument =0;
-                      fifo_insert(param->dir_fifo,cmd);
-                      usleep(100000); //needs to be modified
-                      //flip 180 degree
-                    #endif
-                    //release the egg
-                     
-                    //
-                    cmd.command = 'c';
-                    cmd.argument = 0;
-                    //grab the egg
-                    fifo_insert(param->control_fifo,cmd);
-                    cmd.command = 'm';
-                    cmd.argument = 2;
-                    fifo_insert(param->control_fifo,cmd);
-                    printf("switched robot mode to mode 2\n");
-                    mode3 = false;
-                  }
-                  else{
-                    if(!FIFO_FULL(param->control_fifo)){
-                    cmd.command= 'j';
-                    cmd.argument =0;
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    }
-                  }
-                }
-              }
             }
+            // else{
+            //   //-----------------------arm mode --------------------------
+            //   arm_frames_seen++;
+            //   if (arm_frames_seen >= MAX_DECISION_SIZE) {
+            //     arm_queue_filled = true;
+            //   }
+            //   memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
+            //   to_black_white(egg_data_2, IMAGE_SIZE/3, EGG_THRESHOLD);
+            //   min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
+            //   int count = 0;
+            //   EggBlob arm_eggs[1];
+            //   int found = find_egg_blobs(egg_data_2,arm_eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
+
+            //   int min_x = arm_eggs[0].min_x;
+            //   int max_x = arm_eggs[0].max_x;
+            //   int min_y = arm_eggs[0].min_y;
+            //   int max_y = arm_eggs[0].max_y;
+
+            //   // Draw red bounding box
+            //   draw_bbox(min_x,min_y,max_x,max_y, egg_data_2,(struct pixel_format_RGB){255, 0, 0});
+
+            //   for (int i = 0; i < MAX_DECISION_SIZE - 1; i++) {
+            //     arm_decision_q[i] = arm_decision_q[i + 1];
+            //   }
+            //   if(found){
+            //     arm_decision_q[MAX_DECISION_SIZE-1].x = arm_eggs[0].center_x;
+            //     arm_decision_q[MAX_DECISION_SIZE-1].y = arm_eggs[0].center_y;
+            //   }          
+            //   else{
+            //     arm_decision_q[MAX_DECISION_SIZE-1].x = -1;
+            //     arm_decision_q[MAX_DECISION_SIZE-1].y = -1;
+            //    }
+
+            //   if(arm_queue_filled && !pause_thread){ 
+            //     int left = 0, right = 0; int center_x =0 ;int not_found = 0; int front = 0; int back = 0,center_y =0;
+            //     for (int i = 0; i < MAX_DECISION_SIZE; i++) {
+            //         if (arm_decision_q[i].x > 0 && arm_decision_q[i].x < CENTER_L) left++;
+            //         else if (arm_decision_q[i].x > CENTER_R) right++;
+            //         else if (arm_decision_q[i].x && arm_decision_q[i].y == -1) not_found++;
+            //         else center_x++;
+
+            //         int cur_y = arm_decision_q[i].y;
+            //         if(cur_y > 0 && cur_y < CENTER_F) front ++;
+            //         else if(cur_y > CENTER_B) back++;
+            //         else center_y++;
+            //     }
+                
+            //     if(arm_eggs[0].size > ARM_STOP_THRESH){ //check if the egg is close enough
+            //       printf("arm: egg size is %d egg is close to robot\n",arm_eggs[0].size);
+            //       arm_stopped = true;    
+            //     }
+            //     else{
+
+            //     }
+            //     //check x direction
+            //     if(arm_cool_down_x > 0)
+            //     {
+            //       arm_cool_down_x--;
+            //     }
+            //     else if(not_found > MAX_DECISION_SIZE/2){
+            //       if(!FIFO_FULL(param->control_fifo)){
+                    
+            //         cmd.command ='w';
+            //         FIFO_INSERT(param->control_fifo,cmd);
+            //         turn_cool_down = TURN_COOLDOWN_FRAMES;
+            //         printf("arm: robot did not find any egg \n");
+            //         robot_stopped = false;
+            //       }  
+            //     }
+            //     else if (left >= MAX_DECISION_SIZE/2) {
+            //       if (!FIFO_FULL(param->control_fifo)) {
+                      
+            //         printf("arm queue decision: largest egg detected on the left\n");                    
+            //         cmd.command = 'a';
+            //         FIFO_INSERT(param->control_fifo, cmd);
+            //         //centered = false;
+            //         turn_cool_down = TURN_COOLDOWN_FRAMES;                      
+            //       }
+            //     } else if (right >= MAX_DECISION_SIZE/2) {
+            //       if (!FIFO_FULL(param->control_fifo)) {
+            //           printf("arm queue decision: largest egg detected on the right\n");
+            //           cmd.command = 'd';
+            //           FIFO_INSERT(param->control_fifo, cmd);
+            //           turn_cool_down = TURN_COOLDOWN_FRAMES;
+            //       }
+            //     }
+            //     else if(center_x >= MAX_DECISION_SIZE/2){
+            //       arm_centered_x = true;
+            //       printf("arm: egg is at the center of the of arm in the x direction \n");
+            //     }
+            //     //check y direction
+            //     if(arm_cool_down_y > 0){
+            //       arm_cool_down_y--;
+            //     }
+            //     if(front >= MAX_DECISION_THRESHOLD){
+            //       printf("arm: arm is too far front");
+            //       cmd.command = 'x';
+            //       cmd.command =0;
+            //       fifo_insert(param->control_fifo,cmd);
+            //       arm_cool_down_y = TURN_COOLDOWN_FRAMES;
+            //     }
+            //     else if(back >= MAX_DECISION_THRESHOLD){
+            //       printf("arm: arm is too back");
+            //       cmd.command ='w';
+            //       cmd.argument = 0;
+            //       fifo_insert(param->control_fifo,cmd);
+            //       arm_cool_down_y = TURN_COOLDOWN_FRAMES;
+            //     }
+            //     else if(center_y >= MAX_DECISION_THRESHOLD){
+            //       printf("arm: egg is at the center of the arm in the y direction \n");
+            //       arm_centered_y =true;
+            //     }
+
+            //     if(arm_centered_x && arm_centered_y){
+            //       if(arm_stopped)
+            //       {
+            //         printf("arm: arm is close enough to grab the egg \n");
+            //       //todo: grab the egg
+            //         cmd.command = 'c';
+            //         cmd.argument = 0;
+            //         //grab the egg
+            //         fifo_insert(param->control_fifo,cmd);
+            //         #ifdef SINGLE_EGG
+            //           //flip 180 degree
+            //           cmd.command = 'w';
+            //           cmd.argument =0;
+            //           fifo_insert(param->dir_fifo,cmd);
+            //           usleep(100000); //needs to be modified
+            //           //flip 180 degree
+            //         #endif
+            //         //release the egg
+                     
+            //         //
+            //         cmd.command = 'c';
+            //         cmd.argument = 0;
+            //         //grab the egg
+            //         fifo_insert(param->control_fifo,cmd);
+            //         cmd.command = 'm';
+            //         cmd.argument = 2;
+            //         fifo_insert(param->control_fifo,cmd);
+            //         printf("switched robot mode to mode 2\n");
+            //         mode3 = false;
+            //       }
+            //       else{
+            //         if(!FIFO_FULL(param->control_fifo)){
+            //         cmd.command= 'j';
+            //         cmd.argument =0;
+            //         FIFO_INSERT(param->control_fifo,cmd);
+            //         }
+            //       }
+            //     }
+            //   }
+            // }
             break;
           }
         }
