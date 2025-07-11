@@ -2086,7 +2086,7 @@ void *egg_detector(void * arg)
                 arm_queue_filled = true;
               }
               memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
-              //to_black_white(egg_data_2, IMAGE_SIZE/3, EGG_THRESHOLD);
+              to_black_white(egg_data_2, IMAGE_SIZE/3, EGG_THRESHOLD);
               min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
               int count = 0;
               EggBlob arm_eggs[1];

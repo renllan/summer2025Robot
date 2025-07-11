@@ -46,7 +46,7 @@
 #define GET_FRAMES                10  /* the number of frame times to average when determining the FPS */
 #define IMAGE_SIZE                sizeof(struct image_t)
 #define TURN_COOLDOWN_FRAMES 15
-#define EGG_THRESHOLD 210  //
+#define EGG_THRESHOLD 180  //
 #define COUNT_THRESHOLD 500
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
