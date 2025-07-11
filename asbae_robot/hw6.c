@@ -1092,12 +1092,11 @@ void *video_capture(void * arg){
   printf("%s thread starting\n", param->name);
   struct video_interface_handle_t *         handle_video1;
   struct video_interface_handle_t *         handle_video2;
-  struct draw_bitmap_multiwindow_handle_t * handle_GUI_RGB = NULL;
 
   handle_video1 = video_interface_open( "/dev/video0" );
   video_interface_print_modes(handle_video1);
 
-  if(!video_interface_set_mode_manual(handle_video1,7)){
+  if(!video_interface_set_mode_auto(handle_video1)){
     printf("failed to configure dev/video0 \n");
     return NULL;
   }
@@ -1105,7 +1104,7 @@ void *video_capture(void * arg){
   
   handle_video2 = video_interface_open( "/dev/video2" );
   video_interface_print_modes(handle_video2);
-  if(!video_interface_set_mode_manual(handle_video2,7)){
+  if(!video_interface_set_mode_auto(handle_video2)){
     printf("failed to configure dev/video2 \n");
     return NULL;
   }
@@ -1128,7 +1127,6 @@ void *video_capture(void * arg){
   int scaled_width      = handle_video1->configured_width/SCALE_REDUCTION_PER_AXIS;
   int scaled_height     = handle_video1->configured_height/SCALE_REDUCTION_PER_AXIS;
   printf("img size = %ld x %ld\n", handle_video1->configured_width,handle_video1->configured_height);
-  printf("original img size = %d x %d\n", scaled_width,scaled_height);
   printf("size of image_t %ld\n", IMAGE_SIZE);
   
   int argc = 0;
@@ -1139,7 +1137,8 @@ void *video_capture(void * arg){
     counter++;
     if(counter % 25 == 0)
       {
-        if (video_interface_get_image(handle_video1, param->image1) && video_interface_get_image(handle_video2, param->image2)){//
+        if (video_interface_get_image(handle_video1, param->image1) 
+        ){//
          
 
         
@@ -1153,7 +1152,7 @@ void *video_capture(void * arg){
           // );
          
               
-            struct thread_command cmd = {'u',0};
+            struct thread_command cmd = {'u',2};
             memcpy(param->rgb_raw,(unsigned char *)param->image1,IMAGE_SIZE);
             memcpy(param->greyscale_raw,(unsigned char*)param->image1,IMAGE_SIZE);
             memcpy(param->bw_raw,(unsigned char *)param->image1,IMAGE_SIZE);
@@ -1173,7 +1172,17 @@ void *video_capture(void * arg){
         }
         else
         {
-          printf("did not image \n");
+          printf("robot did not image \n");
+        }
+        if(video_interface_get_image(handle_video2, param->image2)){
+          struct thread_command cmd = {'u',1};
+          
+          memcpy(param->arm_img_raw, (unsigned char *)param->image2,IMAGE_SIZE);
+          FIFO_INSERT(param->egg_fifo,cmd);
+
+        }
+        else{
+          printf("arm camera did not get image");
         }
       }
       
@@ -1937,9 +1946,12 @@ void *egg_detector(void * arg)
             break;
           }
           case 'u':{
-            memcpy(egg_buffer_1,param->RGB_IMG_raw,IMAGE_SIZE);
-            memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
-
+            if(cmd.argument == 1){
+             memcpy(egg_buffer_1,param->RGB_IMG_raw,IMAGE_SIZE);
+            }
+            else{
+              memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
+            }    
             if(!mode3){
               // ---------------Robot Mode-----------------
               robot_frames_seen++;
