@@ -2075,8 +2075,12 @@ void *egg_detector(void * arg)
                   }
                   if(!FIFO_FULL(param->control_fifo)){
                     cmd.command = 'm';
-                    cmd.argument = 3;
+                    cmd.argument = 0;
                     FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '3';
+                    cmd.argument = 0;
+                    FIFO_INSERT(param->control_fifo,cmd);
+
                     printf("switched robot mode to mode3 \n");
                     mode3 = true;
                     //move the arm forward to try to get closer to the egg
