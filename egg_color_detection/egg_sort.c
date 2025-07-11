@@ -50,7 +50,9 @@ int main(int argc, char * argv[])
 
     struct draw_bitmap_multiwindow_handle_t * handle_GUI_grey 
     =  draw_bitmap_create_window(IMG_WIDTH,IMG_HEIGHT);
-   
+
+    handle_video1 = video_interface_open("/dev/video0");
+    
     if(!video_interface_set_mode_auto(handle_video1)){
         printf("failed to configure dev/video0 \n");
         return 1;
