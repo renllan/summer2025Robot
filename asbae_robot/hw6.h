@@ -79,16 +79,12 @@
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
 
-// Drop left or right
-#define SPIN_MOTOR_TEMP_REST 90
 #define SPIN_MOTOR_LEFT 0 
 #define SPIN_MOTOR_RIGHT 180
-#define BACK_FORTH_MOTOR_TEMP_REST 90
-#define BACK_FORTH_MOTOR_RIGHT 0
-#define BACK_FORTH_MOTOR_LEFT 180
-#define UP_DOWN_MOTOR_TEMP_REST 90
-#define UP_DOWN_MOTOR_LEFT 0
-#define UP_DOWN_MOTOR_RIGHT 180
+#define FRONTBACK_MOTOR_RIGHT 0
+#define FRONTBACK_MOTOR_LEFT 180
+#define UPDOWN_MOTOR_L 0 
+#define UPDOWN_MOTOR_R 180
 
 #define CLAW_OPEN 450 // 500 for other car
 #define CLAW_CLOSE 800 // 800 for other car
@@ -137,7 +133,6 @@ struct arm_thread_param
   const char                    *name;
   struct fifo_t                 *fifo;
   int                            uart_fd; // UART file descriptor for arm control
-  int                           *drop_stage; // 0 set 90-90-90, 1 move left or right & twist PWM, 2 open claw and rest position
   bool                          *quit_flag;
 };
 

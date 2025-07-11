@@ -61,7 +61,6 @@ int main(int argc, char * argv[] )
     pthread_t t_arm_cam;
 
     bool quit_flag = false;
-    int drop_stage = 0; // 0 set 90-90-90, 1 move left or right & twist PWM, 2 open claw and rest position
 
     struct fifo_t motor_control_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t key_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
@@ -160,7 +159,6 @@ int main(int argc, char * argv[] )
       "arm",
       &arm_fifo,
       uart_fd, // pass the UART file descriptor to the arm control thread
-      &drop_stage, // pass the drop stage variable to the arm control thread
       &quit_flag
     };
     /*initial the parameters of the pwm servo*/
@@ -168,7 +166,6 @@ int main(int argc, char * argv[] )
       "pwm_servo",
       &pwm_servo_fifo,
       uart_fd, // pass the UART file descriptor to the PWM servo control thread
-      &drop_stage, // pass the drop stage variable to the PWM servo control thread
       &quit_flag
     };
     /*initial the parameters of the claw*/
@@ -176,7 +173,6 @@ int main(int argc, char * argv[] )
       "claw",
       &claw_fifo,
       uart_fd, // pass the UART file descriptor to the claw control thread
-      &drop_stage, // pass the drop stage variable to the claw control thread
       &quit_flag
     };
     /*intialize the parameter of IR_sensor_thread
