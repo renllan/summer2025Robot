@@ -2083,6 +2083,9 @@ void *egg_detector(void * arg)
                     cmd.command = 'w';
                     cmd.argument = 0; //move the arm forward
                     fifo_insert(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    cmd.argument = 0; //move the arm forward
+                    fifo_insert(param->control_fifo,cmd);
                   }
                 }
               }
