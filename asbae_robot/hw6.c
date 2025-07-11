@@ -863,21 +863,25 @@ void *Motor_Speed_Thread(void * args)
         printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
         switch (cmd.command)
         {
-        case 's':
-          /* code */
-          int speed = cmd.argument;
-          param->pwm->DAT1 = speed;
-          param->pwm->DAT2 = speed;
-          break;
-        
-        case 'b':
-          busy = true;
-          busy_count = cmd.argument;
-          printf("speed thread busy count = %d\n", busy_count);
-          break;
-        default:
-          break;
-        }
+          case 's':
+          {
+            /* code */
+            int speed = cmd.argument;
+            param->pwm->DAT1 = speed;
+            param->pwm->DAT2 = speed;
+            break;
+          }
+          case 'b':
+          {
+            busy = true;
+            busy_count = cmd.argument;
+            printf("speed thread busy count = %d\n", busy_count);
+            break;
+          }
+          default:
+          {
+            break;
+          }
       }
       
     }
@@ -1034,6 +1038,7 @@ void *Motor_Control(void * arg){
         prev_dir ='w';
         break;
       case 'a':
+      {
       //change the direction first
         int busy2 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
@@ -1060,6 +1065,7 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
+      }
       case 's':
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 's';
@@ -1069,6 +1075,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
+      {
         int busy1 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
@@ -1091,6 +1098,7 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
+      }
       case 'x':
         if (prev_dir == 'd'){
           if(!FIFO_FULL(param->speed_fifo)){
