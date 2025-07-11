@@ -734,6 +734,7 @@ void *Motor_Speed_Thread(void * args)
   // start 10ms timed wait
   bool busy= false;
   int busy_count =0;
+  int speed;
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
   printf("motor speed started \n");
@@ -748,7 +749,7 @@ void *Motor_Speed_Thread(void * args)
         {
         case 's':
           /* code */
-          int speed = cmd.argument;
+          speed = cmd.argument;
           param->pwm->DAT1 = speed;
           param->pwm->DAT2 = speed;
           break;
@@ -880,6 +881,8 @@ void *Motor_Control(void * arg){
   wait_period( &timer_state, 100u );
   printf("motor control thread started \n");
   char prev_dir = 's';
+  int busy2; // used to store the busy time for turning left/righ
+  int busy1; // used to store the busy time for turning left/right
   while(!(*param->quit_flag)){
     if(!FIFO_EMPTY(param->motor_control_fifo))
     {
@@ -918,7 +921,7 @@ void *Motor_Control(void * arg){
         break;
       case 'a':
       //change the direction first
-        int busy2 = (int)(param->angle*1.5);
+        busy2 = (int)(param->angle*1.5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'a';
           cmd2.argument = 0;
