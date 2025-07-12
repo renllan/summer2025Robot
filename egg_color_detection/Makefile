@@ -8,7 +8,7 @@ SOURCES = egg_sort.c \
           ../asbae_robot/draw_bbox.c \
 		  ../include/wait_period.c \
 		  ../include/import_registers.c \
-		  ../include/get_pressed_key.c
+		  ../include/keypress.c
 OBJECTS = $(SOURCES:.c=.o)
 
 CFLAGS = -g -Og -Werror -Wno-deprecated-declarations `pkg-config --cflags gtk+-2.0`
