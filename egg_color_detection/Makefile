@@ -7,7 +7,7 @@ SOURCES = egg_sort.c \
           ../asbae_robot/to_black_white.c \
           ../asbae_robot/draw_bbox.c \
 		  ../include/wait_period.c \
-		  ../include/import_registers.c \ 
+		  ../include/import_registers.c \
 		  ../include/wait_period.c 
 
 OBJECTS = $(SOURCES:.c=.o)
