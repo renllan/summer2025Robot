@@ -4,7 +4,7 @@
 #define Bad_value 220
 #define FRAMES 50
 
-void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
+int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
     int min_x =center_x-BBOX_W/2;
@@ -36,8 +36,10 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
         printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
     //return the avg blue pixel value in the small box
         return avg_b;
-
-
+    }
+    else {
+        printf("No pixels in the bounding box.\n");
+        return 0; // No pixels in the bounding box
     }
 }
 void apply_expoential(struct pixel_format_RGB *img){
