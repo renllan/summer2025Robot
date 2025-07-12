@@ -1928,12 +1928,12 @@ void *egg_detector(void * arg)
         {
           case 'w':{
             pause_thread = false;
-            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);//robot image
             printf("starting egg detection \n");
             break;
           }
           case 's':{
-            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);
+            printf( "\n %s= %c  %c\n", param->name, cmd.command, cmd.argument);//arm image
             printf("stop egg detection \n");
             break;
           }
@@ -2053,7 +2053,7 @@ void *egg_detector(void * arg)
                   if (!FIFO_FULL(param->dir_fifo)) {
                       
                       printf("robot queue decision: largest egg detected on the left\n");                    
-                      cmd.command = 'a';
+                      cmd.command = 'd';
                       FIFO_INSERT(param->dir_fifo, cmd);
                       //centered = false;
                       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
@@ -2061,7 +2061,7 @@ void *egg_detector(void * arg)
                 } else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->dir_fifo)) {
                       printf("robot queue decision: largest egg detected on the right\n");
-                      cmd.command = 'd';
+                      cmd.command = 'a';
                       FIFO_INSERT(param->dir_fifo, cmd);
                       turn_cool_down = TURN_COOLDOWN_FRAMES;
                   }
@@ -2070,7 +2070,7 @@ void *egg_detector(void * arg)
                   robot_centered = true;
                   printf("robot: egg is at the center of the robot\n");
                 }
-                if(robot_centered && robot_centered){
+                if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
@@ -2078,22 +2078,32 @@ void *egg_detector(void * arg)
                   }
                   if(!FIFO_FULL(param->control_fifo)){
                     cmd.command = 'm';
-                    cmd.argument = 3;
+                    cmd.argument = 0;
                     FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '3';
+                    cmd.argument = 0;
+                    FIFO_INSERT(param->control_fifo,cmd);
+
                     printf("switched robot mode to mode3 \n");
                     mode3 = true;
+                    //move the arm forward to try to get closer to the egg
+                    cmd.command = 'w';
+                    cmd.argument = 0; //move the arm forward
+                    fifo_insert(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    cmd.argument = 0; //move the arm forward
+                    fifo_insert(param->control_fifo,cmd);
                   }
                 }
               }
-            }else{
+            }
+            else{
               //-----------------------arm mode --------------------------
               arm_frames_seen++;
               if (arm_frames_seen >= MAX_DECISION_SIZE) {
                 arm_queue_filled = true;
               }
-              memcpy(egg_buffer_2,param->ARM_IMG_RAW,IMAGE_SIZE);
               to_black_white(egg_data_2, IMAGE_SIZE/3, EGG_THRESHOLD);
-              min_x = IMG_WIDTH;min_y = IMG_HEIGHT; max_x =0;max_y =0;
               int count = 0;
               EggBlob arm_eggs[1];
               int found = find_egg_blobs(egg_data_2,arm_eggs,MAX_EGGS,IMG_WIDTH,IMG_HEIGHT);
@@ -2146,19 +2156,37 @@ void *egg_detector(void * arg)
                 }
                 else if(not_found > MAX_DECISION_SIZE/2){
                   if(!FIFO_FULL(param->control_fifo)){
-                    
+                    //move the robot robot to the front a little bit
+                    //move the arm to the front a little bit
                     cmd.command ='w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command ='j';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'm';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '1';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 's';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'm';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '3';
                     FIFO_INSERT(param->control_fifo,cmd);
                     turn_cool_down = TURN_COOLDOWN_FRAMES;
                     printf("arm: robot did not find any egg \n");
-                    robot_stopped = false;
+                    arm_stopped = false;
+                    break;
                   }  
                 }
                 else if (left >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->control_fifo)) {
                       
                     printf("arm queue decision: largest egg detected on the left\n");                    
-                    cmd.command = 'a';
+                    cmd.command = 'd';
                     FIFO_INSERT(param->control_fifo, cmd);
                     //centered = false;
                     turn_cool_down = TURN_COOLDOWN_FRAMES;                      
@@ -2166,7 +2194,7 @@ void *egg_detector(void * arg)
                 } else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->control_fifo)) {
                       printf("arm queue decision: largest egg detected on the right\n");
-                      cmd.command = 'd';
+                      cmd.command = 'a';
                       FIFO_INSERT(param->control_fifo, cmd);
                       turn_cool_down = TURN_COOLDOWN_FRAMES;
                   }
