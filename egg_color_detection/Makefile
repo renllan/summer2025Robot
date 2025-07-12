@@ -6,6 +6,9 @@ SOURCES = egg_sort.c \
           ../asbae_robot/find_egg_blobs.c \
           ../asbae_robot/to_black_white.c \
           ../asbae_robot/draw_bbox.c
+		  ../include/wait_period.c \
+		  ../include/io_interface.c \
+		  
 
 OBJECTS = $(SOURCES:.c=.o)
 
