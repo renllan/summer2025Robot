@@ -303,8 +303,8 @@ int main(int argc, char * argv[] )
         GPIO_CLR(io->gpio, 06);
 
         //temp
-        //io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
-        //io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_ALTERNATE_FUNCTION0;
+        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
+        io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_ALTERNATE_FUNCTION5;
         io->pwm->DAT1 = 1; // testing
         io->pwm->DAT2 = 1; // testing
         printf ("pwm val: %d\n", io->pwm->DAT1);
@@ -319,8 +319,8 @@ int main(int argc, char * argv[] )
         io->pwm->DAT2 = 100; // stop pwm
         printf ("pwm val: %d\n", io->pwm->DAT1);
         printf ("pwm val: %d\n", io->pwm->DAT2);
-        //io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_INPUT;
-        //io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
+        io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_INPUT;
+        io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
 
         //start the gui thread
         draw_bitmap_start(argc,argv);
