@@ -183,7 +183,7 @@ int main(int argc, char * argv[] )
         "egg datection", 
         &egg_fifo, 
         &motor_control_fifo, 
-        &control_fifo,
+        &key_fifo,
         BW_IMG_raw,
         BW_IMG_data,
         IMG_ARM_RAW1,
