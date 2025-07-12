@@ -398,7 +398,13 @@ int main(int argc, char * argv[] )
   {
     ; /* warning message already issued */
   }
-/* 
+  printf("Setting angles to [90, 90, 90]\n\n");
+    angles[0] = SPIN_MOTOR_TEMP_REST;
+    angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+    angles[2] = UP_DOWN_MOTOR_TEMP_REST;
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
+    sleep(1); // Delay to assure reset position is reached
+  /*
      * Initialize angles to [90, 135, 75] (RESET POSITION)
      * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
      * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
@@ -408,7 +414,7 @@ int main(int argc, char * argv[] )
     angles[0] = SPIN_RESET;
     angles[1] = BACK_FORTH_RESET;
     angles[2] = UP_DOWN_RESET;
-    set_angles(uart_fd, angles, ARM_TIMEOUT);
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
     
     /*
      * Initialize claw to CLAW_OPEN (open position)
@@ -418,7 +424,7 @@ int main(int argc, char * argv[] )
      */
     printf("Setting claw to CLAW_OPEN\n\n");
     claw_pos = CLAW_OPEN;
-    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT*2);
 
     /*
      * Initialize PWM servo to 180 degrees
@@ -427,7 +433,7 @@ int main(int argc, char * argv[] )
      * For example, servo will be turned 30 degrees clockwise from 0 (claw motor facing forward) if 30 degrees is set
      */
     printf("Setting PWM servo\n");
-    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT);
+    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT*2);
     sleep(1); // Delay to assure reset position is reached
   printf( "main function done\n" );
 
