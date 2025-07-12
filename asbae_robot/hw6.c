@@ -979,7 +979,6 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
-      }
       case 'x':
         if (prev_dir == 'd'){
           if(!FIFO_FULL(param->speed_fifo)){
@@ -1277,8 +1276,6 @@ void *video_capture(void * arg){
   printf("video capture thread exit\n");
   return NULL;
 }
-
-  
 
 void *video_with_cross(void * arg){
   
