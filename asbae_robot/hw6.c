@@ -484,10 +484,10 @@ void *Control(void * arg)
           change = true;
           break;
         }
-        case '.': //turn and drop eggs to the right
+        case 'f': //turn and drop eggs to the right
         {
           if (param->mode == 3) {
-            cmd2.command = '.';
+            cmd2.command = 'f';
             cmd2.argument = 0; // not needed for egg drop
             if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
             else printf("arm_fifo queue full\nHW6> ");
@@ -499,10 +499,10 @@ void *Control(void * arg)
           }
           break;
         }
-        case ',': //turn and drop eggs to the left
+        case 'g': //turn and drop eggs to the left
         {
           if (param->mode == 3) {
-            cmd2.command = ',';
+            cmd2.command = 'g';
             cmd2.argument = 0; // not needed for egg drop
             if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
             else printf("arm_fifo queue full\nHW6> ");
@@ -627,7 +627,7 @@ void *Arm_Thread(void * args)
             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
             break;
           }
-          case '.':
+          case 'f':
           {
             left_right = true; // set left/right flag to true for egg drop
             // set angles to 90-90-90
@@ -639,7 +639,7 @@ void *Arm_Thread(void * args)
             *(param->drop_stage) = 1; // set drop stage to 1
             break;
           }
-          case ',':
+          case 'g':
           {
             left_right = false; // set left/right flag to false for egg drop
             angles[0] = SPIN_MOTOR_TEMP_REST;
@@ -796,7 +796,7 @@ void *PWM_Servo_Thread(void * args)
             set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
             break;
           }
-          case ',': // turn and drop eggs to the left
+          case 'f': // turn and drop eggs to the left
           {
             left_right = false; // set left/right flag to false for egg drop
             pwm_servo_angle = PWM_SERVO_RESET; // set angle for left drop
@@ -806,7 +806,7 @@ void *PWM_Servo_Thread(void * args)
             *(param->drop_stage) = 1; // set drop stage to 1 (either the arm does it first or the pwm servo does it first)
             break;
           }
-          case '.': // turn and drop eggs to the right
+          case 'g': // turn and drop eggs to the right
           {
             left_right = true; // set left/right flag to true for egg drop
             pwm_servo_angle = PWM_SERVO_RESET; // set angle for right drop
