@@ -635,7 +635,7 @@ void *Arm_Thread(void * args)
             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-            sleep(1); // assure arm does not move foe 1 second
+            sleep(2); // assure arm does not move for 2 seconds
             *(param->drop_stage) = 1; // set drop stage to 1
             break;
           }
@@ -830,9 +830,9 @@ void *PWM_Servo_Thread(void * args)
       else { // drop egg to the right
         pwm_servo_angle = PWM_SERVO_RIGHT; // set angle for right drop
       }
-      set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT*2);
-      sleep(1); // assure servo does not move for 1 second
-      *(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
+      set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT);
+      //sleep(1); // assure servo does not move for 1 second
+      //*(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
     } // no cases for stage 2 (wait for other threads to update)
     wait_period( &timer_state, 10u ); /* 10ms */
   }

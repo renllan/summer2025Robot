@@ -398,25 +398,8 @@ int main(int argc, char * argv[] )
   {
     ; /* warning message already issued */
   }
-  printf("Setting angles to [90, 90, 90]\n\n");
-    angles[0] = SPIN_MOTOR_TEMP_REST;
-    angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
-    angles[2] = UP_DOWN_MOTOR_TEMP_REST;
-    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
-    sleep(1); // Delay to assure reset position is reached
+
   /*
-     * Initialize angles to [90, 135, 75] (RESET POSITION)
-     * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
-     * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
-     * [2] moves arm up and down, 90 is level; below is up and above is down
-     */
-    printf("Setting angles to [90, 135, 75]\n\n");
-    angles[0] = SPIN_RESET;
-    angles[1] = BACK_FORTH_RESET;
-    angles[2] = UP_DOWN_RESET;
-    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
-    
-    /*
      * Initialize claw to CLAW_OPEN (open position)
      * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
      * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
@@ -434,6 +417,24 @@ int main(int argc, char * argv[] )
      */
     printf("Setting PWM servo\n");
     set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT*2);
+
+    printf("Setting angles to [90, 90, 90]\n\n");
+    angles[0] = SPIN_MOTOR_TEMP_REST;
+    angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+    angles[2] = UP_DOWN_MOTOR_TEMP_REST;
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
+    sleep(1); // Delay to assure reset position is reached
+  /*
+     * Initialize angles to [90, 135, 75] (RESET POSITION)
+     * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
+     * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
+     * [2] moves arm up and down, 90 is level; below is up and above is down
+     */
+    printf("Setting angles to [90, 135, 75]\n\n");
+    angles[0] = SPIN_RESET;
+    angles[1] = BACK_FORTH_RESET;
+    angles[2] = UP_DOWN_RESET;
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
     sleep(1); // Delay to assure reset position is reached
   printf( "main function done\n" );
 
