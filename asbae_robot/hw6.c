@@ -625,7 +625,7 @@ void *Arm_Thread(void * args)
             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
             angles[2] = UP_DOWN_MOTOR_TEMP_REST;
             set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
-            sleep(1); // Delay to assure reset position is reached
+            sleep(2); // Delay to assure reset position is reached
             angles[0] = SPIN_RESET;
             angles[1] = BACK_FORTH_RESET;
             angles[2] = UP_DOWN_RESET;

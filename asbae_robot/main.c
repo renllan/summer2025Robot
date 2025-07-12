@@ -423,7 +423,7 @@ int main(int argc, char * argv[] )
     angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
     angles[2] = UP_DOWN_MOTOR_TEMP_REST;
     set_angles(uart_fd, angles, ARM_TIMEOUT*2);
-    sleep(1); // Delay to assure reset position is reached
+    sleep(2); // Delay to assure reset position is reached
   /*
      * Initialize angles to [90, 135, 75] (RESET POSITION)
      * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
