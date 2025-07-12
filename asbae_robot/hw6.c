@@ -979,7 +979,6 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
-      }
       case 'x':
         if (prev_dir == 'd'){
           if(!FIFO_FULL(param->speed_fifo)){
