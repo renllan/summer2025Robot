@@ -34,7 +34,8 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
         int avg_g = sum_g / count;
         int avg_b = sum_b / count;
         printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
-    return avg_b;
+    //return the avg blue pixel value in the small box
+        return avg_b;
 
 
     }
