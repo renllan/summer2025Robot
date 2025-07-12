@@ -2153,8 +2153,25 @@ void *egg_detector(void * arg)
                 }
                 else if(not_found > MAX_DECISION_SIZE/2){
                   if(!FIFO_FULL(param->control_fifo)){
-                    
+                    //move the robot robot to the front a little bit
+                    //move the arm to the front a little bit
                     cmd.command ='w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command ='j';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'm';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '1';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'w';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 's';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = 'm';
+                    FIFO_INSERT(param->control_fifo,cmd);
+                    cmd.command = '3';
                     FIFO_INSERT(param->control_fifo,cmd);
                     turn_cool_down = TURN_COOLDOWN_FRAMES;
                     printf("arm: robot did not find any egg \n");

@@ -1,4 +1,8 @@
 #include "find_egg_blobs.h"
+#include <math.h>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 #define PIXEL_RATIO_H 80
 #define PIXEL_RATIO_L 60
 #define PIXEL_THRESH_H 15000
@@ -36,14 +40,14 @@ bool dequeue(PointQueue *q, Point *out) {
 
 int is_white(struct pixel_format_RGB p) {
     return p.R == 255 && p.G == 255 && p.B == 255;
-}
-int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, int width, int height) {
+}int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, int width, int height) {
     assert(img != NULL && eggs != NULL && max_eggs >= 0 && width > 0 && height > 0);
 
     int (*visited)[width] = calloc(height, sizeof(*visited));
     int egg_count = 0;
     PointQueue que;
     reset_queue(&que);
+
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             if (visited[y][x] == 0 && is_white(img[y * width + x])) {
@@ -54,13 +58,14 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
                         dequeue(&que, &dummy);  // drain queue
                     }
                     printf("Queue overflow at blob starting (%d,%d)\n", x,y);
-                    
                 }
                 visited[y][x] = 1;
 
                 int min_x = x, max_x = x, min_y = y, max_y = y;
                 int sum_x = 0, sum_y = 0, pixels = 0;
                 int white_pixels = 0;
+                int perimeter = 0; // <-- perimeter
+
                 while (!queue_empty(&que)) {
                     Point p;
                     dequeue(&que, &p);
@@ -70,6 +75,7 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
 
                     int dx[] = {0, 0, -1, 1};
                     int dy[] = {-1, 1, 0, 0};
+                    int is_edge = 0; // <-- perimeter
 
                     for (int i = 0; i < 4; i++) {
                         int nx = p.x + dx[i];
@@ -90,22 +96,30 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
                             if (nx > max_x) max_x = nx;
                             if (ny > max_y) max_y = ny;
                         }
+
+                        // <-- perimeter: check if neighbor is background or out of bounds
+                        if (nx < 0 || nx >= width || ny < 0 || ny >= height || !is_white(img[ny * width + nx])) {
+                            is_edge = 1;
+                        }
                     }
+                    if (is_edge) perimeter++; // <-- perimeter
                 }
-                
-                
 
                 int w = max_x - min_x + 1;
                 int h = max_y - min_y + 1;
                 int total_pixels = w*h;
                 float aspect = (float)w / h;
                 float white_pixels_ratio = 100*(float)white_pixels/total_pixels;
-                //printf("eggs at %d , %d pixels %d, aspect: %f ,ratio %f\n",sum_x / pixels,sum_y / pixels,pixels,aspect,white_pixels_ratio);
+                float circularity = 4.0 * M_PI * (float)pixels / (perimeter * perimeter);
+
+                // Example: print perimeter for debug
+                // printf("Blob at (%d, %d): perimeter = %d, area = %d\n", x, y, perimeter, pixels);
+
                 if (white_pixels_ratio> PIXEL_RATIO_L && white_pixels_ratio< PIXEL_RATIO_H 
                     && pixels >PIXEL_THRESH_L 
-                     && aspect > ASPECT_L && aspect < ASPECT_H) {
+                    && aspect > ASPECT_L && aspect < ASPECT_H
+                    && circularity > 0.5 && circularity < 1.5) {
                     if (egg_count < max_eggs) {
-                        
                         eggs[egg_count].min_x = min_x;
                         eggs[egg_count].max_x = max_x;
                         eggs[egg_count].min_y = min_y;
@@ -113,6 +127,7 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
                         eggs[egg_count].center_x = sum_x / pixels;
                         eggs[egg_count].center_y = sum_y / pixels;
                         eggs[egg_count].size = pixels;
+                        //eggs[egg_count].perimeter = perimeter; // <-- store perimeter
                         egg_count++;
                     }
                 }
@@ -120,6 +135,5 @@ int find_egg_blobs(struct pixel_format_RGB* img, EggBlob* eggs, int max_eggs, in
         }
     }
     free(visited);
-    //printf("egg count: %d \n",egg_count);
     return egg_count;
 }
