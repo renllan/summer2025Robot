@@ -89,7 +89,7 @@
 #define UP_DOWN_MOTOR_LEFT 0
 #define UP_DOWN_MOTOR_RIGHT 85
 
-#define CLAW_OPEN 350 // 500 for other car
+#define CLAW_OPEN 300 // 500 for other car
 #define CLAW_CLOSE 850 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
