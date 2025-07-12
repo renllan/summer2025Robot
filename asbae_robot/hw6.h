@@ -70,7 +70,7 @@
 #define SPIN_MIN 0 // max left
 #define SPIN_MAX 180 // max right
 #define BACK_FORTH_MIN 35 // max back
-#define BACK_FORTH_MAX 125 // max forward
+#define BACK_FORTH_MAX 130 // max forward
 #define UP_DOWN_MIN 80 // max up
 #define UP_DOWN_MAX 130 // max down
 #define PWM_SERVO_RESET 90 // 180 for other car
@@ -89,7 +89,7 @@
 #define UP_DOWN_MOTOR_LEFT 0
 #define UP_DOWN_MOTOR_RIGHT 85
 
-#define CLAW_OPEN 300 // 500 for other car
+#define CLAW_OPEN 350 // 500 for other car
 #define CLAW_CLOSE 850 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
