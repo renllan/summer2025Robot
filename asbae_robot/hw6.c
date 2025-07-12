@@ -797,26 +797,26 @@ void *PWM_Servo_Thread(void * args)
             set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
             break;
           }
-          case 'f': // turn and drop eggs to the left
-          {
-            left_right = false; // set left/right flag to false for egg drop
-            pwm_servo_angle = PWM_SERVO_RESET; // set angle for left drop
-            printf("Turning pwm servo left for egg drop\n");
-            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-            //sleep(1); // assure servo does not move for 1 second
-            *(param->drop_stage) = 1; // set drop stage to 1 (either the arm does it first or the pwm servo does it first)
-            break;
-          }
-          case 'g': // turn and drop eggs to the right
-          {
-            left_right = true; // set left/right flag to true for egg drop
-            pwm_servo_angle = PWM_SERVO_RESET; // set angle for right drop
-            printf("Turning pwm servo right for egg drop\n");
-            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-            //sleep(1); // assure servo does not move for 1 second
-            *(param->drop_stage) = 1; // set drop stage to 1 (either the arm does it first or the pwm servo does it first)
-            break;
-          }
+          // case 'f': // turn and drop eggs to the left
+          // {
+          //   left_right = false; // set left/right flag to false for egg drop
+          //   pwm_servo_angle = PWM_SERVO_RESET; // set angle for left drop
+          //   printf("Turning pwm servo left for egg drop\n");
+          //   set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          //   //sleep(1); // assure servo does not move for 1 second
+          //   *(param->drop_stage) = 1; // set drop stage to 1 (either the arm does it first or the pwm servo does it first)
+          //   break;
+          // }
+          // case 'g': // turn and drop eggs to the right
+          // {
+          //   left_right = true; // set left/right flag to true for egg drop
+          //   pwm_servo_angle = PWM_SERVO_RESET; // set angle for right drop
+          //   printf("Turning pwm servo right for egg drop\n");
+          //   set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          //   //sleep(1); // assure servo does not move for 1 second
+          //   *(param->drop_stage) = 1; // set drop stage to 1 (either the arm does it first or the pwm servo does it first)
+          //   break;
+          // }
           default:
           {
             printf("Invalid command for pwm servo thread: %c\n", cmd.command);
