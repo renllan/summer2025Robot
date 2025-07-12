@@ -305,11 +305,16 @@ int main(int argc, char * argv[] )
         //temp
         //io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_INPUT;
         //io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_ALTERNATE_FUNCTION0;
-        io->pwm->DAT1 = 0; // testing
-        io->pwm->DAT2 = 0; // testing
+        io->pwm->DAT1 = 1; // testing
+        io->pwm->DAT2 = 1; // testing
         printf ("pwm val: %d\n", io->pwm->DAT1);
         printf ("pwm val: %d\n", io->pwm->DAT2);
-        sleep(2);
+        sleep(5);
+        io->pwm->DAT1 = 50; // start pwm
+        io->pwm->DAT2 = 50; // start pwm
+        printf ("pwm val: %d\n", io->pwm->DAT1);
+        printf ("pwm val: %d\n", io->pwm->DAT2);
+        sleep(5);
         io->pwm->DAT1 = 100; // stop pwm
         io->pwm->DAT2 = 100; // stop pwm
         printf ("pwm val: %d\n", io->pwm->DAT1);

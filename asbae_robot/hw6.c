@@ -1277,8 +1277,6 @@ void *video_capture(void * arg){
   return NULL;
 }
 
-  
-
 void *video_with_cross(void * arg){
   
   struct img_process_thread_param *param = (struct img_process_thread_param*)arg;
