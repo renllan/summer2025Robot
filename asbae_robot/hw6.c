@@ -721,6 +721,7 @@ void *Claw_Thread(void * args)
       }
     }
     else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
+      sleep(1); // wait for arm to move to basket position
       if (claw_pos != CLAW_OPEN) { // open claw if not already open
         claw_pos = CLAW_OPEN;
         printf("Opening claw to drop egg\n");
@@ -830,9 +831,9 @@ void *PWM_Servo_Thread(void * args)
       else { // drop egg to the right
         pwm_servo_angle = PWM_SERVO_RIGHT; // set angle for right drop
       }
-      set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT);
-      //sleep(1); // assure servo does not move for 1 second
-      //*(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
+      set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT*2);
+      sleep(1); // assure servo does not move for 1 second
+      *(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
     } // no cases for stage 2 (wait for other threads to update)
     wait_period( &timer_state, 10u ); /* 10ms */
   }
