@@ -6,4 +6,4 @@
 #define IMG_HEIGHT 240
 #define BBOX_W   8
 #define BBOX_H   8
-void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img);
+int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img);
