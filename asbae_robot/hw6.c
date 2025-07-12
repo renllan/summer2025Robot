@@ -620,11 +620,17 @@ void *Arm_Thread(void * args)
           }
           case 's': // reset arm to initial angles
           {
+            printf("Setting angles to [90, 90, 90]\n\n");
+            angles[0] = SPIN_MOTOR_TEMP_REST;
+            angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+            angles[2] = UP_DOWN_MOTOR_TEMP_REST;
+            set_angles(uart_fd, angles, ARM_TIMEOUT*2);
+            sleep(1); // Delay to assure reset position is reached
             angles[0] = SPIN_RESET;
             angles[1] = BACK_FORTH_RESET;
             angles[2] = UP_DOWN_RESET;
             printf("Resetting arm to initial angles\n");
-            set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+            set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
             break;
           }
           case 'f':
@@ -635,7 +641,7 @@ void *Arm_Thread(void * args)
             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-            sleep(2); // assure arm does not move for 2 seconds
+            sleep(1); // assure arm does not move for 1 second
             *(param->drop_stage) = 1; // set drop stage to 1
             break;
           }
