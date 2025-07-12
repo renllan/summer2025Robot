@@ -319,6 +319,9 @@ int main(int argc, char * argv[] )
         io->pwm->DAT2 = 100; // stop pwm
         printf ("pwm val: %d\n", io->pwm->DAT1);
         printf ("pwm val: %d\n", io->pwm->DAT2);
+        sleep(5);
+        io->pwm->DAT1 = 1; // testing
+        io->pwm->DAT2 = 1; // testing
         io->gpio->GPFSEL1.field.FSEL9 = GPFSEL_INPUT;
         io->gpio->GPFSEL1.field.FSEL3 = GPFSEL_ALTERNATE_FUNCTION0;
 
