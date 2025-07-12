@@ -1,7 +1,8 @@
 #include "egg_sort.h"
 #include <math.h>
 #define min(a,b)((a)<(b) ? (a):(b))
-
+#define Bad_value 220
+#define FRAMES 50
 
 void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
@@ -33,11 +34,10 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
         int avg_g = sum_g / count;
         int avg_b = sum_b / count;
         printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
-    } else {
-        printf("No pixels in bbox\n");
+    return avg_b;
+
+
     }
-
-
 }
 void apply_expoential(struct pixel_format_RGB *img){
     for(int i = 0; i< IMAGE_SIZE/3;i++)
@@ -50,7 +50,8 @@ void apply_expoential(struct pixel_format_RGB *img){
 int main(int argc, char * argv[])
 {
     struct video_interface_handle_t *         handle_video1  = NULL;
-    unsigned char               IMG_RAW1[IMAGE_SIZE];//arm image
+    unsigned char               IMG_RAW1[IMAGE_SIZE];//arm i mage
+
     struct pixel_format_RGB     * IMG_DATA1 = (struct pixel_format_RGB*)IMG_RAW1;
     static struct image_t       image;
 
@@ -70,9 +71,20 @@ int main(int argc, char * argv[])
         return 1;
     }
     draw_bitmap_start( argc, argv );
+    int sum_b = 0;
+    int counter = 0;
+    struct  timespec  timer_state; 
+    struct io_peripherals *io;
+    io = import_registers();
+    if(!io){
+        printf("fail to initialize io \n");
+        return 0;
+    }
+    io->gpio->GPFSEL1.field.FSEL6 = GPFSEL_OUTPUT;
+    io->gpio->GPFSEL2.field.FSEL6 = GPFSEL_OUTPUT;
 
-    
-   while (handle_video1) {
+    wait_period_initialize( &timer_state );
+    while (handle_video1) {
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
@@ -108,7 +120,23 @@ int main(int argc, char * argv[])
             int center_y = eggs[max_egg].center_y;
             egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
         }
+
+        if(counter %FRAMES==0){
+            int avg = sum_b/FRAMES;
+            if(avg > Bad_value){
+                GPIO_CLR(io->gpio, 6); // turn off the red led
+                GPIO_SET(io->gpio, 5); // turn on the green led
+                printf("detected good egg\n");
+            }
+            else{
+                GPIO_CLR(io->gpio, 5); // turn off the green led
+                GPIO_SET(io->gpio, 6); // turn on the red led
+                printf("detected bad egg\n");
+            }
+            sum_b = 0;
+        }
         draw_bitmap_display(handle_GUI_grey, IMG_DATA2);
+        wait_period(&timer_state, 10u);  // Update every 10ms
     }
 
 
