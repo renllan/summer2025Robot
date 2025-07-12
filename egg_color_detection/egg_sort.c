@@ -88,6 +88,15 @@ int main(int argc, char * argv[])
 
     wait_period_initialize( &timer_state );
     while (handle_video1) {
+        int keyhit1 = get_pressed_key(); // read once every 10ms
+    
+        if ( keyhit1 != -1) {
+            if (keyhit1 == 'q') {
+                printf("Exiting...\n");
+                break;
+            }
+        }
+        counter++;
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
@@ -121,7 +130,7 @@ int main(int argc, char * argv[])
 
             int center_x = eggs[max_egg].center_x;
             int center_y = eggs[max_egg].center_y;
-            egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
+            sum_b   += egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
         }
 
         if(counter %FRAMES==0){
@@ -142,5 +151,7 @@ int main(int argc, char * argv[])
         wait_period(&timer_state, 10u);  // Update every 10ms
     }
 
-
-}
+    if (handle_GUI_RGB) {draw_bitmap_close_window(handle_GUI_RGB); handle_GUI_RGB = NULL;}
+    if (handle_GUI_grey) {draw_bitmap_close_window(handle_GUI_grey); handle_GUI_grey = NULL;}
+    if (handle_video1) video_interface_close(handle_video1);
+}   
