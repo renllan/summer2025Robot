@@ -1,9 +1,10 @@
 #include "egg_sort.h"
 #include <math.h>
 #define min(a,b)((a)<(b) ? (a):(b))
+#define Bad_value 220
+#define FRAMES 50
 
-
-void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
+int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
     int min_x =center_x-BBOX_W/2;
@@ -33,11 +34,13 @@ void egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
         int avg_g = sum_g / count;
         int avg_b = sum_b / count;
         printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
-    } else {
-        printf("No pixels in bbox\n");
+    //return the avg blue pixel value in the small box
+        return avg_b;
     }
-
-
+    else {
+        printf("No pixels in the bounding box.\n");
+        return 0; // No pixels in the bounding box
+    }
 }
 void apply_expoential(struct pixel_format_RGB *img){
     for(int i = 0; i< IMAGE_SIZE/3;i++)
@@ -50,7 +53,8 @@ void apply_expoential(struct pixel_format_RGB *img){
 int main(int argc, char * argv[])
 {
     struct video_interface_handle_t *         handle_video1  = NULL;
-    unsigned char               IMG_RAW1[IMAGE_SIZE];//arm image
+    unsigned char               IMG_RAW1[IMAGE_SIZE];//arm i mage
+
     struct pixel_format_RGB     * IMG_DATA1 = (struct pixel_format_RGB*)IMG_RAW1;
     static struct image_t       image;
 
@@ -70,9 +74,29 @@ int main(int argc, char * argv[])
         return 1;
     }
     draw_bitmap_start( argc, argv );
+    int sum_b = 0;
+    int counter = 0;
+    struct  timespec  timer_state; 
+    struct io_peripherals *io;
+    io = import_registers();
+    if(!io){
+        printf("fail to initialize io \n");
+        return 0;
+    }
+    io->gpio->GPFSEL1.field.FSEL6 = GPFSEL_OUTPUT;
+    io->gpio->GPFSEL2.field.FSEL6 = GPFSEL_OUTPUT;
 
+    wait_period_initialize( &timer_state );
+    while (handle_video1) {
+        int keyhit1 = get_pressed_key(); // read once every 10ms
     
-   while (handle_video1) {
+        if ( keyhit1 != -1) {
+            if (keyhit1 == 'q') {
+                printf("Exiting...\n");
+                break;
+            }
+        }
+        counter++;
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
@@ -106,10 +130,28 @@ int main(int argc, char * argv[])
 
             int center_x = eggs[max_egg].center_x;
             int center_y = eggs[max_egg].center_y;
-            egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
+            sum_b   += egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
+        }
+
+        if(counter %FRAMES==0){
+            int avg = sum_b/FRAMES;
+            if(avg > Bad_value){
+                GPIO_CLR(io->gpio, 6); // turn off the red led
+                GPIO_SET(io->gpio, 5); // turn on the green led
+                printf("detected good egg\n");
+            }
+            else{
+                GPIO_CLR(io->gpio, 5); // turn off the green led
+                GPIO_SET(io->gpio, 6); // turn on the red led
+                printf("detected bad egg\n");
+            }
+            sum_b = 0;
         }
         draw_bitmap_display(handle_GUI_grey, IMG_DATA2);
+        wait_period(&timer_state, 10u);  // Update every 10ms
     }
 
-
-}
+    if (handle_GUI_RGB) {draw_bitmap_close_window(handle_GUI_RGB); handle_GUI_RGB = NULL;}
+    if (handle_GUI_grey) {draw_bitmap_close_window(handle_GUI_grey); handle_GUI_grey = NULL;}
+    if (handle_video1) video_interface_close(handle_video1);
+}   

@@ -5,8 +5,10 @@ SOURCES = egg_sort.c \
           ../include/draw_bitmap_multiwindow.c \
           ../asbae_robot/find_egg_blobs.c \
           ../asbae_robot/to_black_white.c \
-          ../asbae_robot/draw_bbox.c
-
+          ../asbae_robot/draw_bbox.c \
+		  ../include/wait_period.c \
+		  ../include/import_registers.c \
+		  ../include/keypress.c
 OBJECTS = $(SOURCES:.c=.o)
 
 CFLAGS = -g -Og -Werror -Wno-deprecated-declarations `pkg-config --cflags gtk+-2.0`
