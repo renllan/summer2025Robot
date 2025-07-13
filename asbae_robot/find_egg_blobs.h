@@ -1,4 +1,4 @@
-#include "pixel_format_RGB.h"
+#include "../include/pixel_format_RGB.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>

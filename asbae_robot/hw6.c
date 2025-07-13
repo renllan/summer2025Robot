@@ -2037,38 +2037,39 @@ void *egg_detector(void * arg)
                 else if(not_found > MAX_DECISION_SIZE/2){
                   if(!FIFO_FULL(param->dir_fifo)){
                     
-                    cmd.command = 'a';
-                    FIFO_INSERT(param->dir_fifo,cmd);
-                    cmd.command ='w';
+                    // cmd.command = 'a';
+                    // FIFO_INSERT(param->dir_fifo,cmd);
+                    cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
                     turn_cool_down = TURN_COOLDOWN_FRAMES;
                     printf("robot: robot did not find any egg \n");
                     robot_stopped = false;
                   }  
                 }
-                else if (left >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->dir_fifo)) {
+                // else if (left >= MAX_DECISION_SIZE/2) {
+                //   if (!FIFO_FULL(param->dir_fifo)) {
                       
-                      printf("robot queue decision: largest egg detected on the left\n");                    
-                      cmd.command = 'd';
-                      FIFO_INSERT(param->dir_fifo, cmd);
-                      //centered = false;
-                      turn_cool_down = TURN_COOLDOWN_FRAMES;                      
-                  }
-                } else if (right >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->dir_fifo)) {
-                      printf("robot queue decision: largest egg detected on the right\n");
-                      cmd.command = 'a';
-                      FIFO_INSERT(param->dir_fifo, cmd);
-                      turn_cool_down = TURN_COOLDOWN_FRAMES;
-                  }
-                }
+                //       printf("robot queue decision: largest egg detected on the left\n");                    
+                //       cmd.command = 'd';
+                //       FIFO_INSERT(param->dir_fifo, cmd);
+                //       //centered = false;
+                //       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
+                //   }
+                // } else if (right >= MAX_DECISION_SIZE/2) {
+                //   if (!FIFO_FULL(param->dir_fifo)) {
+                //       printf("robot queue decision: largest egg detected on the right\n");
+                //       cmd.command = 'a';
+                //       FIFO_INSERT(param->dir_fifo, cmd);
+                //       turn_cool_down = TURN_COOLDOWN_FRAMES;
+                //   }
+                // }
                 else if(center >=MAX_DECISION_SIZE/2){
                   robot_centered = true;
                   printf("robot: egg is at the center of the robot\n");
                 }
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
+                  usleep(250000); //wait for 1 second
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
