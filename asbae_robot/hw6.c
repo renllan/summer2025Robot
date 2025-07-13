@@ -2128,7 +2128,7 @@ void *egg_detector(void * arg)
               cmd.command = 'p';
               FIFO_INSERT(param->control_fifo,cmd);
               arm_frames_seen++;
-              sleep(1)
+              sleep(1);
               if (arm_frames_seen >= MAX_DECISION_SIZE) {
                 arm_queue_filled = true;
               }
