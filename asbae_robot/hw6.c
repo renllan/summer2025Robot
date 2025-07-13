@@ -675,7 +675,6 @@ void *Arm_Thread(void * args)
         angles[2] = UP_DOWN_MOTOR_RIGHT;
       }
       set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
-      sleep(1); // assure arm does not move for 1 second
       *(param->drop_stage) = 2; // set drop stage to 2
     } else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
       angles[0] = SPIN_MOTOR_RIGHT2; // reset spin motor to temporary rest position
@@ -734,7 +733,6 @@ void *Claw_Thread(void * args)
       }
     }
     else if (*(param->drop_stage) == 3) { // stage 2 (open claw to drop egg)
-      sleep(1); // wait for arm to move to basket position
       if (claw_pos != CLAW_OPEN) { // open claw if not already open
         claw_pos = CLAW_OPEN;
         printf("Opening claw to drop egg\n");
