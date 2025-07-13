@@ -76,7 +76,6 @@ int main(int argc, char * argv[] )
     struct fifo_t hist_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t egg_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t single_channel_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for arm control commands
     struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
     struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
     struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
