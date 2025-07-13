@@ -1,4 +1,5 @@
 #include "find_egg_blobs.h"
+
 #define PIXEL_RATIO_H 80
 #define PIXEL_RATIO_L 60
 #define PIXEL_THRESH_H 15000

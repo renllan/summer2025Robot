@@ -498,8 +498,8 @@ void *Control(void * arg)
               printf( "pwm_servo_fifo queue full\nHW6> " );
               break;
           }
-          if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
-          else printf( "claw_fifo queue full\nHW6> " );
+          // if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
+          // else printf( "claw_fifo queue full\nHW6> " );
           break;
         }
         default: //if no command entered
@@ -2179,45 +2179,59 @@ void *egg_detector(void * arg)
                   printf("arm: egg size is %d egg is close to robot\n",arm_eggs[0].size);
                   arm_stopped = true;    
                 }
-                else{
-
-                }
+                
                 //check x direction
-                if(arm_cool_down_x > 0)
-                {
-                  arm_cool_down_x--;
-                }
+                // if(arm_cool_down_x > 0)
+                // {
+                //   arm_cool_down_x--;
+                // }
 
-                if(not_found > MAX_DECISION_SIZE/2){
-                  if(!FIFO_FULL(param->control_fifo)){
-                    //move the robot robot to the front a little bit
-                    //move the arm to the front a little bit
-                    // cmd.command ='w';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command ='j';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command = 'm';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command = '1';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command = 'w';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command = 'w';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    // cmd.command = 's';
-                    // FIFO_INSERT(param->control_fifo,cmd);
-                    cmd.command = 'm';
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    cmd.command = '3';
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    cmd.command = 'w';
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    turn_cool_down = TURN_COOLDOWN_FRAMES;
-                    printf("arm: robot did not find any egg \n");
-                    arm_stopped = false;
-                    break;
-                  }  
-                }
+                
+
+                // if(not_found > MAX_DECISION_SIZE/2){
+                //   if(!FIFO_FULL(param->control_fifo)){
+                //     //move the robot robot to the front a little bit
+                //     //move the arm to the front a little bit
+                //     // cmd.command ='w';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command ='j';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command = 'm';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command = '1';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command = 'w';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command = 'w';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     // cmd.command = 's';
+                //     // FIFO_INSERT(param->control_fifo,cmd);
+                //     cmd.command = 'm';
+                //     FIFO_INSERT(param->control_fifo,cmd);
+                //     cmd.command = '3';
+                //     FIFO_INSERT(param->control_fifo,cmd);
+                //     cmd.command = 'w';
+                //     FIFO_INSERT(param->control_fifo,cmd);
+                //     turn_cool_down = TURN_COOLDOWN_FRAMES;
+                //     printf("arm: robot did not find any egg \n");
+                //     arm_stopped = false;
+                //     break;
+                //   }  
+                // }
+
+                 if(found > 0 && arm_eggs[0].min_x > 150){
+                    for(int i = 0; i<6;i++){
+                      cmd.command = 'j';
+                      fifo_insert(param->control_fifo, cmd);
+                    }
+                    cmd.command = 'c';
+                    fifo_insert(param->control_fifo, cmd);
+
+                  }
+                  // }
+                  // else if(found > 0 && arm_eggs[0].center_x < 80){
+                  //   cmd.command = ''
+                  // }
 
                 // if (left >= MAX_DECISION_SIZE/2) {
                 //   if (!FIFO_FULL(param->control_fifo)) {
@@ -2241,67 +2255,47 @@ void *egg_detector(void * arg)
                 //   printf("arm: egg is at the center of the of arm in the x direction \n");
                 // }
                 //check y direction
-                if(arm_cool_down_y > 0){
-                  arm_cool_down_y--;
-                }
-                if(front >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too far front");
-                  cmd.command = 'x';
-                  cmd.command =0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(back >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too back");
-                  cmd.command ='w';
-                  cmd.argument = 0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(center_y >= MAX_DECISION_THRESHOLD){
-                  printf("arm: egg is at the center of the arm in the y direction \n");
-                  arm_centered_y =true;
-                }
+                
 
-                if(arm_centered_y){
-                  if(arm_stopped)
-                  {
-                    printf("arm: arm is close enough to grab the egg \n");
-                  //todo: grab the egg
-                    cmd.command = 'c';
-                    cmd.argument = 0;
-                    //grab the egg
-                    fifo_insert(param->control_fifo,cmd);
-                    #ifdef SINGLE_EGG
-                      //flip 180 degree
-                      cmd.command = 'x';
-                      cmd.argument =0;
-                      fifo_insert(param->dir_fifo,cmd);
-                      usleep(100000); //needs to be modified
-                      //flip 180 degree
-                    #endif
-                    //release the egg
+                // if(arm_centered_y){
+                //   if(arm_stopped)
+                //   {
+                //     printf("arm: arm is close enough to grab the egg \n");
+                //   //todo: grab the egg
+                //     cmd.command = 'c';
+                //     cmd.argument = 0;
+                //     //grab the egg
+                //     fifo_insert(param->control_fifo,cmd);
+                //     #ifdef SINGLE_EGG
+                //       //flip 180 degree
+                //       cmd.command = 'x';
+                //       cmd.argument =0;
+                //       fifo_insert(param->dir_fifo,cmd);
+                //       usleep(100000); //needs to be modified
+                //       //flip 180 degree
+                //     #endif
+                //     //release the egg
                     
                      
-                    //
-                    cmd.command = 'c';
-                    cmd.argument = 0;
-                    //grab the egg
-                    fifo_insert(param->control_fifo,cmd);
-                    cmd.command = 'm';
-                    cmd.argument = 2;
-                    fifo_insert(param->control_fifo,cmd);
-                    printf("switched robot mode to mode 2\n");
-                    mode3 = false;
-                  }
-                  else{
-                    if(!FIFO_FULL(param->control_fifo)){
-                    cmd.command= 'j';
-                    cmd.argument =0;
-                    FIFO_INSERT(param->control_fifo,cmd);
-                    }
-                  }
-                }
+                //     //
+                //     cmd.command = 'c';
+                //     cmd.argument = 0;
+                //     //grab the egg
+                //     fifo_insert(param->control_fifo,cmd);
+                //     cmd.command = 'm';
+                //     cmd.argument = 2;
+                //     fifo_insert(param->control_fifo,cmd);
+                //     printf("switched robot mode to mode 2\n");
+                //     mode3 = false;
+                //   }
+                //   else{
+                //     if(!FIFO_FULL(param->control_fifo)){
+                //     cmd.command= 'j';
+                //     cmd.argument =0;
+                //     FIFO_INSERT(param->control_fifo,cmd);
+                //     }
+                //   }
+                // }
               }
             }
             break;
