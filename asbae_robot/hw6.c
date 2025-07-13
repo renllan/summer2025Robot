@@ -733,6 +733,7 @@ void *Claw_Thread(void * args)
       }
     }
     else if (*(param->drop_stage) == 3) { // stage 2 (open claw to drop egg)
+      sleep(1); // wait for arm to move to basket position
       if (claw_pos != CLAW_OPEN) { // open claw if not already open
         claw_pos = CLAW_OPEN;
         printf("Opening claw to drop egg\n");
