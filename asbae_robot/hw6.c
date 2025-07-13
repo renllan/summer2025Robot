@@ -1938,6 +1938,9 @@ void *egg_detector(void * arg)
     int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
+
+    cmd.command = 'p';
+    FIFO_INSERT(param->control_fifo,cmd);
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
@@ -1982,8 +1985,6 @@ void *egg_detector(void * arg)
             }    
             if(!mode3){
               // ---------------Robot Mode-----------------
-              cmd.command = 'p';
-              FIFO_INSERT(param->control_fifo,cmd);
               robot_frames_seen++;
               if (robot_frames_seen >= MAX_DECISION_SIZE) {
                 robot_queue_filled = true;
