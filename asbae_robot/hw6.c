@@ -1698,7 +1698,7 @@ void set_gpio(struct io_peripherals *io)
   /* set the pin function to OUTPUT for GPIO24 - */
   /* set the pin function to OUTPUT for GPIO25 -    */
   io->gpio->GPFSEL2.field.FSEL4 = GPFSEL_INPUT;
-    io->gpio->GPFSEL2.field.FSEL5 = GPFSEL_INPUT;
+  io->gpio->GPFSEL2.field.FSEL5 = GPFSEL_INPUT;
   /* set the pin function to OUTPUT for GPIO05 - */
   /* set the pin function to OUTPUT for GPIO06 -    */
   io->gpio->GPFSEL0.field.FSEL5 = GPFSEL_OUTPUT;
@@ -2151,7 +2151,8 @@ void *egg_detector(void * arg)
                 {
                   arm_cool_down_x--;
                 }
-                else if(not_found > MAX_DECISION_SIZE/2){
+
+                if(not_found > MAX_DECISION_SIZE/2){
                   if(!FIFO_FULL(param->control_fifo)){
                     //move the robot robot to the front a little bit
                     //move the arm to the front a little bit
@@ -2179,27 +2180,28 @@ void *egg_detector(void * arg)
                     break;
                   }  
                 }
-                else if (left >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->control_fifo)) {
+
+                // if (left >= MAX_DECISION_SIZE/2) {
+                //   if (!FIFO_FULL(param->control_fifo)) {
                       
-                    printf("arm queue decision: largest egg detected on the left\n");                    
-                    cmd.command = 'd';
-                    FIFO_INSERT(param->control_fifo, cmd);
-                    //centered = false;
-                    turn_cool_down = TURN_COOLDOWN_FRAMES;                      
-                  }
-                } else if (right >= MAX_DECISION_SIZE/2) {
-                  if (!FIFO_FULL(param->control_fifo)) {
-                      printf("arm queue decision: largest egg detected on the right\n");
-                      cmd.command = 'a';
-                      FIFO_INSERT(param->control_fifo, cmd);
-                      turn_cool_down = TURN_COOLDOWN_FRAMES;
-                  }
-                }
-                else if(center_x >= MAX_DECISION_SIZE/2){
-                  arm_centered_x = true;
-                  printf("arm: egg is at the center of the of arm in the x direction \n");
-                }
+                //     printf("arm queue decision: largest egg detected on the left\n");                    
+                //     cmd.command = 'd';
+                //     FIFO_INSERT(param->control_fifo, cmd);
+                //     //centered = false;
+                //     turn_cool_down = TURN_COOLDOWN_FRAMES;                      
+                //   }
+                // } else if (right >= MAX_DECISION_SIZE/2) {
+                  // if (!FIFO_FULL(param->control_fifo)) {
+                  //     printf("arm queue decision: largest egg detected on the right\n");
+                  //     cmd.command = 'a';
+                  //     FIFO_INSERT(param->control_fifo, cmd);
+                //       turn_cool_down = TURN_COOLDOWN_FRAMES;
+                //   }
+                // }
+                // else if(center_x >= MAX_DECISION_SIZE/2){
+                //   arm_centered_x = true;
+                //   printf("arm: egg is at the center of the of arm in the x direction \n");
+                // }
                 //check y direction
                 if(arm_cool_down_y > 0){
                   arm_cool_down_y--;
@@ -2223,7 +2225,7 @@ void *egg_detector(void * arg)
                   arm_centered_y =true;
                 }
 
-                if(arm_centered_x && arm_centered_y){
+                if(arm_centered_y){
                   if(arm_stopped)
                   {
                     printf("arm: arm is close enough to grab the egg \n");
@@ -2234,13 +2236,14 @@ void *egg_detector(void * arg)
                     fifo_insert(param->control_fifo,cmd);
                     #ifdef SINGLE_EGG
                       //flip 180 degree
-                      cmd.command = 'w';
+                      cmd.command = 'x';
                       cmd.argument =0;
                       fifo_insert(param->dir_fifo,cmd);
                       usleep(100000); //needs to be modified
                       //flip 180 degree
                     #endif
                     //release the egg
+                    
                      
                     //
                     cmd.command = 'c';
