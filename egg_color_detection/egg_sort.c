@@ -1,7 +1,7 @@
 #include "egg_sort.h"
 #include <math.h>
 #define min(a,b)((a)<(b) ? (a):(b))
-#define Bad_value 220
+#define Bad_value 250
 #define FRAMES 50
 #define BAD_EGG_THRESHOLD 251
 int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
