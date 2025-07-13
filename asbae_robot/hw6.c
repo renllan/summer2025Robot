@@ -2241,27 +2241,27 @@ void *egg_detector(void * arg)
                 //   printf("arm: egg is at the center of the of arm in the x direction \n");
                 // }
                 //check y direction
-                if(arm_cool_down_y > 0){
-                  arm_cool_down_y--;
-                }
-                if(front >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too far front");
-                  cmd.command = 'x';
-                  cmd.command =0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(back >= MAX_DECISION_THRESHOLD){
-                  printf("arm: arm is too back");
-                  cmd.command ='w';
-                  cmd.argument = 0;
-                  fifo_insert(param->control_fifo,cmd);
-                  arm_cool_down_y = TURN_COOLDOWN_FRAMES;
-                }
-                else if(center_y >= MAX_DECISION_THRESHOLD){
-                  printf("arm: egg is at the center of the arm in the y direction \n");
-                  arm_centered_y =true;
-                }
+                // if(arm_cool_down_y > 0){
+                //   arm_cool_down_y--;
+                // }
+                // if(front >= MAX_DECISION_THRESHOLD){
+                //   printf("arm: arm is too far front");
+                //   cmd.command = 'x';
+                //   cmd.command =0;
+                //   fifo_insert(param->control_fifo,cmd);
+                //   arm_cool_down_y = TURN_COOLDOWN_FRAMES;
+                // }
+                // else if(back >= MAX_DECISION_THRESHOLD){
+                //   printf("arm: arm is too back");
+                //   cmd.command ='w';
+                //   cmd.argument = 0;
+                //   fifo_insert(param->control_fifo,cmd);
+                //   arm_cool_down_y = TURN_COOLDOWN_FRAMES;
+                // }
+                // else if(center_y >= MAX_DECISION_THRESHOLD){
+                //   printf("arm: egg is at the center of the arm in the y direction \n");
+                //   arm_centered_y =true;
+                // }
 
                 if(arm_centered_y){
                   if(arm_stopped)
