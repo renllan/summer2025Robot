@@ -484,6 +484,24 @@ void *Control(void * arg)
           change = true;
           break;
         }
+        case 'p': // arm 909090
+        {
+          cmd2.command = 'p';
+          cmd2.argument = 0; // not needed for arm control
+          if (!(FIFO_FULL(param->arm_fifo))) FIFO_INSERT( param->arm_fifo, cmd2 );
+          else {
+              printf( "arm_fifo queue full\nHW6> " );
+              break;
+          }
+          if (!(FIFO_FULL(param->pwm_servo_fifo))) FIFO_INSERT( param->pwm_servo_fifo, cmd2 );
+          else {
+              printf( "pwm_servo_fifo queue full\nHW6> " );
+              break;
+          }
+          if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
+          else printf( "claw_fifo queue full\nHW6> " );
+          break;
+        }
         default: //if no command entered
         {
             printf("invalid command \n");
@@ -595,6 +613,15 @@ void *Arm_Thread(void * args)
           set_angles(param->uart_fd, angles, ARM_TIMEOUT);
           break;
         }
+        case 'p': // 909090
+        {
+          angles[0] = SPIN_RESET;
+          angles[1] = BACK_FORTH_RESET;
+          angles[2] = UP_DOWN_RESET;
+          printf("Resetting arm to 90 degrees\n");
+          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+          break;
+        }
         default:
         {
           printf("Invalid command for arm thread: %c\n", cmd.command);
@@ -634,7 +661,7 @@ void *Claw_Thread(void * args)
           set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
           break;
         }
-        case 's': // reset claw to open position
+        case 's': case 'p':// reset claw to open position
         {
           claw_pos = CLAW_OPEN;
           printf("Resetting claw to open position\n");
@@ -704,7 +731,7 @@ void *PWM_Servo_Thread(void * args)
           printf("Decreasing pwm servo angle to %d degrees\n", angle_change);
           break;
         }
-        case 's': // reset pwm servo to initial angle
+        case 's': case 'p': // reset pwm servo to initial angle
         {
           pwm_servo_angle = PWM_SERVO_RESET;
           printf("Resetting pwm servo to initial angle\n");
@@ -1274,8 +1301,6 @@ void *video_capture(void * arg){
   printf("video capture thread exit\n");
   return NULL;
 }
-
-  
 
 void *video_with_cross(void * arg){
   
@@ -1957,6 +1982,8 @@ void *egg_detector(void * arg)
             }    
             if(!mode3){
               // ---------------Robot Mode-----------------
+              cmd.command = 'p';
+              FIFO_INSERT(param->control_fifo,cmd);
               robot_frames_seen++;
               if (robot_frames_seen >= MAX_DECISION_SIZE) {
                 robot_queue_filled = true;
