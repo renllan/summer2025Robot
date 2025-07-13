@@ -3,7 +3,7 @@
 #define min(a,b)((a)<(b) ? (a):(b))
 #define Bad_value 220
 #define FRAMES 50
-
+#define BAD_EGG_THRESHOLD 251
 int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
@@ -33,7 +33,7 @@ int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
         int avg_r = sum_r / count;
         int avg_g = sum_g / count;
         int avg_b = sum_b / count;
-        printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
+        //printf("Average RGB inside bbox: (R: %d, G:%d, B:%d)\n", avg_r, avg_g, avg_b);
     //return the avg blue pixel value in the small box
         return avg_b;
     }
@@ -96,7 +96,6 @@ int main(int argc, char * argv[])
                 break;
             }
         }
-        counter++;
         video_interface_get_image(handle_video1, &image);
         memcpy(IMG_RAW1, (unsigned char *)&image, IMAGE_SIZE);
 
@@ -131,18 +130,40 @@ int main(int argc, char * argv[])
             int center_x = eggs[max_egg].center_x;
             int center_y = eggs[max_egg].center_y;
             sum_b   += egg_sort(center_x, center_y, IMG_DATA1); // display the egg sort
+            counter++;
+
         }
 
         if(counter %FRAMES==0){
             int avg = sum_b/FRAMES;
             if(avg > Bad_value){
-                GPIO_CLR(io->gpio, 6); // turn off the red led
-                GPIO_SET(io->gpio, 5); // turn on the green led
+                GPIO_SET(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 26); // turn on the green led
                 printf("detected good egg\n");
             }
+            else if (avg < 100){
+                GPIO_SET(io->gpio, 6); // turn off the green led
+                GPIO_CLR(io->gpio, 16); // turn on the red led
+                printf("detected bad egg\n");
+            }
+            else if(avg > BAD_EGG_THRESHOLD){
+                GPIO_SET(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 6); // turn on the green led
+                printf("detected bad egg\n");
+            }
+            else if(avg < BAD_EGG_THRESHOLD){
+                GPIO_SET(io->gpio, 26); // turn off the green led
+                GPIO_CLR(io->gpio, 6); // turn on the red led
+                printf("detected bad egg\n");
+            }
+            else if(avg > 200 && avg < 220){
+                GPIO_clr(io->gpio, 16); // turn off the green led
+                GPIO_CLR(io->gpio, 26); // turn off the red led
+                printf("did not detect egg\n");
+            }    
             else{
-                GPIO_CLR(io->gpio, 5); // turn off the green led
-                GPIO_SET(io->gpio, 6); // turn on the red led
+                GPIO_CLR(io->gpio, 16); // turn off the green led
+                GPIO_SET(io->gpio, 26); // turn on the red led
                 printf("detected bad egg\n");
             }
             sum_b = 0;
@@ -154,4 +175,7 @@ int main(int argc, char * argv[])
     if (handle_GUI_RGB) {draw_bitmap_close_window(handle_GUI_RGB); handle_GUI_RGB = NULL;}
     if (handle_GUI_grey) {draw_bitmap_close_window(handle_GUI_grey); handle_GUI_grey = NULL;}
     if (handle_video1) video_interface_close(handle_video1);
+
+    GPIO_CLR(io->gpio, 16); // turn off the green led
+    GPIO_CLR(io->gpio, 26);
 }   
