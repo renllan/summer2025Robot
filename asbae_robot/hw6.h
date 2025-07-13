@@ -74,21 +74,23 @@
 #define UP_DOWN_MIN 80 // max up
 #define UP_DOWN_MAX 130 // max down
 #define PWM_SERVO_RESET 90 // 180 for other car
-#define PWM_SERVO_LEFT 105 // 120 for other car
+#define PWM_SERVO_LEFT 180 // 120 for other car
 #define PWM_SERVO_RIGHT 0 // 60 for other car
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
 
 #define SPIN_MOTOR_TEMP_REST 90
-#define SPIN_MOTOR_LEFT 0 
+#define SPIN_MOTOR_LEFT1 130
+#define SPIN_MOTOR_LEFT2 145 
 #define SPIN_MOTOR_RIGHT1 50
 #define SPIN_MOTOR_RIGHT2 25
 #define BACK_FORTH_MOTOR_TEMP_REST 90
 #define BACK_FORTH_MOTOR_RIGHT1 100
 #define BACK_FORTH_MOTOR_RIGHT2 110
-#define BACK_FORTH_MOTOR_LEFT 180
+#define BACK_FORTH_MOTOR_LEFT1 100
+#define BACK_FORTH_MOTOR_LEFT2 110
 #define UP_DOWN_MOTOR_TEMP_REST 85
-#define UP_DOWN_MOTOR_LEFT 0
+#define UP_DOWN_MOTOR_LEFT 85
 #define UP_DOWN_MOTOR_RIGHT 85
 
 #define CLAW_OPEN 375 // 500 for other car

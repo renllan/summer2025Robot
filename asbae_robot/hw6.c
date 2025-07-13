@@ -681,8 +681,8 @@ void *Arm_Thread(void * args)
     }
     else if (*(param->drop_stage) == 1) { // stage 1 (move to basket)
       if (left_right) { // drop egg to the left
-        angles[0] = SPIN_MOTOR_LEFT;
-        angles[1] = BACK_FORTH_MOTOR_LEFT;
+        angles[0] = SPIN_MOTOR_LEFT1;
+        angles[1] = BACK_FORTH_MOTOR_LEFT1;
         angles[2] = UP_DOWN_MOTOR_LEFT; // set angles for left drop
       }
       else { // drop egg to the right
@@ -692,10 +692,17 @@ void *Arm_Thread(void * args)
       }
       set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
       *(param->drop_stage) = 2; // set drop stage to 2
-    } else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
-      angles[0] = SPIN_MOTOR_RIGHT2; // reset spin motor to temporary rest position
-      angles[1] = BACK_FORTH_MOTOR_RIGHT2; // reset back/forth motor to temporary rest position
-      angles[2] = UP_DOWN_MOTOR_RIGHT; // reset up/down motor to temporary rest position
+    }
+    else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
+      if (left_right) { // drop egg to the left
+        angles[0] = SPIN_MOTOR_LEFT2; // reset spin motor to temporary rest position
+        angles[1] = BACK_FORTH_MOTOR_LEFT2; // reset back/forth motor to temporary rest position
+        angles[2] = UP_DOWN_MOTOR_LEFT; // reset up/down motor to temporary rest position
+      } else { // drop egg to the right
+        angles[0] = SPIN_MOTOR_RIGHT2; // reset spin motor to temporary rest position
+        angles[1] = BACK_FORTH_MOTOR_RIGHT2; // reset back/forth motor to temporary rest position
+        angles[2] = UP_DOWN_MOTOR_RIGHT; // reset up/down motor to temporary rest position
+      }
       set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
       sleep(1); // wait for arm to move to basket position
       *(param->drop_stage) = 3; // set drop stage to 3
