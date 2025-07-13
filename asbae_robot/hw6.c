@@ -495,6 +495,14 @@ void *Control(void * arg)
             else printf("pwm_servo_fifo queue full\nHW6> ");
             if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
             else printf("claw_fifo queue full\nHW6> ");
+            cmd2.command = 's';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
             break;
           }
           break;
@@ -503,6 +511,14 @@ void *Control(void * arg)
         {
           if (param->mode == 3) {
             cmd2.command = 'g';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
+            cmd2.command = 's';
             cmd2.argument = 0; // not needed for egg drop
             if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
             else printf("arm_fifo queue full\nHW6> ");
