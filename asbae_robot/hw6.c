@@ -2024,6 +2024,7 @@ void *egg_detector(void * arg)
                     cmd.command = 's';
                     if(!robot_stopped)
                     {
+                      usleep(250000); //wait for 250 ms
                       FIFO_INSERT(param->dir_fifo,cmd);
                     }
                     robot_stopped = true;
@@ -2034,18 +2035,18 @@ void *egg_detector(void * arg)
                 {
                   turn_cool_down--;
                 }
-                else if(not_found > MAX_DECISION_SIZE/2){
-                  if(!FIFO_FULL(param->dir_fifo)){
+                // else if(not_found > MAX_DECISION_SIZE/2){
+                //   if(!FIFO_FULL(param->dir_fifo)){
                     
-                    // cmd.command = 'a';
-                    // FIFO_INSERT(param->dir_fifo,cmd);
-                    cmd.command ='s';
-                    FIFO_INSERT(param->dir_fifo,cmd);
-                    turn_cool_down = TURN_COOLDOWN_FRAMES;
-                    printf("robot: robot did not find any egg \n");
-                    robot_stopped = false;
-                  }  
-                }
+                //     // cmd.command = 'a';
+                //     // FIFO_INSERT(param->dir_fifo,cmd);
+                //     cmd.command ='s';
+                //     FIFO_INSERT(param->dir_fifo,cmd);
+                //     turn_cool_down = TURN_COOLDOWN_FRAMES;
+                //     printf("robot: robot did not find any egg \n");
+                //     robot_stopped = false;
+                //   }  
+                // }
                 // else if (left >= MAX_DECISION_SIZE/2) {
                 //   if (!FIFO_FULL(param->dir_fifo)) {
                       
@@ -2054,7 +2055,7 @@ void *egg_detector(void * arg)
                 //       FIFO_INSERT(param->dir_fifo, cmd);
                 //       //centered = false;
                 //       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
-                //   }
+                //   }f
                 // } else if (right >= MAX_DECISION_SIZE/2) {
                 //   if (!FIFO_FULL(param->dir_fifo)) {
                 //       printf("robot queue decision: largest egg detected on the right\n");
