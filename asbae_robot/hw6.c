@@ -2221,7 +2221,7 @@ void *egg_detector(void * arg)
 
                 //  if(found > 0 && arm_eggs[0].min_x > 150){
                   cmd.command = 'w';
-                    fifo_insert(param->dir_fifo, cmd);
+                    fifo_insert(param->control_fifo, cmd);
                     sleep(1);
                     for(int i = 0; i<6;i++){
                       printf("arm: preparing to grab egg \n");
