@@ -1900,6 +1900,7 @@ void *egg_detector(void * arg)
     struct  timespec  timer_state; 
     printf("%s thread started \n",param->name);
     wait_period_initialize( &timer_state );
+    bool p_state = false;
 
     struct draw_bitmap_multiwindow_handle_t *handle =NULL;
     struct draw_bitmap_multiwindow_handle_t *arm_handle = NULL;
@@ -2125,8 +2126,11 @@ void *egg_detector(void * arg)
             }
             else{
               //-----------------------arm mode --------------------------
-              cmd.command = 'p';
-              FIFO_INSERT(param->control_fifo,cmd);
+              if (!p_state) {
+                cmd.command = 'p';
+                FIFO_INSERT(param->control_fifo,cmd);
+                p_state = true;
+              }
               arm_frames_seen++;
               sleep(1);
               if (arm_frames_seen >= MAX_DECISION_SIZE) {
