@@ -657,8 +657,8 @@ void *Arm_Thread(void * args)
             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+            *(param->drop_stage) = 1; // set drop stage to 1            
             sleep(1); // assure arm does not move for 1 second
-            *(param->drop_stage) = 1; // set drop stage to 1
             break;
           }
           case 'g':
@@ -668,8 +668,8 @@ void *Arm_Thread(void * args)
             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-            sleep(1); // assure arm does not move foe 1 second
             *(param->drop_stage) = 1; // set drop stage to 1
+            sleep(1); // assure arm does not move foe 1 second
             break;
           }
           default:
