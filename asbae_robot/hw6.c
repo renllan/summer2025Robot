@@ -670,14 +670,21 @@ void *Arm_Thread(void * args)
         angles[2] = UP_DOWN_MOTOR_LEFT; // set angles for left drop
       }
       else { // drop egg to the right
-        angles[0] = SPIN_MOTOR_RIGHT;
-        angles[1] = BACK_FORTH_MOTOR_RIGHT;
+        angles[0] = SPIN_MOTOR_RIGHT1;
+        angles[1] = BACK_FORTH_MOTOR_RIGHT1;
         angles[2] = UP_DOWN_MOTOR_RIGHT;
       }
       set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
       sleep(1); // assure arm does not move for 1 second
       *(param->drop_stage) = 2; // set drop stage to 2
-    } // no cases for stage 2 (wait for other threads to update)
+    } else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
+      angles[0] = SPIN_MOTOR_RIGHT2; // reset spin motor to temporary rest position
+      angles[1] = BACK_FORTH_MOTOR_RIGHT2; // reset back/forth motor to temporary rest position
+      angles[2] = UP_DOWN_MOTOR_RIGHT; // reset up/down motor to temporary rest position
+      set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
+      sleep(1); // wait for arm to move to basket position
+      *(param->drop_stage) = 3; // set drop stage to 3
+    }
     wait_period( &timer_state, 10u ); /* 10ms */
   }
   printf( "Arm thread function done\n" );
@@ -726,7 +733,7 @@ void *Claw_Thread(void * args)
         }
       }
     }
-    else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
+    else if (*(param->drop_stage) == 3) { // stage 2 (open claw to drop egg)
       sleep(1); // wait for arm to move to basket position
       if (claw_pos != CLAW_OPEN) { // open claw if not already open
         claw_pos = CLAW_OPEN;
@@ -839,7 +846,7 @@ void *PWM_Servo_Thread(void * args)
       }
       set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT*2);
       sleep(1); // assure servo does not move for 1 second
-      *(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
+      //*(param->drop_stage) = 2; // set drop stage to 2 (wait for claw to open)
     } // no cases for stage 2 (wait for other threads to update)
     wait_period( &timer_state, 10u ); /* 10ms */
   }
