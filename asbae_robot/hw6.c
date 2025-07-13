@@ -2245,7 +2245,9 @@ void *egg_detector(void * arg)
                     fifo_insert(param->dir_fifo, cmd);
                     sleep(1);
                     printf("arm: robot is approaching bin  \n");
-
+                    sleep(1);
+                    cmd.command = 's';
+                    fifo_insert(param->dir_fifo, cmd);
                     for(int i = 0; i<6;i++){
                       printf("arm: preparing to grab egg \n");
                       cmd.command = 'j';
