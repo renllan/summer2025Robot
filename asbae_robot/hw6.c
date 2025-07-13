@@ -788,7 +788,7 @@ void *PWM_Servo_Thread(void * args)
   wait_period( &timer_state, 10u ); /* 10ms */
   while (!*(param->quit_flag))
   {
-    if (*(param->drop_stage) == 0) { // not dropping egg
+    if (*(param->drop_stage) == 0 || cmd.command == 'f' || cmd.command == 'g') { // not dropping egg
       if (!(FIFO_EMPTY(param->fifo)))
       {
         FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
