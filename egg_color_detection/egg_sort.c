@@ -141,31 +141,19 @@ int main(int argc, char * argv[])
                 GPIO_CLR(io->gpio, 26); // turn on the green led
                 printf("detected good egg\n");
             }
-            else if (avg < 100){
-                GPIO_SET(io->gpio, 6); // turn off the green led
-                GPIO_CLR(io->gpio, 16); // turn on the red led
-                printf("detected bad egg\n");
-            }
-            else if(avg > BAD_EGG_THRESHOLD){
-                GPIO_SET(io->gpio, 16); // turn off the red led
-                GPIO_CLR(io->gpio, 6); // turn on the green led
-                printf("detected bad egg\n");
-            }
-            else if(avg < BAD_EGG_THRESHOLD){
-                GPIO_SET(io->gpio, 26); // turn off the green led
-                GPIO_CLR(io->gpio, 6); // turn on the red led
-                printf("detected bad egg\n");
-            }
-            else if(avg > 200 && avg < 220){
-                GPIO_clr(io->gpio, 16); // turn off the green led
-                GPIO_CLR(io->gpio, 26); // turn off the red led
+            
+            else if(avg < 100){
+                GPIO_CLR(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 26); // turn on the green led
                 printf("did not detect egg\n");
-            }    
+
+            }
             else{
                 GPIO_CLR(io->gpio, 16); // turn off the green led
                 GPIO_SET(io->gpio, 26); // turn on the red led
                 printf("detected bad egg\n");
             }
+    
             sum_b = 0;
         }
         draw_bitmap_display(handle_GUI_grey, IMG_DATA2);
