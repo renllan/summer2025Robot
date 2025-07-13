@@ -1939,8 +1939,6 @@ void *egg_detector(void * arg)
     int arm_cool_down_y = 0;
     bool mode3 = false;
     struct thread_command cmd = {0, 0};
-    cmd.command = 'p';
-    FIFO_INSERT(param->control_fifo,cmd);
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
@@ -2127,6 +2125,8 @@ void *egg_detector(void * arg)
             }
             else{
               //-----------------------arm mode --------------------------
+              cmd.command = 'p';
+              FIFO_INSERT(param->control_fifo,cmd);
               arm_frames_seen++;
               if (arm_frames_seen >= MAX_DECISION_SIZE) {
                 arm_queue_filled = true;
