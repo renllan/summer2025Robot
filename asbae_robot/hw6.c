@@ -615,9 +615,9 @@ void *Arm_Thread(void * args)
         }
         case 'p': // 909090
         {
-          angles[0] = SPIN_RESET;
-          angles[1] = BACK_FORTH_RESET;
-          angles[2] = UP_DOWN_RESET;
+          angles[0] = SPIN_REST;
+          angles[1] = BACK_FORTH_REST;
+          angles[2] = UP_DOWN_REST;
           printf("Resetting arm to 90 degrees\n");
           set_angles(param->uart_fd, angles, ARM_TIMEOUT);
           break;
