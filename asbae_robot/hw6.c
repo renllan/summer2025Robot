@@ -2024,7 +2024,9 @@ void *egg_detector(void * arg)
                     cmd.command = 's';
                     if(!robot_stopped)
                     {
+                      printf("sleep start \n");
                       usleep(250000); //wait for 250 ms
+                      printf("sleep end \n");
                       FIFO_INSERT(param->dir_fifo,cmd);
                     }
                     robot_stopped = true;
