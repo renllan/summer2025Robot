@@ -2220,6 +2220,9 @@ void *egg_detector(void * arg)
                 // }
 
                 //  if(found > 0 && arm_eggs[0].min_x > 150){
+                  cmd.command = 'w';
+                    fifo_insert(param->dir_fifo, cmd);
+                    sleep(1);
                     for(int i = 0; i<6;i++){
                       printf("arm: preparing to grab egg \n");
                       cmd.command = 'j';
@@ -2232,7 +2235,7 @@ void *egg_detector(void * arg)
                     cmd.command = 'p';
                     fifo_insert(param->control_fifo, cmd);
                     sleep(1);
-                    for(int i = 0; i<6;i++){
+                    for(int i = 0; i<4;i++){
                       printf("arm: turning the robot around\n");
                       cmd.command = 'd';
                       fifo_insert(param->dir_fifo, cmd);
