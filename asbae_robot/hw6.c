@@ -1938,14 +1938,13 @@ void *egg_detector(void * arg)
     int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
-
+    struct thread_command cmd = {0, 0};
     cmd.command = 'p';
     FIFO_INSERT(param->control_fifo,cmd);
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
     {
-      struct thread_command cmd = {0, 0};
       if(!FIFO_EMPTY(param->egg_fifo))
       {
         FIFO_REMOVE(param->egg_fifo,&cmd);
