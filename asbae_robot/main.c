@@ -8,6 +8,17 @@ int main(int argc, char * argv[] )
     int angles[3];
     //int xyz[3]; // Uncomment if you want to use XYZ positions
 
+      /*
+     * Initialize claw to CLAW_OPEN (open position)
+     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
+     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
+     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
+     */
+    printf("Setting claw to CLAW_OPEN\n\n");
+    int claw_pos = CLAW_OPEN;
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+    sleep(1); // Delay to assure claw is open
+
     /* 
      * Initialize angles to [90, 135, 75] (RESET POSITION)
      * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
@@ -19,16 +30,6 @@ int main(int argc, char * argv[] )
     angles[1] = BACK_FORTH_RESET;
     angles[2] = UP_DOWN_RESET;
     set_angles(uart_fd, angles, ARM_TIMEOUT);
-    
-    /*
-     * Initialize claw to CLAW_OPEN (open position)
-     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
-     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
-     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
-     */
-    printf("Setting claw to CLAW_OPEN\n\n");
-    int claw_pos = CLAW_OPEN;
-    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
 
     /*
      * Initialize PWM servo to 180 degrees
@@ -61,6 +62,7 @@ int main(int argc, char * argv[] )
     pthread_t t_arm_cam;
 
     bool quit_flag = false;
+    int drop_stage = 0; // 0 set 90-90-90, 1 move left or right & twist PWß
 
     struct fifo_t motor_control_fifo = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t key_fifo   = {{}, 0, 0, PTHREAD_MUTEX_INITIALIZER};
@@ -159,6 +161,7 @@ int main(int argc, char * argv[] )
       "arm",
       &arm_fifo,
       uart_fd, // pass the UART file descriptor to the arm control thread
+      &drop_stage, // pass the drop stage variable to the arm control thread
       &quit_flag
     };
     /*initial the parameters of the pwm servo*/
@@ -166,6 +169,7 @@ int main(int argc, char * argv[] )
       "pwm_servo",
       &pwm_servo_fifo,
       uart_fd, // pass the UART file descriptor to the PWM servo control thread
+      &drop_stage, // pass the drop stage variable to the PWM servo control thread
       &quit_flag
     };
     /*initial the parameters of the claw*/
@@ -173,6 +177,7 @@ int main(int argc, char * argv[] )
       "claw",
       &claw_fifo,
       uart_fd, // pass the UART file descriptor to the claw control thread
+      &drop_stage, // pass the drop stage variable to the claw control thread
       &quit_flag
     };
     /*intialize the parameter of IR_sensor_thread
@@ -394,7 +399,33 @@ int main(int argc, char * argv[] )
   {
     ; /* warning message already issued */
   }
-/* 
+
+  /*
+     * Initialize claw to CLAW_OPEN (open position)
+     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
+     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
+     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
+     */
+    printf("Setting claw to CLAW_OPEN\n\n");
+    claw_pos = CLAW_OPEN;
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT*2);
+
+    /*
+     * Initialize PWM servo to 180 degrees
+     * This is equivalent to setting the servo to the parallel position with the claw motor facing backwards
+     * Angle is turned clockwise
+     * For example, servo will be turned 30 degrees clockwise from 0 (claw motor facing forward) if 30 degrees is set
+     */
+    printf("Setting PWM servo\n");
+    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT*2);
+
+    printf("Setting angles to [90, 90, 90]\n\n");
+    angles[0] = SPIN_MOTOR_TEMP_REST;
+    angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+    angles[2] = UP_DOWN_MOTOR_TEMP_REST;
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
+    sleep(2); // Delay to assure reset position is reached
+  /*
      * Initialize angles to [90, 135, 75] (RESET POSITION)
      * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
      * [1] moves arm back and forth, 90 is upright; below is forward and above is backward
@@ -404,26 +435,7 @@ int main(int argc, char * argv[] )
     angles[0] = SPIN_RESET;
     angles[1] = BACK_FORTH_RESET;
     angles[2] = UP_DOWN_RESET;
-    set_angles(uart_fd, angles, ARM_TIMEOUT);
-    
-    /*
-     * Initialize claw to CLAW_OPEN (open position)
-     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
-     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
-     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
-     */
-    printf("Setting claw to CLAW_OPEN\n\n");
-    claw_pos = CLAW_OPEN;
-    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
-
-    /*
-     * Initialize PWM servo to 180 degrees
-     * This is equivalent to setting the servo to the parallel position with the claw motor facing backwards
-     * Angle is turned clockwise
-     * For example, servo will be turned 30 degrees clockwise from 0 (claw motor facing forward) if 30 degrees is set
-     */
-    printf("Setting PWM servo\n");
-    set_pwmservo(uart_fd, PWM_SERVO_RESET, PWM_SERVO_TIMEOUT);
+    set_angles(uart_fd, angles, ARM_TIMEOUT*2);
     sleep(1); // Delay to assure reset position is reached
   printf( "main function done\n" );
 

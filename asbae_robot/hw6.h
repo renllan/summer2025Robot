@@ -66,28 +66,35 @@
 // Arm macros constants
 #define SPIN_RESET 90
 #define BACK_FORTH_RESET 125
-#define UP_DOWN_RESET 75
+#define UP_DOWN_RESET 85
 #define SPIN_MIN 0 // max left
 #define SPIN_MAX 180 // max right
 #define BACK_FORTH_MIN 35 // max back
-#define BACK_FORTH_MAX 125 // max forward
-#define UP_DOWN_MIN 85 // max up
+#define BACK_FORTH_MAX 130 // max forward
+#define UP_DOWN_MIN 80 // max up
 #define UP_DOWN_MAX 130 // max down
 #define PWM_SERVO_RESET 90 // 180 for other car
-#define PWM_SERVO_LEFT 105 // 120 for other car
-#define PWM_SERVO_RIGHT 15 // 60 for other car
+#define PWM_SERVO_LEFT 180 // 120 for other car
+#define PWM_SERVO_RIGHT 0 // 60 for other car
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
 
-#define SPIN_MOTOR_LEFT 0 
-#define SPIN_MOTOR_RIGHT 180
-#define FRONTBACK_MOTOR_RIGHT 0
-#define FRONTBACK_MOTOR_LEFT 180
-#define UPDOWN_MOTOR_L 0 
-#define UPDOWN_MOTOR_R 180
+#define SPIN_MOTOR_TEMP_REST 90
+#define SPIN_MOTOR_LEFT1 130
+#define SPIN_MOTOR_LEFT2 145 
+#define SPIN_MOTOR_RIGHT1 50
+#define SPIN_MOTOR_RIGHT2 25
+#define BACK_FORTH_MOTOR_TEMP_REST 90
+#define BACK_FORTH_MOTOR_RIGHT1 100
+#define BACK_FORTH_MOTOR_RIGHT2 110
+#define BACK_FORTH_MOTOR_LEFT1 100
+#define BACK_FORTH_MOTOR_LEFT2 110
+#define UP_DOWN_MOTOR_TEMP_REST 85
+#define UP_DOWN_MOTOR_LEFT 85
+#define UP_DOWN_MOTOR_RIGHT 85
 
-#define CLAW_OPEN 450 // 500 for other car
-#define CLAW_CLOSE 800 // 800 for other car
+#define CLAW_OPEN 375 // 500 for other car
+#define CLAW_CLOSE 825 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
 #define ARM_CLAW_TIMEOUT 500 // Timeout for arm claw commands in milliseconds
@@ -133,6 +140,7 @@ struct arm_thread_param
   const char                    *name;
   struct fifo_t                 *fifo;
   int                            uart_fd; // UART file descriptor for arm control
+  int                           *drop_stage; // 0 set 90-90-90, 1 move left or right & twist PWM, 2 open claw and rest position
   bool                          *quit_flag;
 };
 
