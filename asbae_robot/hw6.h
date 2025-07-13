@@ -51,7 +51,7 @@
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 2000  //needs to be tuned
+#define STOP_THRESH 1600  //needs to be tuned
 #define MAX_DECISION_SIZE 10
 #define CENTER_L 140
 #define CENTER_R 180
