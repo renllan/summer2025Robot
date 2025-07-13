@@ -137,8 +137,8 @@ int main(int argc, char * argv[])
         if(counter %FRAMES==0){
             int avg = sum_b/FRAMES;
             if(avg > Bad_value){
-                GPIO_SET(io->gpio, 16); // turn off the red led
-                GPIO_CLR(io->gpio, 26); // turn on the green led
+                GPIO_CLR(io->gpio, 16); // turn off the red led
+                GPIO_SET(io->gpio, 26); // turn on the green led
                 printf("detected good egg\n");
             }
             
@@ -149,8 +149,8 @@ int main(int argc, char * argv[])
 
             }
             else{
-                GPIO_CLR(io->gpio, 16); // turn off the green led
-                GPIO_SET(io->gpio, 26); // turn on the red led
+                GPIO_SET(io->gpio, 16); // turn off the green led
+                GPIO_CLR(io->gpio, 26); // turn on the red led
                 printf("detected bad egg\n");
             }
     
