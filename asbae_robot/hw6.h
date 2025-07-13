@@ -69,7 +69,7 @@
 #define UP_DOWN_RESET 75
 #define SPIN_MIN 0 // max left
 #define SPIN_MAX 180 // max right
-#define BACK_FORTH_MIN 35 // max back
+#define BACK_FORTH_MIN 30 // max back
 #define BACK_FORTH_MAX 130 // max forward
 #define UP_DOWN_MIN 80 // max up
 #define UP_DOWN_MAX 130 // max down

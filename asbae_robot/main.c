@@ -8,6 +8,17 @@ int main(int argc, char * argv[] )
     int angles[3];
     //int xyz[3]; // Uncomment if you want to use XYZ positions
 
+      /*
+     * Initialize claw to CLAW_OPEN (open position)
+     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
+     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
+     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
+     */
+    printf("Setting claw to CLAW_OPEN\n\n");
+    int claw_pos = CLAW_OPEN;
+    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+    sleep(1); // Delay to assure claw is open
+
     /* 
      * Initialize angles to [90, 135, 75] (RESET POSITION)
      * [0] spins arm horizontally, 90 is front; below is turn right and above is turn left
@@ -19,16 +30,6 @@ int main(int argc, char * argv[] )
     angles[1] = BACK_FORTH_RESET;
     angles[2] = UP_DOWN_RESET;
     set_angles(uart_fd, angles, ARM_TIMEOUT);
-    
-    /*
-     * Initialize claw to CLAW_OPEN (open position)
-     * CLAW_OPEN is the open position for the claw, and CLAW_CLOSE is the closed position
-     * How much the claw opens or closes can be modified by changing the values of CLAW_OPEN and CLAW_CLOSE
-     * For now, CLAW_OPEN is set to 500 and CLAW_CLOSE is set to 800
-     */
-    printf("Setting claw to CLAW_OPEN\n\n");
-    int claw_pos = CLAW_OPEN;
-    set_claw(uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
 
     /*
      * Initialize PWM servo to 180 degrees
