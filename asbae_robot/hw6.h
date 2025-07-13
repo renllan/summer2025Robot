@@ -66,10 +66,10 @@
 // Arm macros constants
 #define SPIN_RESET 90
 #define BACK_FORTH_RESET 125
-#define UP_DOWN_RESET 75
+#define UP_DOWN_RESET 85
 #define SPIN_MIN 0 // max left
 #define SPIN_MAX 180 // max right
-#define BACK_FORTH_MIN 30 // max back
+#define BACK_FORTH_MIN 35 // max back
 #define BACK_FORTH_MAX 130 // max forward
 #define UP_DOWN_MIN 80 // max up
 #define UP_DOWN_MAX 130 // max down
@@ -83,7 +83,7 @@
 #define SPIN_MOTOR_LEFT 0 
 #define SPIN_MOTOR_RIGHT1 50
 #define SPIN_MOTOR_RIGHT2 25
-#define BACK_FORTH_MOTOR_TEMP_REST 105
+#define BACK_FORTH_MOTOR_TEMP_REST 90
 #define BACK_FORTH_MOTOR_RIGHT1 100
 #define BACK_FORTH_MOTOR_RIGHT2 110
 #define BACK_FORTH_MOTOR_LEFT 180
