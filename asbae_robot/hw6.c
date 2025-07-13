@@ -2254,6 +2254,11 @@ void *egg_detector(void * arg)
                     
                     break;
                   }
+                  else{
+                    cmd.command = 'w';
+                    fifo_insert(param->control_fifo, cmd);
+
+                  }
                   // }
                   // else if(found > 0 && arm_eggs[0].center_x < 80){
                   //   cmd.command = ''
