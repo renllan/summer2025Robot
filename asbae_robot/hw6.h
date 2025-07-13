@@ -55,7 +55,7 @@
 #define MAX_DECISION_SIZE 10
 #define CENTER_L 140
 #define CENTER_R 180
-#define ARM_STOP_THRESH 4000  //needs to be tuned
+#define ARM_STOP_THRESH 10000  //needs to be tuned
 #define CENTER_F 100
 #define CENTER_B 140
 #define MAX_DECISION_THRESHOLD MAX_DECISION_SIZE/2
