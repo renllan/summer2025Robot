@@ -128,7 +128,7 @@ void *IR_Sensor(void* arg)
         for(int i = 0;i<100;i++){
           wait_period(&timer_state,10u);
         }
-        for(int i = 0;i<4;i++){
+        for(int i = 0;i<5;i++){
           cmd.command='j';
           cmd.argument = 0;
           FIFO_INSERT(param->control_fifo,cmd);
