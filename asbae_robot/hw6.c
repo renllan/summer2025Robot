@@ -1944,6 +1944,9 @@ void *egg_detector(void * arg){
     int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
+
+    int prev_egg_found = 0;
+
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
@@ -2060,6 +2063,11 @@ void *egg_detector(void * arg){
                     robot_stopped = true;
                   }
                 }
+                
+                if(prev_egg_found > found){
+                  robot_centered = true;
+                  robot_stopped = true;
+                }
 
                 if(turn_cool_down > 0)
                 {
@@ -2086,7 +2094,8 @@ void *egg_detector(void * arg){
                       //centered = false;
                       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
                   }
-                } else if (right >= MAX_DECISION_SIZE/2) {
+                } 
+                else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->dir_fifo)) {
                       printf("robot queue decision: largest egg detected on the right\n");
                       cmd.command = 'a';
@@ -2129,6 +2138,7 @@ void *egg_detector(void * arg){
                     // fifo_insert(param->control_fifo,cmd);
                   }
                 }
+                prev_egg_found = found;
               }
             }
             else{
