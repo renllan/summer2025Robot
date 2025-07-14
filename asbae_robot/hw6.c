@@ -137,12 +137,10 @@ void *Control(void * arg)
   printf("control thread started \n");
   while (!*(param->quit_flag))
   {
-    if (!(FIFO_EMPTY( param->key_fifo )))
-    {
+    if (!(FIFO_EMPTY( param->key_fifo ))) {
       FIFO_REMOVE( param->key_fifo, &cmd1 );  // read once every 10ms
       printf( "\n %s= %c  %c\n", param->name, cmd1.command, cmd1.argument);
-      switch (cmd1.command)
-      {
+      switch (cmd1.command) {
         case '1':
         {
           if(change)
@@ -500,7 +498,7 @@ void *Control(void * arg)
           }
           // if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
           // else printf( "claw_fifo queue full\nHW6> " );
-
+        }
         case 'f': //turn and drop eggs to the right
         {
           if (param->mode == 3) {
