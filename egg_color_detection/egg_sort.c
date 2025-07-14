@@ -160,6 +160,9 @@ int main(int argc, char * argv[])
                 GPIO_CLR(io->gpio, 26); // turn on the red led
 
                 usleep(500000);
+                 GPIO_CLR(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 26); // turn on the green led
+                usleep(500000);
                 
                 printf("detected bad egg\n");
             }
