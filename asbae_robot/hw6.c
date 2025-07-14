@@ -72,20 +72,20 @@ void *IR_Sensor(void* arg)
              
   struct thread_command cmd = {0,0};
   struct thread_command cmd2 = {0,0};
+  bool grabbed = false;
   bool pause_thread = true;
   // start 10ms timed wait, ie. set interrupt
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
   printf("IR sensor starting");
-  while(!(*param->quit_flag))
-  {
+  while(!(*param->quit_flag)){
       if(!FIFO_EMPTY(param->IR_sensor_fifo)){
         FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
         printf("reading from ir fifo \n");
         switch (cmd.command){
           case 'w': // start line tracing
           {
-            pause_thread = !pause_thread;
+            pause_thread = false;
             printf("IR Sensor thread started \n");
             break;
           }
@@ -98,8 +98,7 @@ void *IR_Sensor(void* arg)
       int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
       int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
       printf("left val %d right val, %d \n", left_val,right_val);
-      if(!pause_thread){
-        if(left_val == 0){ 
+      if(left_val == 0){ 
 
         //stop and grab the egg
         //grab the egg
@@ -144,15 +143,17 @@ void *IR_Sensor(void* arg)
         for(int i = 0;i<100;i++){
           wait_period(&timer_state,10u);
         }
+
         cmd.command = 'p';
         cmd.argument = 0;
         FIFO_INSERT(param->control_fifo,cmd);
+        grabbed = true;
       }
 
-      if(right_val == 0){ //hit the wall
+      if(right_val == 0 && grabbed == true){ //hit the wall
         cmd.command = 'b';
         cmd.argument = 50; 
-      
+        
         FIFO_INSERT(param->dir_fifo, cmd);
         
         cmd.command = 'x';
@@ -185,12 +186,9 @@ void *IR_Sensor(void* arg)
 
         //tur 180 degrees
       
-        }
-      }
-      
-     
-    wait_period( &timer_state, 10u );
   }
+  wait_period( &timer_state, 10u );
+}
 
   printf("IR Sensor thread Quit\n");
   return NULL;
