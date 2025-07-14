@@ -72,6 +72,7 @@ void *IR_Sensor(void* arg)
              
   struct thread_command cmd = {0,0};
   struct thread_command cmd2 = {0,0};
+  bool pause_thread = true;
   // start 10ms timed wait, ie. set interrupt
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
@@ -84,6 +85,7 @@ void *IR_Sensor(void* arg)
         switch (cmd.command){
           case 'w': // start line tracing
           {
+            pause_thread = !pause_thread;
             printf("IR Sensor thread started \n");
             break;
           }
@@ -96,8 +98,8 @@ void *IR_Sensor(void* arg)
       int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
       int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
       printf("left val %d right val, %d \n", left_val,right_val);
-      
-      if(left_val == 0){ 
+      if(!pause_thread){
+        if(left_val == 0){ 
 
         //stop and grab the egg
         //grab the egg
@@ -183,7 +185,9 @@ void *IR_Sensor(void* arg)
 
         //tur 180 degrees
       
-    }
+        }
+      }
+      
      
     wait_period( &timer_state, 10u );
   }
