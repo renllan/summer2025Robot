@@ -78,10 +78,9 @@ int main(int argc, char * argv[] )
     struct fifo_t hist_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t egg_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
     struct fifo_t single_channel_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
-    struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for arm control commands
     struct fifo_t pwm_servo_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for PWM servo control commands
     struct fifo_t claw_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER}; // FIFO for claw control commands
-    struct fifo_t edge_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
+    struct fifo_t arm_fifo = {{},0,0,PTHREAD_MUTEX_INITIALIZER};
 
     static struct image_t       image;
     static struct image_t       image1; //arm camera feed
@@ -118,7 +117,7 @@ int main(int argc, char * argv[] )
       
     // };
 
- 
+    
 
 
     /*initialize the parameter of motor control thread*/
@@ -128,7 +127,7 @@ int main(int argc, char * argv[] )
       &speed_fifo,
       &dir_fifo,
       15,
-      20,
+      25,
       &quit_flag
     };
     /*intial the parameter of motor_speed_thread    */

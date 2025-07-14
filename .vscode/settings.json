@@ -4,6 +4,8 @@
         "pixel_format_rgb.h": "c",
         "c_equiv_ctl.h": "c",
         "mpu6050.h": "c",
-        "mpu9250.h": "c"
+        "mpu9250.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }

@@ -51,11 +51,11 @@
 #define IMG_WIDTH 320
 #define IMG_HEIGHT 240
 #define MAX_EGGS 10
-#define STOP_THRESH 1800  //needs to be tuned
+#define STOP_THRESH 1600  //needs to be tuned
 #define MAX_DECISION_SIZE 10
 #define CENTER_L 140
 #define CENTER_R 180
-#define ARM_STOP_THRESH 4000  //needs to be tuned
+#define ARM_STOP_THRESH 10000  //needs to be tuned
 #define CENTER_F 100
 #define CENTER_B 140
 #define MAX_DECISION_THRESHOLD MAX_DECISION_SIZE/2
@@ -70,14 +70,17 @@
 #define SPIN_MIN 0 // max left
 #define SPIN_MAX 180 // max right
 #define BACK_FORTH_MIN 35 // max back
-#define BACK_FORTH_MAX 130 // max forward
-#define UP_DOWN_MIN 80 // max up
-#define UP_DOWN_MAX 130 // max down
+#define BACK_FORTH_MAX 125 // max forward
+#define UP_DOWN_MIN 85 // max up
+#define UP_DOWN_MAX 125 // max down
 #define PWM_SERVO_RESET 90 // 180 for other car
 #define PWM_SERVO_LEFT 180 // 120 for other car
 #define PWM_SERVO_RIGHT 0 // 60 for other car
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
+#define SPIN_REST 90
+#define BACK_FORTH_REST 55
+#define UP_DOWN_REST 90
 
 #define SPIN_MOTOR_TEMP_REST 90
 #define SPIN_MOTOR_LEFT1 130
@@ -93,11 +96,11 @@
 #define UP_DOWN_MOTOR_LEFT 85
 #define UP_DOWN_MOTOR_RIGHT 85
 
-#define CLAW_OPEN 375 // 500 for other car
-#define CLAW_CLOSE 825 // 800 for other car
+#define CLAW_OPEN 325 // 500 for other car
+#define CLAW_CLOSE 875 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
-#define ARM_CLAW_TIMEOUT 500 // Timeout for arm claw commands in milliseconds
+#define ARM_CLAW_TIMEOUT 375 // Timeout for arm claw commands in milliseconds
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);
 void enable_pwm(struct io_peripherals *io) ;

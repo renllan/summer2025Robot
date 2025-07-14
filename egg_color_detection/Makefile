@@ -3,7 +3,7 @@ TARGET = egg_sort
 SOURCES = egg_sort.c \
           ../include/video_interface.c \
           ../include/draw_bitmap_multiwindow.c \
-          ../asbae_robot/find_egg_blobs.c \
+          find_egg_blobs.c \
           ../asbae_robot/to_black_white.c \
           ../asbae_robot/draw_bbox.c \
 		  ../include/wait_period.c \
