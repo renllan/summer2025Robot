@@ -105,7 +105,7 @@ void *IR_Sensor(void* arg)
         //turn 180 degrees
         printf("detected white line");
         cmd.command = 'b';
-        cmd.argument = 50; //move forward 50
+        cmd.argument = 75; //move forward 50
         if(!FIFO_FULL(param->dir_fifo))
         {
           FIFO_INSERT(param->dir_fifo, cmd);
