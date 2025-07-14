@@ -3,7 +3,7 @@
 #define min(a,b)((a)<(b) ? (a):(b))
 #define Bad_value 250
 #define FRAMES 10
-#define BAD_EGG_THRESHOLD 170
+#define BAD_EGG_THRESHOLD 200
 int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
 {
     /* data */
