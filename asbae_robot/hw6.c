@@ -2100,6 +2100,10 @@ void *egg_detector(void * arg){
                 }
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
+
+                  for(int i = 0; i< 25;i++){
+                    wait_period(&timer_state, 10u);
+                  }
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
@@ -2115,12 +2119,12 @@ void *egg_detector(void * arg){
                     printf("switched robot mode to mode3 \n");
                     mode3 = true;
                     //move the arm forward to try to get closer to the egg
-                    cmd.command = 'w';
-                    cmd.argument = 0; //move the arm forward
-                    fifo_insert(param->control_fifo,cmd);
-                    cmd.command = 'w';
-                    cmd.argument = 0; //move the arm forward
-                    fifo_insert(param->control_fifo,cmd);
+                    // cmd.command = 'w';
+                    // cmd.argument = 0; //move the arm forward
+                    // fifo_insert(param->control_fifo,cmd);
+                    // cmd.command = 'w';
+                    // cmd.argument = 0; //move the arm forward
+                    // fifo_insert(param->control_fifo,cmd);
                   }
                 }
               }
