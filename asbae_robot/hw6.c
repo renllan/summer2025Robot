@@ -1946,7 +1946,7 @@ void *egg_detector(void * arg){
     bool mode3 = false;
 
     int prev_egg_found = 0;
-
+    // int egg_found_q[MAX_DECISION_SIZE] = {0};
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
@@ -2025,6 +2025,7 @@ void *egg_detector(void * arg){
               //move the que forward by one position
               for (int i = 0; i < MAX_DECISION_SIZE - 1; i++) {
                   robot_decision_q[i] = robot_decision_q[i + 1];
+                  // egg_found_q[i] = egg_found_q[i + 1];
               }
               if(found > 0){
                 int min_x = eggs[max_egg].min_x;
@@ -2044,7 +2045,7 @@ void *egg_detector(void * arg){
               
 
               if(!pause_thread && robot_queue_filled){
-                int left = 0, right = 0, center,not_found = 0;
+                int left = 0, right = 0, center,not_found = 0; int egg_changed = 0;
                 for (int i = 0; i < MAX_DECISION_SIZE; i++) {
                     if (robot_decision_q[i] > 0 && robot_decision_q[i] < CENTER_L) left++;
                     else if (robot_decision_q[i] > CENTER_R) right++;
@@ -2064,10 +2065,10 @@ void *egg_detector(void * arg){
                   }
                 }
                 
-                if(prev_egg_found > found){
-                  robot_centered = true;
-                  robot_stopped = true;
-                }
+                // if(prev_egg_found > found){
+                //   robot_centered = true;
+                //   robot_stopped = true;
+                // }
 
                 if(turn_cool_down > 0)
                 {
