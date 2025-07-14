@@ -2226,15 +2226,51 @@ void *egg_detector(void * arg)
                 //   }  
                 // }
 
-                 if(found > 0 && arm_eggs[0].min_x > 150){
+                //  if(found > 0 && arm_eggs[0].min_x > 150){
+                  cmd.command = 'w';
+                    fifo_insert(param->control_fifo, cmd);
+                    sleep(1);
                     for(int i = 0; i<6;i++){
+                      printf("arm: preparing to grab egg \n");
                       cmd.command = 'j';
                       fifo_insert(param->control_fifo, cmd);
                     }
-                    cmd.command = 'c';
+                    sleep(1);
+                    cmd.command= 'c';
                     fifo_insert(param->control_fifo, cmd);
+                    sleep(1);
+                    cmd.command = 'p';
+                    fifo_insert(param->control_fifo, cmd);
+                    sleep(1);
+                    for(int i = 0; i<4;i++){
+                      printf("arm: turning the robot around\n");
+                      cmd.command = 'd';
+                      fifo_insert(param->dir_fifo, cmd);
+                    }
+                    sleep(1);
+                    cmd.command = 'w';
+                    fifo_insert(param->dir_fifo, cmd);
+                    sleep(1);
+                    printf("arm: robot is approaching bin  \n");
+                    sleep(1);
+                    cmd.command = 's';
+                    fifo_insert(param->dir_fifo, cmd);
+                    for(int i = 0; i<6;i++){
+                      printf("arm: preparing to grab egg \n");
+                      cmd.command = 'j';
+                      fifo_insert(param->control_fifo, cmd);
+                    }
+                    sleep(1);
+                    cmd.command= 'c';
+                    fifo_insert(param->control_fifo, cmd);
+                    
+                    break;
+                  // }
+                  // else{
+                  //   cmd.command = 'w';
+                  //   fifo_insert(param->control_fifo, cmd);
 
-                  }
+                  // }
                   // }
                   // else if(found > 0 && arm_eggs[0].center_x < 80){
                   //   cmd.command = ''
