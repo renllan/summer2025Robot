@@ -180,10 +180,7 @@ void *IR_Sensor(void* arg)
         //   right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
         // }
 
-        for(int i = 0;i<200;i++){
-          wait_period(&timer_state,10u);
-        }
-
+        sleep(2);
         cmd.command = 's';
         cmd.argument = 0;
         FIFO_INSERT(param->motor_control_fifo,cmd);
