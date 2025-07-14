@@ -1957,6 +1957,9 @@ void *egg_detector(void * arg){
     int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
+
+    int prev_egg_found = 0;
+    // int egg_found_q[MAX_DECISION_SIZE] = {0};
     wait_period(&timer_state, 10u);
 
     while(!(*param->quit_flag))
@@ -2035,6 +2038,7 @@ void *egg_detector(void * arg){
               //move the que forward by one position
               for (int i = 0; i < MAX_DECISION_SIZE - 1; i++) {
                   robot_decision_q[i] = robot_decision_q[i + 1];
+                  // egg_found_q[i] = egg_found_q[i + 1];
               }
               if(found > 0){
                 int min_x = eggs[max_egg].min_x;
@@ -2054,7 +2058,7 @@ void *egg_detector(void * arg){
               
 
               if(!pause_thread && robot_queue_filled){
-                int left = 0, right = 0, center,not_found = 0;
+                int left = 0, right = 0, center,not_found = 0; int egg_changed = 0;
                 for (int i = 0; i < MAX_DECISION_SIZE; i++) {
                     if (robot_decision_q[i] > 0 && robot_decision_q[i] < CENTER_L) left++;
                     else if (robot_decision_q[i] > CENTER_R) right++;
@@ -2073,6 +2077,11 @@ void *egg_detector(void * arg){
                     robot_stopped = true;
                   }
                 }
+                
+                // if(prev_egg_found > found){
+                //   robot_centered = true;
+                //   robot_stopped = true;
+                // }
 
                 if(turn_cool_down > 0)
                 {
@@ -2099,7 +2108,8 @@ void *egg_detector(void * arg){
                       //centered = false;
                       turn_cool_down = TURN_COOLDOWN_FRAMES;                      
                   }
-                } else if (right >= MAX_DECISION_SIZE/2) {
+                } 
+                else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->dir_fifo)) {
                       printf("robot queue decision: largest egg detected on the right\n");
                       cmd.command = 'a';
@@ -2114,9 +2124,9 @@ void *egg_detector(void * arg){
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
 
-                  for(int i = 0; i< 75;i++){
-                    wait_period(&timer_state, 10u);
-                  }
+                  // for(int i = 0; i< ;i++){
+                  //   wait_period(&timer_state, 10u);
+                  // }
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
@@ -2142,6 +2152,7 @@ void *egg_detector(void * arg){
                     // fifo_insert(param->control_fifo,cmd);
                   }
                 }
+                prev_egg_found = found;
               }
             }
             else{
