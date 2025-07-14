@@ -1,7 +1,8 @@
 #include "egg_sort.h"
 #include <math.h>
 #define min(a,b)((a)<(b) ? (a):(b))
-#define Bad_value 230
+#define Bad_value_H 247
+#define Bad_value_L 230
 #define FRAMES 10
 #define BAD_EGG_THRESHOLD 170
 int egg_sort(int center_x, int center_y, struct pixel_format_RGB *img)
@@ -139,7 +140,7 @@ int main(int argc, char * argv[])
 
         if(counter %FRAMES==0){
             int avg = sum_b/FRAMES;
-            if(avg > Bad_value){ //good egg
+            if(avg > Bad_value_H){ //good egg
                 GPIO_CLR(io->gpio, 16); // turn off the red led
                 GPIO_SET(io->gpio, 26); // turn on the green led
                 usleep(500000);
@@ -149,13 +150,8 @@ int main(int argc, char * argv[])
                 printf("detected good egg\n");
             }
             
-            else if(avg < 100){
-                GPIO_CLR(io->gpio, 16); // turn off the red led
-                GPIO_CLR(io->gpio, 26); // turn on the green led
-                printf("did not detect egg\n");
-
-            }
-            else{
+           
+            else if(avg > Bad_value_L && avg < Bad_value_H){ //bad egg
                 GPIO_SET(io->gpio, 16); // turn off the green led
                 GPIO_CLR(io->gpio, 26); // turn on the red led
 
@@ -165,6 +161,12 @@ int main(int argc, char * argv[])
                 usleep(500000);
                 
                 printf("detected bad egg\n");
+            }
+             else{
+                GPIO_CLR(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 26); // turn on the green led
+                printf("did not detect egg\n");
+
             }
             sum_b = 0;
         }
