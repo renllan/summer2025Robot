@@ -97,7 +97,7 @@ void *IR_Sensor(void* arg)
       
       int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
       int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
-      // printf("left val %d right val, %d \n", left_val,right_val);
+      printf("left val %d right val, %d \n", left_val,right_val);
       if(left_val == 0){ 
 
         //stop and grab the egg
@@ -105,7 +105,7 @@ void *IR_Sensor(void* arg)
         //turn 180 degrees
         printf("detected white line");
         cmd.command = 'b';
-        cmd.argument = 20; //move forward 50
+        cmd.argument = 50; //move forward 50
         if(!FIFO_FULL(param->dir_fifo))
         {
           FIFO_INSERT(param->dir_fifo, cmd);
@@ -121,12 +121,11 @@ void *IR_Sensor(void* arg)
         fifo_insert(param->control_fifo,cmd);
         cmd.command = 'p';
         cmd.argument = 0;
-        fifo_insert(param->control_fifo, cmd);
         if(!FIFO_FULL(param->control_fifo))
         {
-          FIFO_INSERT(param->motor_control_fifo, cmd);
+          FIFO_INSERT(param->control_fifo, cmd);
         }
-        for(int i = 0;i<30;i++){
+        for(int i = 0;i<100;i++){
           wait_period(&timer_state,10u);
         }
         for(int i = 0;i<4;i++){
