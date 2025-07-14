@@ -182,7 +182,15 @@ int main(int argc, char * argv[] )
     /*intialize the parameter of IR_sensor_thread
       - initialize to line tracing mode
     */
-    struct IR_Sensor_param                IR_sensor_param      =  {"IR Senssor", &IR_sensor_fifo,&dir_fifo,NULL,24,25,&quit_flag};
+    struct IR_Sensor_param                IR_sensor_param      =  {
+      "IR Senssor", 
+      &IR_sensor_fifo,
+      &motor_control_fifo,
+      &control_fifo,
+      &dir_fifo,
+      NULL,
+      24,25,
+      &quit_flag};
     struct egg_detector_thread_param      egg_param = {
         "egg datection", 
         &egg_fifo, 
