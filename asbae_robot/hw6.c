@@ -500,6 +500,51 @@ void *Control(void * arg)
           }
           // if (!(FIFO_FULL(param->claw_fifo))) FIFO_INSERT( param->claw_fifo, cmd2 );
           // else printf( "claw_fifo queue full\nHW6> " );
+
+        case 'f': //turn and drop eggs to the right
+        {
+          if (param->mode == 3) {
+            cmd2.command = 'f';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
+            cmd2.command = 's';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
+            break;
+          }
+          break;
+        }
+        case 'g': //turn and drop eggs to the left
+        {
+          if (param->mode == 3) {
+            cmd2.command = 'g';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
+            cmd2.command = 's';
+            cmd2.argument = 0; // not needed for egg drop
+            if(!FIFO_FULL(param->arm_fifo)) FIFO_INSERT(param->arm_fifo, cmd2);
+            else printf("arm_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->pwm_servo_fifo)) FIFO_INSERT(param->pwm_servo_fifo, cmd2);
+            else printf("pwm_servo_fifo queue full\nHW6> ");
+            if(!FIFO_FULL(param->claw_fifo)) FIFO_INSERT(param->claw_fifo, cmd2);
+            else printf("claw_fifo queue full\nHW6> ");
+            break;
+          }
           break;
         }
         default: //if no command entered
@@ -527,6 +572,7 @@ void *Arm_Thread(void * args)
       UP_DOWN_RESET // 75 degrees
   }; // initiail angles for the arm
   int angle_change = 5; // angle change for each command
+  bool left_right = false; // true for left, false for right
   // used to wake up every 10ms with wait_period() function,
   // similar to interrupt occuring every 10ms
   struct  timespec  timer_state;
@@ -534,99 +580,148 @@ void *Arm_Thread(void * args)
   // start 10ms timed wait, ie. set interrupt
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
-  while (!*(param->quit_flag))
-  {
-    if (!(FIFO_EMPTY(param->fifo)))
-    {
-      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
-      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
-      switch (cmd.command)
-      {
-        case 'w': // move arm forward
-        {
-          if (angles[cmd.argument - 1] - angle_change < BACK_FORTH_MIN) angles[cmd.argument - 1] = BACK_FORTH_MIN; // set to minimum angle
-          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
-          printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'x': // move arm backward
-        {
-          if (angles[cmd.argument - 1] + angle_change > BACK_FORTH_MAX) angles[cmd.argument - 1] = BACK_FORTH_MAX; // set to maximum angle
-          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
-          printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'd': // turn right
-        {
-          if (angles[cmd.argument - 1] - angle_change < SPIN_MIN) angles[cmd.argument - 1] = SPIN_MIN; // set to minimum angle
-          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
-          printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'a': // turn left
-        {
-          if (angles[cmd.argument - 1] + angle_change > SPIN_MAX) angles[cmd.argument - 1] = SPIN_MAX; // set to maximum angle
-          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
-          printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'i': // move arm up
-        {
-          if (angles[cmd.argument - 1] - angle_change < UP_DOWN_MIN) angles[cmd.argument - 1] = UP_DOWN_MIN; // set to minimum angle
-          else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
-          printf("Moving up, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'j': // move arm down
-        {
-          if (angles[cmd.argument - 1] + angle_change > UP_DOWN_MAX) angles[cmd.argument - 1] = UP_DOWN_MAX; // set to maximum angle
-          else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
-          printf("Moving down, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'o': // increase angle by 5
-        {
-          if (angle_change + cmd.argument > 180) angle_change = 180; // set to maximum angle
-          else angle_change += cmd.argument; // increase angle by cmd.argument degrees
-          printf("Increasing angle change to %d degrees\n", angle_change);
-          break;
-        }
-        case 'k': // decrease angle by 5
-        {
-          if (angle_change - cmd.argument < 0) angle_change = 0; // set to minimum angle
-          else angle_change -= cmd.argument; // decrease angle by cmd.argument degrees
-          printf("Decreasing angle change to %d degrees\n", angle_change);
-          break;
-        }
-        case 's': // reset arm to initial angles
-        {
-          angles[0] = SPIN_RESET;
-          angles[1] = BACK_FORTH_RESET;
-          angles[2] = UP_DOWN_RESET;
-          printf("Resetting arm to initial angles\n");
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        case 'p': // 909090
-        {
-          angles[0] = SPIN_REST;
-          angles[1] = BACK_FORTH_REST;
-          angles[2] = UP_DOWN_REST;
-          printf("Resetting arm to 90 degrees\n");
-          set_angles(param->uart_fd, angles, ARM_TIMEOUT);
-          break;
-        }
-        default:
-        {
-          printf("Invalid command for arm thread: %c\n", cmd.command);
-        }
+  while (!*(param->quit_flag)) {
+    if (*(param->drop_stage) == 0) { // not dropping egg
+      if (!(FIFO_EMPTY(param->fifo))) {
+         switch (cmd.command) {
+           case 'w': // move arm forward
+           {
+             if (angles[cmd.argument - 1] - angle_change < BACK_FORTH_MIN) angles[cmd.argument - 1] = BACK_FORTH_MIN; // set to minimum angle
+             else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+             printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'x': // move arm backward
+           {
+             if (angles[cmd.argument - 1] + angle_change > BACK_FORTH_MAX) angles[cmd.argument - 1] = BACK_FORTH_MAX; // set to maximum angle
+             else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+             printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'd': // turn right
+           {
+             if (angles[cmd.argument - 1] - angle_change < SPIN_MIN) angles[cmd.argument - 1] = SPIN_MIN; // set to minimum angle
+             else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+             printf("Turning left, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'a': // turn left
+           {
+             if (angles[cmd.argument - 1] + angle_change > SPIN_MAX) angles[cmd.argument - 1] = SPIN_MAX; // set to maximum angle
+             else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+             printf("Turning right, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'i': // move arm up
+           {
+             if (angles[cmd.argument - 1] - angle_change < UP_DOWN_MIN) angles[cmd.argument - 1] = UP_DOWN_MIN; // set to minimum angle
+             else angles[cmd.argument - 1] -= angle_change; // decrease angle by angle_change degrees
+             printf("Moving up, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'j': // move arm down
+           {
+             if (angles[cmd.argument - 1] + angle_change > UP_DOWN_MAX) angles[cmd.argument - 1] = UP_DOWN_MAX; // set to maximum angle
+             else angles[cmd.argument - 1] += angle_change; // increase angle by angle_change degrees
+             printf("Moving down, new angles: [%d, %d, %d]\n", angles[0], angles[1], angles[2]);
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'o': // increase angle by 5
+           {
+             if (angle_change + cmd.argument > 180) angle_change = 180; // set to maximum angle
+             else angle_change += cmd.argument; // increase angle by cmd.argument degrees
+             printf("Increasing angle change to %d degrees\n", angle_change);
+             break;
+           }
+           case 'k': // decrease angle by 5
+           {
+             if (angle_change - cmd.argument < 0) angle_change = 0; // set to minimum angle
+             else angle_change -= cmd.argument; // decrease angle by cmd.argument degrees
+             printf("Decreasing angle change to %d degrees\n", angle_change);
+             break;
+           }
+           case 's': // reset arm to initial angles
+           {
+             angles[0] = SPIN_RESET;
+             angles[1] = BACK_FORTH_RESET;
+             angles[2] = UP_DOWN_RESET;
+             printf("Resetting arm to initial angles\n");
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'p': // 909090
+           {
+             angles[0] = SPIN_REST;
+             angles[1] = BACK_FORTH_REST;
+             angles[2] = UP_DOWN_REST;
+             printf("Resetting arm to 90 degrees\n");
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             break;
+           }
+           case 'f':
+           {
+             left_right = true; // set left/right flag to true for egg drop
+             // set angles to 90-90-90
+             angles[0] = SPIN_MOTOR_TEMP_REST;
+             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             *(param->drop_stage) = 1; // set drop stage to 1            
+             sleep(1); // assure arm does not move for 1 second
+             break;
+           }
+           case 'g':
+           { 
+             left_right = false; // set left/right flag to false for egg drop
+             angles[0] = SPIN_MOTOR_TEMP_REST;
+             angles[1] = BACK_FORTH_MOTOR_TEMP_REST;
+             angles[2] = UP_DOWN_MOTOR_TEMP_REST; // set temporary rest angles for egg drop
+             set_angles(param->uart_fd, angles, ARM_TIMEOUT);
+             *(param->drop_stage) = 1; // set drop stage to 1
+             sleep(1); // assure arm does not move foe 1 second
+             break;
+           }
+           default:
+           {
+             printf("Invalid command for arm thread: %c\n", cmd.command);
+           }
+         }
+       }
+     }
+      else if (*(param->drop_stage) == 1) { // stage 1 (move to basket)
+        if (left_right) { // drop egg to the left
+        angles[0] = SPIN_MOTOR_LEFT1;
+        angles[1] = BACK_FORTH_MOTOR_LEFT1;
+        angles[2] = UP_DOWN_MOTOR_LEFT; // set angles for left drop
       }
+      else { // drop egg to the right
+        angles[0] = SPIN_MOTOR_RIGHT1;
+        angles[1] = BACK_FORTH_MOTOR_RIGHT1;
+        angles[2] = UP_DOWN_MOTOR_RIGHT;
+      }
+      set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
+      *(param->drop_stage) = 2; // set drop stage to 2
+      sleep(1); // wait for arm to move to basket position
+    }
+    else if (*(param->drop_stage) == 2) { // stage 2 (open claw to drop egg)
+      if (left_right) { // drop egg to the left
+        angles[0] = SPIN_MOTOR_LEFT2; // reset spin motor to temporary rest position
+        angles[1] = BACK_FORTH_MOTOR_LEFT2; // reset back/forth motor to temporary rest position
+        angles[2] = UP_DOWN_MOTOR_LEFT; // reset up/down motor to temporary rest position
+      } else { // drop egg to the right
+        angles[0] = SPIN_MOTOR_RIGHT2; // reset spin motor to temporary rest position
+        angles[1] = BACK_FORTH_MOTOR_RIGHT2; // reset back/forth motor to temporary rest position
+        angles[2] = UP_DOWN_MOTOR_RIGHT; // reset up/down motor to temporary rest position
+      }
+       set_angles(param->uart_fd, angles, ARM_TIMEOUT*2);
+       sleep(1); // wait for arm to move to basket position
+      *(param->drop_stage) = 3; // set drop stage to 3
     }
     wait_period( &timer_state, 10u ); /* 10ms */
   }
@@ -648,32 +743,45 @@ void *Claw_Thread(void * args)
   wait_period( &timer_state, 10u ); /* 10ms */
   while (!*(param->quit_flag))
   {
-    if (!(FIFO_EMPTY(param->fifo)))
-    {
-      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
-      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
-      switch (cmd.command)
+    if (*(param->drop_stage) == 0) { // not dropping egg
+      if (!(FIFO_EMPTY(param->fifo)))
       {
-        case 'c': // toggle claw
+        FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
+        printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
+        switch (cmd.command)
         {
-          claw_pos = (claw_pos == CLAW_OPEN) ? CLAW_CLOSE : CLAW_OPEN; // toggle claw position
-          printf("Toggling claw, new position: %d\n", claw_pos);
-          set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
-          break;
-        }
-        case 's': case 'p':// reset claw to open position
-        {
-          claw_pos = CLAW_OPEN;
-          printf("Resetting claw to open position\n");
-          set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
-          break;
-        }
-        default:
-        {
-          printf("Invalid command for claw thread: %c\n", cmd.command);
+          case 'c': // toggle claw
+          {
+            claw_pos = (claw_pos == CLAW_OPEN) ? CLAW_CLOSE : CLAW_OPEN; // toggle claw position
+            printf("Toggling claw, new position: %d\n", claw_pos);
+            set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+            break;
+          }
+          case 's': // reset claw to open position
+          {
+            claw_pos = CLAW_OPEN;
+            printf("Resetting claw to open position\n");
+            set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+            break;
+          }
+          default:
+          {
+            printf("Invalid command for claw thread: %c\n", cmd.command);
+          }
         }
       }
     }
+    else if (*(param->drop_stage) == 3) { // stage 2 (open claw to drop egg)
+      sleep(1); // wait for arm to move to basket position
+      if (claw_pos != CLAW_OPEN) { // open claw if not already open
+        claw_pos = CLAW_OPEN;
+        printf("Opening claw to drop egg\n");
+        set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
+        sleep(1); // assure claw is open for 1 second
+      }
+      *(param->drop_stage) = 0; // reset drop stage to 0 (drop done)
+     
+    } // no cases for stage 1 (wait for other threads to update)
     wait_period( &timer_state, 10u ); /* 10ms */
   }
   printf( "Claw thread function done\n" );
@@ -686,6 +794,8 @@ void *PWM_Servo_Thread(void * args)
   struct  thread_command cmd = {0, 0};
   int pwm_servo_angle = PWM_SERVO_RESET; // initial pwm servo angle
   int angle_change = 5; // angle change for each command
+  bool left_right = false; // true for left, false for right
+  bool pwm_done = false; // flag to indicate if pwm servo is done moving
   // used to wake up every 10ms with wait_period() function,
   // similar to interrupt occuring every 10ms
   struct  timespec  timer_state;
@@ -695,62 +805,87 @@ void *PWM_Servo_Thread(void * args)
   wait_period( &timer_state, 10u ); /* 10ms */
   while (!*(param->quit_flag))
   {
-    if (!(FIFO_EMPTY(param->fifo)))
-    {
-      FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
-      printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
-      switch (cmd.command)
+    if (*(param->drop_stage) == 0) {//} || cmd.command == 'f' || cmd.command == 'g') { // not dropping egg
+      if (!(FIFO_EMPTY(param->fifo)))
       {
-        case 'e': // turn pwm servo left
+        FIFO_REMOVE(param->fifo, &cmd);  // read once every 10ms
+        printf( "\n %s= %c  %d\n", param->name, cmd.command, cmd.argument);
+        switch (cmd.command)
         {
-          if (pwm_servo_angle - angle_change < PWM_SERVO_MIN) pwm_servo_angle = PWM_SERVO_MIN; // set to minimum angle
-          else pwm_servo_angle -= angle_change; // decrease angle by angle_change degrees
-          printf("Turning pwm servo left, new angle: %d\n", pwm_servo_angle);
-          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-          break;
-        }
-        case 'r': // turn pwm servo right
-        {
-          if (pwm_servo_angle + angle_change > PWM_SERVO_MAX) pwm_servo_angle = PWM_SERVO_MAX; // set to maximum angle
-          else pwm_servo_angle += angle_change; // increase angle by angle_change degrees
-          printf("Turning pwm servo right, new angle: %d\n", pwm_servo_angle);
-          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-          break;
-        }
-        case 'o': // increase pwm servo angle by 5 degrees
-        {
-          if (angle_change + cmd.argument > PWM_SERVO_MAX) angle_change = PWM_SERVO_MAX; // set to maximum angle
-          else angle_change += cmd.argument; // increase angle by angle_change degrees
-          printf("Increasing pwm servo angle to %d degrees\n", angle_change);
-          break;
-        }
-        case 'k': // decrease pwm servo angle by 5 degrees
-        {
-          if (angle_change - cmd.argument < PWM_SERVO_MIN) angle_change = PWM_SERVO_MIN; // set to minimum angle
-          else angle_change -= cmd.argument; // decrease angle by angle_change degrees
-          printf("Decreasing pwm servo angle to %d degrees\n", angle_change);
-          break;
-        }
-        case 's': // reset pwm servo to initial angle
-        {
-          pwm_servo_angle = PWM_SERVO_RESET;
-          printf("Resetting pwm servo to initial angle\n");
-          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-          break;
-        }
-        case 'p': 
-        {
-          pwm_servo_angle = PWM_SERVO_MAX; // reset pwm servo to rest position
-          printf("Resetting pwm servo to rest position\n");
-          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
-          break;
-        }
-        default:
-        {
-          printf("Invalid command for pwm servo thread: %c\n", cmd.command);
+          case 'e': // turn pwm servo left
+          {
+            if (pwm_servo_angle - angle_change < PWM_SERVO_MIN) pwm_servo_angle = PWM_SERVO_MIN; // set to minimum angle
+            else pwm_servo_angle -= angle_change; // decrease angle by angle_change degrees
+            printf("Turning pwm servo left, new angle: %d\n", pwm_servo_angle);
+            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+            break;
+          }
+          case 'r': // turn pwm servo right
+          {
+            if (pwm_servo_angle + angle_change > PWM_SERVO_MAX) pwm_servo_angle = PWM_SERVO_MAX; // set to maximum angle
+            else pwm_servo_angle += angle_change; // increase angle by angle_change degrees
+            printf("Turning pwm servo right, new angle: %d\n", pwm_servo_angle);
+            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+            break;
+          }
+          case 'o': // increase pwm servo angle by 5 degrees
+          {
+            if (angle_change + cmd.argument > PWM_SERVO_MAX) angle_change = PWM_SERVO_MAX; // set to maximum angle
+            else angle_change += cmd.argument; // increase angle by angle_change degrees
+            printf("Increasing pwm servo angle to %d degrees\n", angle_change);
+            break;
+          }
+          case 'k': // decrease pwm servo angle by 5 degrees
+          {
+            if (angle_change - cmd.argument < PWM_SERVO_MIN) angle_change = PWM_SERVO_MIN; // set to minimum angle
+            else angle_change -= cmd.argument; // decrease angle by angle_change degrees
+            printf("Decreasing pwm servo angle to %d degrees\n", angle_change);
+            break;
+          }
+          case 's': // reset pwm servo to initial angle
+          {
+            pwm_servo_angle = PWM_SERVO_RESET;
+            printf("Resetting pwm servo to initial angle\n");
+            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+            break;
+          }
+            case 'p': 
+          {
+            pwm_servo_angle = PWM_SERVO_MAX; // reset pwm servo to rest position
+            printf("Resetting pwm servo to rest position\n");
+            set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+            break;
+          }
+          case 'f': // turn and drop eggs to the left
+          {
+            pwm_done = false; // reset pwm done flag
+            left_right = true; // set left/right flag to true for egg drop
+            break;
+          }
+          case 'g': // turn and drop eggs to the right
+          {
+            pwm_done = false; // reset pwm done flag
+            left_right = false; // set left/right flag to false for egg drop
+            break;
+          }
+          default:
+          {
+            printf("Invalid command for pwm servo thread: %c\n", cmd.command);
+          }
         }
       }
     }
+    else if (*(param->drop_stage) == 1 && !pwm_done) { // stage 1 (move to basket)
+      if (left_right) { // drop egg to the left
+        pwm_servo_angle = PWM_SERVO_LEFT; // set angle for left drop
+      }
+      else { // drop egg to the right
+        pwm_servo_angle = PWM_SERVO_RIGHT; // set angle for right drop
+      }
+      set_pwmservo(param->uart_fd, pwm_servo_angle, ARM_TIMEOUT);
+      pwm_done = true; // set pwm done flag to true
+      //sleep(1); // assure servo does not move for 1 second
+    } // no cases for stage 2 (wait for other threads to update)
     wait_period( &timer_state, 10u ); /* 10ms */
   }
   printf( "PWM Servo thread function done\n" );
@@ -954,6 +1089,7 @@ void *Motor_Control(void * arg){
         prev_dir ='w';
         break;
       case 'a':
+      {
       //change the direction first
         busy2 = (int)(param->angle*5);
         if(!FIFO_FULL(param->dir_fifo)){
@@ -980,6 +1116,7 @@ void *Motor_Control(void * arg){
           FIFO_INSERT(param->speed_fifo,cmd2);
         }
         break;
+      }
       case 's':
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 's';
