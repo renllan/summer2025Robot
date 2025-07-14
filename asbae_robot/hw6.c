@@ -65,7 +65,7 @@ void *KeyRead(void * arg)
 void *IR_Sensor(void* arg)
 {
   struct IR_Sensor_param *param = (struct IR_Sensor_param *)arg;
-  bool pause_thread = true;
+  // bool pause_thread = true;
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function, 
              // similar to interrupt occuring every 10ms
@@ -84,7 +84,6 @@ void *IR_Sensor(void* arg)
         switch (cmd.command){
           case 'w': // start line tracing
           {
-            pause_thread = !pause_thread;
             printf("IR Sensor thread started \n");
             break;
           }
@@ -93,11 +92,10 @@ void *IR_Sensor(void* arg)
 
       
 
-
-      if(!pause_thread){ 
-        int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
-        int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
-        
+      
+      int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
+      int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
+      printf("left val %dright val, %d \n", left_val,right_val);
       if(left_val == 1){ 
 
         //stop and grab the egg
@@ -139,7 +137,7 @@ void *IR_Sensor(void* arg)
         }
         cmd.command = 'c';
         cmd.argument = 0;
-        fifo_insert(param->control_fifo,cmd);
+        FIFO_INSERT(param->control_fifo,cmd);
         for(int i = 0;i<100;i++){
           wait_period(&timer_state,10u);
         }
@@ -160,10 +158,10 @@ void *IR_Sensor(void* arg)
          //increase turn angle to 180
         cmd.command = 'b';
         cmd.argument = 50;
-        fifo_insert(param->dir_fifo,cmd);
+        FIFO_INSERT(param->dir_fifo,cmd);
         cmd.command = 'o';
         cmd.argument = 90;
-        fifo_insert(param->motor_control_fifo,cmd);
+        FIFO_INSERT(param->motor_control_fifo,cmd);
         cmd.command = 'd';
         cmd.argument = 0;
         FIFO_INSERT(param->motor_control_fifo,cmd);
@@ -171,8 +169,7 @@ void *IR_Sensor(void* arg)
         cmd.argument = 0;
         cmd.command = 'b';
         cmd.argument = 50;
-        fifo_insert(param->dir_fifo,cmd);
-        FIFO_INSERT(param->dir_fifo, cmd);
+        FIFO_INSERT(param->dir_fifo,cmd);
         if(!FIFO_FULL(param->dir_fifo))
         {
           cmd.command = 'o'; //increase turn anlge to 180
@@ -184,7 +181,7 @@ void *IR_Sensor(void* arg)
 
 
         //tur 180 degrees
-      }
+      
     }
      
     wait_period( &timer_state, 10u );
