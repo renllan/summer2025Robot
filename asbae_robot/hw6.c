@@ -66,6 +66,7 @@ void *IR_Sensor(void* arg)
 {
   struct IR_Sensor_param *param = (struct IR_Sensor_param *)arg;
   // bool pause_thread = true;
+  int ir_ctr = 0;
   struct  timespec  timer_state; 
              // used to wake up every 10ms with wait_period() function, 
              // similar to interrupt occuring every 10ms
@@ -99,7 +100,7 @@ void *IR_Sensor(void* arg)
       int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
       int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
       //printf("left val %d right val, %d \n", left_val,right_val);
-      if(left_val == 0){ 
+      if(left_val == 0 && ir_ctr != 1){ 
 
         //stop and grab the egg
         //grab the egg
@@ -152,7 +153,7 @@ void *IR_Sensor(void* arg)
           wait_period(&timer_state,10u);
         }
         cmd.command = 'o';
-        cmd.argument = 180*3/5;
+        cmd.argument = 180*1/2;
         FIFO_INSERT(param->motor_control_fifo,cmd);
 
         for(int i = 0;i<100;i++){
@@ -162,6 +163,61 @@ void *IR_Sensor(void* arg)
         cmd.argument  = 0;
         FIFO_INSERT(param->motor_control_fifo,cmd);
 
+        cmd.command = 'w';
+        cmd.argument = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
+        while (right_val)
+        {
+          wait_period(&timer_state,10u);
+          right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
+        }
+        cmd.command = 's';
+        cmd.argument = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        cmd.command = 'o';
+        cmd.argument = 90*1/2;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        cmd.command = 'd';
+        cmd.argument  = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        cmd.command = 'w';
+        cmd.argument = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        right_val = GPIO_READ(param->gpio,param->pin_1); // read wall
+        while (right_val) {
+          wait_period(&timer_state,10u);
+          right_val = GPIO_READ(param->gpio,param->pin_1); // read wall
+        }
+
+        cmd.command = 's';
+        cmd.argument = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        cmd.command = 'o';
+        cmd.argument = 90*1/2;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        cmd.command = 'p';
+        cmd.argument = 0;
+        if(!FIFO_FULL(param->control_fifo))
+        {
+          FIFO_INSERT(param->control_fifo, cmd);
+        }
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        cmd.command = 'c';
+        cmd.argument = 0;
+        if(!FIFO_FULL(param->control_fifo))
+        {
+          FIFO_INSERT(param->control_fifo, cmd);
+        }
 
       }
 
