@@ -88,7 +88,7 @@
 #define SPIN_MOTOR_LEFT2 145 
 #define SPIN_MOTOR_RIGHT1 50
 #define SPIN_MOTOR_RIGHT2 25
-#define BACK_FORTH_MOTOR_TEMP_REST 45
+#define BACK_FORTH_MOTOR_TEMP_REST 90
 #define BACK_FORTH_MOTOR_RIGHT1 100
 #define BACK_FORTH_MOTOR_RIGHT2 110
 #define BACK_FORTH_MOTOR_LEFT1 100
@@ -165,10 +165,12 @@ struct IR_Sensor_param
 {
   const char                  *name;
   struct fifo_t              *IR_sensor_fifo;
+  struct fifo_t              *motor_control_fifo;
+  struct fifo_t              *control_fifo;
   struct fifo_t              *dir_fifo;
   volatile struct gpio_register     *gpio;
-  int                         pin_1;
-  int                         pin_2;
+  int                         pin_1;//left
+  int                         pin_2;//right
   bool                       *quit_flag;
 };
 
