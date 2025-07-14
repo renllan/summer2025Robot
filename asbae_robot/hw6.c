@@ -80,36 +80,93 @@ void *IR_Sensor(void* arg)
   {
     if(!pause_thread)
     {
-    //   int left_val = GPIO_READ(param->gpio,param->pin_1);
-    //   int right_val = GPIO_READ(param->gpio,param->pin_2);
-    //   if(left_val != 0){
-    //     cmd.command = 'd';
-    //     cmd.argument = 0;
-    //     if(!FIFO_FULL(param->dir_fifo)){FIFO_INSERT(param->dir_fifo,cmd);}
-    //     usleep(250000);
+      if(!FIFO_FULL(param->IR_sensor_fifo)){
+        FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
+        switch (cmd.command){
+          case 'u': // start line tracing
+          {
+            pause_thread = !pause_thread;
+            printf("IR Sensor thread started \n");
+            break;
+          }
+        }
 
-    //   }
-    //   if(right_val != 0){
-    //     cmd.command = 'a';
-    //     cmd.argument = 0;
-    //     if(!FIFO_FULL(param->dir_fifo)){FIFO_INSERT(param->dir_fifo,cmd);}
-    //     usleep(250000);
-    //   }
+      }
+
+
+      if(!pause_thread){ int left_val = GPIO_READ(param->gpio,param->pin_1); // read ground
+      int right_val = GPIO_READ(param->gpio,param->pin_2); //read wall
+      
+      if(left_val == 0){ 
+
+        //stop and grab the egg
+        //grab the egg
+        //turn 180 degrees
+        cmd.command = 'b';
+        cmd.argument = 50; //move forward 50
+        if(!FIFO_FULL(param->dir_fifo))
+        {
+          FIFO_INSERT(param->dir_fifo, cmd);
+        }
+        cmd.command = 's';
+        cmd.argument= 0;
+        fifo_insert(param->dir_fifo, cmd);
+        cmd.command = 'm';//switch mode 
+        cmd.argument =0;
+        fifo_insert(param->control_fifo,cmd);
+        cmd.command = "3";
+        cmd.argument = '0';
+        fifo_insert(param->control_fifo,cmd);
+        cmd.command = 'p';
+        cmd.argument = 0;
+        fifo_insert(param->control_fifo, cmd);
+        if(!FIFO_FULL(param->control_fifo))
+        {
+          FIFO_INSERT(param->motor_control_fifo, cmd);
+        }
+
+      }
+
+      if(right_val == 0){ //hit the wall
+        cmd.command = 'b';
+        cmd.argument = 50; 
+      
+        FIFO_INSERT(param->dir_fifo, cmd);
+        
+        cmd.command = 'x';
+        cmd.argument = 0; //turn 180 degrees
+        FIFO_INSERT(param->dir_fifo, cmd);
+         //increase turn angle to 180
+        cmd.command = 'b';
+        cmd.argument = 50;
+        fifo_insert(param->dir_fifo,cmd);
+        cmd.command = 'o';
+        cmd.argument = 90;
+        fifo_insert(param->motor_control_fifo,cmd);
+        cmd.command = 'd';
+        cmd.argument = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+        cmd.command = 'w';
+        cmd.argument = 0;
+        
+       
+        FIFO_INSERT(param->dir_fifo, cmd);
+        if(!FIFO_FULL(param->dir_fifo))
+        {
+          cmd.command = 'o'; //increase turn anlge to 180
+          cmd.argument = 90;
+          FIFO_INSERT(param->dir_fifo, cmd);
+        }
+        cmd.command = 'w';
+        cmd.argument = 0; //move forward
+
+
+        //tur 180 degrees
+      }
     }
-    //check for mode switching
-    // if(!FIFO_EMPTY(param->IR_sensor_fifo))
-    // {
-    //   FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
-    //   printf( "\n %s= %c\n", param->name, cmd2.command);
-    //   switch(cmd2.command)
-    //   {
-    //     case 'w':{pause_thread = false;break;}
-    //     case 's':{pause_thread = true; break;}
-    //     default:{ printf("invalid mode \n");}
-    //   }
-    // }
-
+     
     wait_period( &timer_state, 10u );
+    }
   }
   printf("IR Sensor thread Quit\n");
   return NULL;
@@ -1069,6 +1126,10 @@ void *Motor_Control(void * arg){
         }
         break;
       case 'o':
+        if(cmd1.argument > 0){
+          param->angle = cmd1.argument;
+          break;
+        }
         if(param->angle <85){
           param->angle +=5;
           printf("current angle = %d", param->angle);
