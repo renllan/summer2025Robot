@@ -147,47 +147,26 @@ void *IR_Sensor(void* arg)
         cmd.argument = 0;
         FIFO_INSERT(param->control_fifo,cmd);
         grabbed = true;
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        cmd.command = 'o';
+        cmd.argument = '180';
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        cmd.command = 'd';
+        cmd.argument  = 0;
+        FIFO_INSERT(param->motor_control_fifo,cmd);
+
+
       }
 
-      if(right_val == 0 && grabbed == true){ //hit the wall
-        cmd.command = 'b';
-        cmd.argument = 50; 
-        
-        FIFO_INSERT(param->dir_fifo, cmd);
-        
-        cmd.command = 'x';
-        cmd.argument = 0; //turn 180 degrees
-        FIFO_INSERT(param->dir_fifo, cmd);
-         //increase turn angle to 180
-        cmd.command = 'b';
-        cmd.argument = 50;
-        FIFO_INSERT(param->dir_fifo,cmd);
-        cmd.command = 'o';
-        cmd.argument = 90;
-        FIFO_INSERT(param->motor_control_fifo,cmd);
-        cmd.command = 'd';
-        cmd.argument = 0;
-        FIFO_INSERT(param->motor_control_fifo,cmd);
-        cmd.command = 'w';
-        cmd.argument = 0;
-        cmd.command = 'b';
-        cmd.argument = 50;
-        FIFO_INSERT(param->dir_fifo,cmd);
-        if(!FIFO_FULL(param->dir_fifo))
-        {
-          cmd.command = 'o'; //increase turn anlge to 180
-          cmd.argument = 90;
-          FIFO_INSERT(param->dir_fifo, cmd);
-        }
-        cmd.command = 'w';
-        cmd.argument = 0; //move forward
 
-
-        //tur 180 degrees
-      
+      wait_period( &timer_state, 10u );
   }
-  wait_period( &timer_state, 10u );
-}
 
   printf("IR Sensor thread Quit\n");
   return NULL;
