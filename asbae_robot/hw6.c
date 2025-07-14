@@ -116,6 +116,7 @@ void *IR_Sensor(void* arg)
         cmd.command = 's';
         cmd.argument= 0;
         fifo_insert(param->dir_fifo, cmd);
+        sleep(1);
         cmd.command = 'm';//switch mode 
         cmd.argument =0;
         fifo_insert(param->control_fifo,cmd);
@@ -160,7 +161,7 @@ void *IR_Sensor(void* arg)
         }
 
         cmd.command = 'o';
-        cmd.argument = 180*14/20;
+        cmd.argument = 180*16/20;
         FIFO_INSERT(param->motor_control_fifo,cmd);
 
         for(int i = 0;i<100;i++){
