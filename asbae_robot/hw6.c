@@ -112,7 +112,7 @@ void *IR_Sensor(void* arg)
         {
           FIFO_INSERT(param->dir_fifo, cmd);
         }
-        for(int i = 0;i<400;i++){
+        for(int i = 0;i<500;i++){
           wait_period(&timer_state,10u);
         }
         cmd.command = 's';
