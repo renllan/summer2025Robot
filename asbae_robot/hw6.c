@@ -2101,11 +2101,11 @@ void *egg_detector(void * arg){
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
 
-                  for(int i = 0; i< ;i++){
+                  for(int i = 0; i< 50;i++){
                     wait_period(&timer_state, 10u);
                   }
                   if(!FIFO_FULL(param->dir_fifo)){
-                    cmd.command ='s';50
+                    cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
                   }
                   if(!FIFO_FULL(param->control_fifo)){
