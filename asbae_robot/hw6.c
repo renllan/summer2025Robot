@@ -2101,11 +2101,11 @@ void *egg_detector(void * arg){
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
 
-                  for(int i = 0; i< 25;i++){
+                  for(int i = 0; i< ;i++){
                     wait_period(&timer_state, 10u);
                   }
                   if(!FIFO_FULL(param->dir_fifo)){
-                    cmd.command ='s';
+                    cmd.command ='s';50
                     FIFO_INSERT(param->dir_fifo,cmd);
                   }
                   if(!FIFO_FULL(param->control_fifo)){
@@ -2200,7 +2200,7 @@ void *egg_detector(void * arg){
                   if (!FIFO_FULL(param->control_fifo)) {
                       
                     printf("arm queue decision: largest egg detected on the left\n");                    
-                    cmd.command = 'a';
+                    cmd.command = 'w';
                     FIFO_INSERT(param->control_fifo, cmd);
                     //centered = false;
                     turn_cool_down = TURN_COOLDOWN_FRAMES;                      
@@ -2208,7 +2208,7 @@ void *egg_detector(void * arg){
                 } else if (right >= MAX_DECISION_SIZE/2) {
                   if (!FIFO_FULL(param->control_fifo)) {
                       printf("arm queue decision: largest egg detected on the right\n");
-                      cmd.command = 'd';
+                      cmd.command = 'x';
                       FIFO_INSERT(param->control_fifo, cmd);
                       turn_cool_down = TURN_COOLDOWN_FRAMES;
                   }
@@ -2223,14 +2223,14 @@ void *egg_detector(void * arg){
                 }
                 if(front >= MAX_DECISION_THRESHOLD){
                   printf("arm: arm is too far front");
-                  cmd.command = 'x';
+                  cmd.command = 'a';
                   cmd.command =0;
                   fifo_insert(param->control_fifo,cmd);
                   arm_cool_down_y = TURN_COOLDOWN_FRAMES;
                 }
                 else if(back >= MAX_DECISION_THRESHOLD){
                   printf("arm: arm is too back");
-                  cmd.command ='w';
+                  cmd.command ='d';
                   cmd.argument = 0;
                   fifo_insert(param->control_fifo,cmd);
                   arm_cool_down_y = TURN_COOLDOWN_FRAMES;
