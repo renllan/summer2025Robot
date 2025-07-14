@@ -93,7 +93,7 @@
 #define CLAW_CLOSE 875 // 800 for other car
 #define ARM_TIMEOUT 500 // Timeout for arm commands in milliseconds
 #define PWM_SERVO_TIMEOUT 375 // Timeout for pwm servo commands in milliseconds
-#define ARM_CLAW_TIMEOUT 500 // Timeout for arm claw commands in milliseconds
+#define ARM_CLAW_TIMEOUT 375 // Timeout for arm claw commands in milliseconds
 void *video_histogram(void *arg) ;
 void set_gpio(struct io_peripherals *io);
 void enable_pwm(struct io_peripherals *io) ;

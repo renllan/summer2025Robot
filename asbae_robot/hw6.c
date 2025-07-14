@@ -955,7 +955,7 @@ void *Motor_Control(void * arg){
         break;
       case 'a':
       //change the direction first
-        busy2 = (int)(param->angle*1.5);
+        busy2 = (int)(param->angle*5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'a';
           cmd2.argument = 0;
@@ -989,7 +989,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
-        busy1 = (int)(param->angle*1.5);
+        busy1 = (int)(param->angle*5);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
           cmd2.argument = 0;
@@ -1946,6 +1946,11 @@ void *egg_detector(void * arg)
     int arm_cool_down_x = 0;
     int arm_cool_down_y = 0;
     bool mode3 = false;
+    
+    int diff_egg_size = 0; 
+    int prev_egg_size =0;
+
+    bool first_egg_detected = false;
     struct thread_command cmd = {0, 0};
     wait_period(&timer_state, 10u);
 
@@ -2034,6 +2039,7 @@ void *egg_detector(void * arg)
                 robot_decision_q[MAX_DECISION_SIZE-1] = eggs[max_egg].center_x;
                 printf("largest egg size is is at %d \n", eggs[max_egg].size);
                 egg_found = true;
+
               }
               else{
                 robot_decision_q[MAX_DECISION_SIZE-1] = -1;
@@ -2043,7 +2049,7 @@ void *egg_detector(void * arg)
               
 
               if(!pause_thread && robot_queue_filled){
-                int left = 0, right = 0, center,not_found = 0;
+                int left = 0, right = 0, center,not_found = 0; int new_egg = 0;
                 for (int i = 0; i < MAX_DECISION_SIZE; i++) {
                     if (robot_decision_q[i] > 0 && robot_decision_q[i] < CENTER_L) left++;
                     else if (robot_decision_q[i] > CENTER_R) right++;
@@ -2055,34 +2061,44 @@ void *egg_detector(void * arg)
                   if(!FIFO_FULL(param->dir_fifo)){
                     printf("robot: egg size is %d egg is close to robot\n",eggs[max_egg].size);
                     cmd.command = 's';
+                    diff_egg_size = eggs[max_egg].size - prev_egg_size;
+                    prev_egg_size = eggs[max_egg].size;
+                    first_egg_detected = true;
                     if(!robot_stopped)
                     {
-                      printf("sleep start \n");
-                      //usleep(250000); //wait for 250 ms
-                      sleep(1); //wait for 1 second
-                      printf("sleep end \n");
-                      FIFO_INSERT(param->dir_fifo,cmd);
+                      // printf("sleep start \n");
+                      // //usleep(250000); //wait for 250 ms
+                      // sleep(1); //wait for 1 second
+                      // printf("sleep end \n");
+                      // FIFO_INSERT(param->dir_fifo,cmd);
                     }
                     robot_stopped = true;
                   }
                 }
 
+                if(diff_egg_size < DIFF_EGG_SIZE_THRESH){
+                  robot_stopped = true;
+                }
+
+                
+                  
                 if(turn_cool_down > 0)
                 {
                   turn_cool_down--;
                 }
-                // else if(not_found > MAX_DECISION_SIZE/2){
-                //   if(!FIFO_FULL(param->dir_fifo)){
+                
+                else if(not_found > MAX_DECISION_SIZE/2){
+                 if(!FIFO_FULL(param->dir_fifo)){
                     
-                //     // cmd.command = 'a';
-                //     // FIFO_INSERT(param->dir_fifo,cmd);
-                //     cmd.command ='s';
-                //     FIFO_INSERT(param->dir_fifo,cmd);
-                //     turn_cool_down = TURN_COOLDOWN_FRAMES;
-                //     printf("robot: robot did not find any egg \n");
-                //     robot_stopped = false;
-                //   }  
-                // }
+                    // cmd.command = 'a';
+                    // FIFO_INSERT(param->dir_fifo,cmd);
+                    cmd.command ='s';
+                    FIFO_INSERT(param->dir_fifo,cmd);
+                    turn_cool_down = TURN_COOLDOWN_FRAMES;
+                    printf("robot: robot did not find any egg \n");
+                    robot_stopped = false;
+                  }  
+                }
                 // else if (left >= MAX_DECISION_SIZE/2) {
                 //   if (!FIFO_FULL(param->dir_fifo)) {
                       
@@ -2232,7 +2248,7 @@ void *egg_detector(void * arg)
                   cmd.command = 'w';
                     fifo_insert(param->control_fifo, cmd);
                     sleep(1);
-                    for(int i = 0; i<6;i++){
+                    for(int i = 0; i<5;i++){
                       printf("arm: preparing to grab egg \n");
                       cmd.command = 'j';
                       fifo_insert(param->control_fifo, cmd);
@@ -2257,7 +2273,7 @@ void *egg_detector(void * arg)
                     sleep(1);
                     cmd.command = 's';
                     fifo_insert(param->dir_fifo, cmd);
-                    for(int i = 0; i<6;i++){
+                    for(int i = 0; i<5;i++){
                       printf("arm: preparing to grab egg \n");
                       cmd.command = 'j';
                       fifo_insert(param->control_fifo, cmd);
