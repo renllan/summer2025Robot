@@ -75,7 +75,7 @@ void *IR_Sensor(void* arg)
   // start 10ms timed wait, ie. set interrupt
   wait_period_initialize( &timer_state );
   wait_period( &timer_state, 10u ); /* 10ms */
-
+  prinf("IR sensor starting");
   while(!(*param->quit_flag))
   {
       if(!FIFO_EMPTY(param->IR_sensor_fifo)){
@@ -95,8 +95,8 @@ void *IR_Sensor(void* arg)
 
 
       if(!pause_thread){ 
-        int left_val = GPIO_READ(param->gpio,param->pin_1); // read ground
-        int right_val = GPIO_READ(param->gpio,param->pin_2); //read wall
+        int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
+        int right_val = GPIO_READ(param->gpio,param->pin_1); //read wall
       
       if(left_val == 0){ 
 
