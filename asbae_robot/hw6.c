@@ -83,7 +83,7 @@ void *IR_Sensor(void* arg)
       if(!FIFO_FULL(param->IR_sensor_fifo)){
         FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
         switch (cmd.command){
-          case 'u': // start line tracing
+          case 'w': // start line tracing
           {
             pause_thread = !pause_thread;
             printf("IR Sensor thread started \n");
@@ -124,7 +124,26 @@ void *IR_Sensor(void* arg)
         {
           FIFO_INSERT(param->motor_control_fifo, cmd);
         }
-
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        for(int i = 0;i<4;i++){
+          cmd.command='j';
+          cmd.argument = 0;
+          FIFO_INSERT(param->control_fifo,cmd);
+        }
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        cmd.command = 'c';
+        cmd.argument = 0;
+        fifo_insert(param->control_fifo,cmd);
+        for(int i = 0;i<100;i++){
+          wait_period(&timer_state,10u);
+        }
+        cmd.command = 'p';
+        cmd.argument = 0;
+        FIFO_INSERT(param->control_fifo,cmd);
       }
 
       if(right_val == 0){ //hit the wall
@@ -148,8 +167,9 @@ void *IR_Sensor(void* arg)
         FIFO_INSERT(param->motor_control_fifo,cmd);
         cmd.command = 'w';
         cmd.argument = 0;
-        
-       
+        cmd.command = 'b';
+        cmd.argument = 50;
+        fifo_insert(param->dir_fifo,cmd);
         FIFO_INSERT(param->dir_fifo, cmd);
         if(!FIFO_FULL(param->dir_fifo))
         {
@@ -221,8 +241,8 @@ void *Control(void * arg)
             param->mode = 2;
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->img_cmd_fifo))
-            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+            if(!FIFO_FULL(param->IR_sensor_fifo))
+            {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
             if(!FIFO_FULL(param->motor_control_fifo))
             {
               FIFO_INSERT(param->motor_control_fifo,cmd2);
@@ -346,8 +366,11 @@ void *Control(void * arg)
           else if(param->mode == 2) { //mode2
             cmd2.command = 'w';
             cmd2.argument = 0;
-            if(!FIFO_FULL(param->img_cmd_fifo))
-            {FIFO_INSERT(param->img_cmd_fifo,cmd2);}
+            if(!FIFO_FULL(param->IR_sensor_fifo))
+            {FIFO_INSERT(param->IR_sensor_fifo,cmd2);}
+            cmd2.command = 's';
+            cmd2.argument = 0;
+            FIFO_INSERT(param->motor_control_fifo,cmd2);
           } 
           else if(param->mode == 3) { //mode3
             cmd2.command = 'w';
@@ -559,19 +582,6 @@ void *Control(void * arg)
           // else printf( "claw_fifo queue full\nHW6> " );
           break;
         }
-        case 't': // pwm 180
-        {
-          cmd2.command = 't';
-          cmd2.argument = 0;
-
-          if (!(FIFO_FULL(param->pwm_servo_fifo))) FIFO_INSERT( param->pwm_servo_fifo, cmd2 );
-          else {
-              printf( "pwm_servo_fifo queue full\nHW6> " );
-              break;
-          }
-
-          break;
-        }
         default: //if no command entered
         {
             printf("invalid command \n");
@@ -731,7 +741,7 @@ void *Claw_Thread(void * args)
           set_claw(param->uart_fd, claw_pos, ARM_CLAW_TIMEOUT);
           break;
         }
-        case 's': case 'p':// reset claw to open position
+        case 's':// reset claw to open position
         {
           claw_pos = CLAW_OPEN;
           printf("Resetting claw to open position\n");
@@ -808,7 +818,7 @@ void *PWM_Servo_Thread(void * args)
           set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
           break;
         }
-        case 't': 
+        case 'p': 
         {
           pwm_servo_angle = PWM_SERVO_MAX; // reset pwm servo to rest position
           printf("Resetting pwm servo to rest position\n");
@@ -2435,6 +2445,7 @@ void *bin_detector(void * arg){
   free(bin_buffer);
   return NULL;
 }
+
 
 void fifo_insert(struct fifo_t* fifo, struct thread_command cmd){
   if(!FIFO_FULL(fifo)){
