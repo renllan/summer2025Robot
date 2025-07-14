@@ -97,7 +97,7 @@ void *IR_Sensor(void* arg)
       
       int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
       int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
-      printf("left val %d right val, %d \n", left_val,right_val);
+      // printf("left val %d right val, %d \n", left_val,right_val);
       if(left_val == 0){ 
 
         //stop and grab the egg
