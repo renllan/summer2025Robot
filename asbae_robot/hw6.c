@@ -559,6 +559,19 @@ void *Control(void * arg)
           // else printf( "claw_fifo queue full\nHW6> " );
           break;
         }
+        case 't': // pwm 180
+        {
+          cmd2.command = 't';
+          cmd2.argument = 0;
+
+          if (!(FIFO_FULL(param->pwm_servo_fifo))) FIFO_INSERT( param->pwm_servo_fifo, cmd2 );
+          else {
+              printf( "pwm_servo_fifo queue full\nHW6> " );
+              break;
+          }
+
+          break;
+        }
         default: //if no command entered
         {
             printf("invalid command \n");
@@ -795,7 +808,7 @@ void *PWM_Servo_Thread(void * args)
           set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
           break;
         }
-        case 'p': 
+        case 't': 
         {
           pwm_servo_angle = PWM_SERVO_MAX; // reset pwm servo to rest position
           printf("Resetting pwm servo to rest position\n");
@@ -2422,7 +2435,6 @@ void *bin_detector(void * arg){
   free(bin_buffer);
   return NULL;
 }
-
 
 void fifo_insert(struct fifo_t* fifo, struct thread_command cmd){
   if(!FIFO_FULL(fifo)){
