@@ -78,7 +78,6 @@ void *IR_Sensor(void* arg)
 
   while(!(*param->quit_flag))
   {
-    if(!pause_thread){
       if(!FIFO_FULL(param->IR_sensor_fifo)){
         FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
         switch (cmd.command){
@@ -89,12 +88,14 @@ void *IR_Sensor(void* arg)
             break;
           }
         }
-
       }
 
+      
 
-      if(!pause_thread){ int left_val = GPIO_READ(param->gpio,param->pin_1); // read ground
-      int right_val = GPIO_READ(param->gpio,param->pin_2); //read wall
+
+      if(!pause_thread){ 
+        int left_val = GPIO_READ(param->gpio,param->pin_1); // read ground
+        int right_val = GPIO_READ(param->gpio,param->pin_2); //read wall
       
       if(left_val == 0){ 
 
@@ -186,8 +187,8 @@ void *IR_Sensor(void* arg)
     }
      
     wait_period( &timer_state, 10u );
-    }
   }
+
   printf("IR Sensor thread Quit\n");
   return NULL;
 }
