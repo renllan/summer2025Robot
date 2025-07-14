@@ -78,8 +78,7 @@ void *IR_Sensor(void* arg)
 
   while(!(*param->quit_flag))
   {
-    if(!pause_thread)
-    {
+    if(!pause_thread){
       if(!FIFO_FULL(param->IR_sensor_fifo)){
         FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
         switch (cmd.command){
@@ -102,6 +101,7 @@ void *IR_Sensor(void* arg)
         //stop and grab the egg
         //grab the egg
         //turn 180 degrees
+        printf("detected white line");
         cmd.command = 'b';
         cmd.argument = 50; //move forward 50
         if(!FIFO_FULL(param->dir_fifo))
