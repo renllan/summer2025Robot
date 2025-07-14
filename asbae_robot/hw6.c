@@ -581,6 +581,7 @@ void *Arm_Thread(void * args)
   while (!*(param->quit_flag)) {
     if (*(param->drop_stage) == 0) { // not dropping egg
       if (!(FIFO_EMPTY(param->fifo))) {
+        FIFO_REMOVE(param->fifo, &cmd);
          switch (cmd.command) {
            case 'w': // move arm forward
            {
@@ -1089,7 +1090,7 @@ void *Motor_Control(void * arg){
       case 'a':
       {
       //change the direction first
-        busy2 = (int)(param->angle*5);
+        busy2 = (int)(param->angle*1);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'a';
           cmd2.argument = 0;
@@ -1124,7 +1125,7 @@ void *Motor_Control(void * arg){
         prev_dir = 's';
         break;
       case 'd':
-        busy1 = (int)(param->angle*5);
+        busy1 = (int)(param->angle*1);
         if(!FIFO_FULL(param->dir_fifo)){
           cmd2.command   = 'd';
           cmd2.argument = 0;
