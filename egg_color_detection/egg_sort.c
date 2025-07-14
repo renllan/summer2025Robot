@@ -143,10 +143,10 @@ int main(int argc, char * argv[])
             if(avg > Bad_value_H){ //good egg
                 GPIO_CLR(io->gpio, 16); // turn off the red led
                 GPIO_SET(io->gpio, 26); // turn on the green led
-                usleep(500000);
+                usleep(375000);
                 GPIO_CLR(io->gpio, 16); // turn off the red led
                 GPIO_CLR(io->gpio, 26); // turn on the green led
-                usleep(500000);
+                usleep(375000);
                 printf("detected good egg\n");
             }
             
@@ -155,16 +155,18 @@ int main(int argc, char * argv[])
                 GPIO_SET(io->gpio, 16); // turn off the green led
                 GPIO_CLR(io->gpio, 26); // turn on the red led
 
-                usleep(500000);
+                usleep(375000);
                  GPIO_CLR(io->gpio, 16); // turn off the red led
                 GPIO_CLR(io->gpio, 26); // turn on the green led
-                usleep(500000);
+                usleep(375000);
                 
                 printf("detected bad egg\n");
             }
              else{
                 GPIO_CLR(io->gpio, 16); // turn off the red led
                 GPIO_CLR(io->gpio, 26); // turn on the green led
+                usleep(375000);
+
                 printf("did not detect egg\n");
 
             }
