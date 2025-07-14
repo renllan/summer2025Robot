@@ -731,10 +731,17 @@ void *PWM_Servo_Thread(void * args)
           printf("Decreasing pwm servo angle to %d degrees\n", angle_change);
           break;
         }
-        case 's': case 'p': // reset pwm servo to initial angle
+        case 's': // reset pwm servo to initial angle
         {
           pwm_servo_angle = PWM_SERVO_RESET;
           printf("Resetting pwm servo to initial angle\n");
+          set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
+          break;
+        }
+        case 'p': 
+        {
+          pwm_servo_angle = PWM_SERVO_MAX; // reset pwm servo to rest position
+          printf("Resetting pwm servo to rest position\n");
           set_pwmservo(param->uart_fd, pwm_servo_angle, PWM_SERVO_TIMEOUT);
           break;
         }
