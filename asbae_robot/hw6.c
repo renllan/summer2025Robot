@@ -2098,7 +2098,7 @@ void *egg_detector(void * arg)
                 }
                 if(robot_centered && robot_stopped){
                   printf("robot is close enough to grab the egg \n");
-                  usleep(250000); //wait for 1 second
+                  sleep(1); //wait for 1 second
                   if(!FIFO_FULL(param->dir_fifo)){
                     cmd.command ='s';
                     FIFO_INSERT(param->dir_fifo,cmd);
