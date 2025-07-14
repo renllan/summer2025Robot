@@ -186,10 +186,11 @@ int main(int argc, char * argv[] )
       "IR Senssor", 
       &IR_sensor_fifo,
       &motor_control_fifo,
-      &control_fifo,
+      &key_fifo,
       &dir_fifo,
       NULL,
-      24,25,
+      24,
+      25,
       &quit_flag};
     struct egg_detector_thread_param      egg_param = {
         "egg datection", 
