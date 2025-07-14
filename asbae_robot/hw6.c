@@ -80,6 +80,7 @@ void *IR_Sensor(void* arg)
   {
       if(!FIFO_FULL(param->IR_sensor_fifo)){
         FIFO_REMOVE(param->IR_sensor_fifo,&cmd2);
+        printf("reading from fifo \n");
         switch (cmd.command){
           case 'w': // start line tracing
           {
