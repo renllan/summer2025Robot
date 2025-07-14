@@ -154,9 +154,11 @@ int main(int argc, char * argv[])
             else{
                 GPIO_SET(io->gpio, 16); // turn off the green led
                 GPIO_CLR(io->gpio, 26); // turn on the red led
+                sleep(1);
+                GPIO_CLR(io->gpio, 16); // turn off the red led
+                GPIO_CLR(io->gpio, 26); // turn on the green led
                 printf("detected bad egg\n");
             }
-    
             sum_b = 0;
         }
         draw_bitmap_display(handle_GUI_grey, IMG_DATA2);
