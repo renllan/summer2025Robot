@@ -151,7 +151,7 @@ void *IR_Sensor(void* arg)
           wait_period(&timer_state,10u);
         }
         cmd.command = 'o';
-        cmd.argument = '180';
+        cmd.argument = 180;
         FIFO_INSERT(param->motor_control_fifo,cmd);
 
         for(int i = 0;i<100;i++){
