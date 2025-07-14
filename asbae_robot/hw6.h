@@ -80,7 +80,7 @@
 #define PWM_SERVO_MIN 0 // 0 for other car
 #define PWM_SERVO_MAX 180 // 180 for other car
 #define SPIN_REST 90
-#define BACK_FORTH_REST 55
+#define BACK_FORTH_REST 60
 #define UP_DOWN_REST 90
 
 #define SPIN_MOTOR_TEMP_REST 90
