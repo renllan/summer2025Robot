@@ -95,10 +95,10 @@ void *IR_Sensor(void* arg)
 
 
       if(!pause_thread){ 
-        int left_val = GPIO_READ(param->gpio,param->pin_2); // read ground
-        int right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
-      
-      if(left_val == 0){ 
+        int left_val = GPIO_READ(param->gpio,param->pin_1); // read ground
+        int right_val = GPIO_READ(param->gpio,param->pin_2 ); //read wall
+        
+      if(left_val == 1){ 
 
         //stop and grab the egg
         //grab the egg
