@@ -353,7 +353,7 @@ int main(int argc, char * argv[] )
         // pthread_create(&t_reduced,NULL,reduced_video, (void*)&reduced_param);
         // pthread_create(&t_hist,NULL, video_histogram, (void*)&hist_param );
         // pthread_create(&t_egg, NULL, egg_detector, (void * )&egg_param);
-        // pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
+        pthread_create(&tmc, NULL,Motor_Control, (void*)&motor_ctl_param);
         // pthread_create(&t_sc,NULL, single_channel, (void*)&single_channel_param);
         pthread_create(&tarm, NULL, Arm_Thread, (void *)&arm_param);
         pthread_create(&tclaw, NULL, Claw_Thread, (void *)&claw_param);
@@ -371,7 +371,7 @@ int main(int argc, char * argv[] )
         // pthread_join(t_reduced,NULL);
         // pthread_join(t_hist,NULL);
         // pthread_join(t_egg,NULL);
-        // pthread_join(tmc,NULL);
+        pthread_join(tmc,NULL);
         // pthread_join(t_sc,NULL);
         pthread_join(tarm, NULL);
         pthread_join(tclaw, NULL);
