@@ -114,7 +114,7 @@ void *IR_Sensor(void* arg)
         cmd.command = 'm';//switch mode 
         cmd.argument =0;
         fifo_insert(param->control_fifo,cmd);
-        cmd.command = "3";
+        cmd.command = '3';
         cmd.argument = '0';
         fifo_insert(param->control_fifo,cmd);
         cmd.command = 'p';
