@@ -105,7 +105,7 @@ void *IR_Sensor(void* arg)
         //turn 180 degrees
         printf("detected white line");
         cmd.command = 'b';
-        cmd.argument = 50; //move forward 50
+        cmd.argument = 20; //move forward 50
         if(!FIFO_FULL(param->dir_fifo))
         {
           FIFO_INSERT(param->dir_fifo, cmd);
@@ -126,7 +126,7 @@ void *IR_Sensor(void* arg)
         {
           FIFO_INSERT(param->motor_control_fifo, cmd);
         }
-        for(int i = 0;i<100;i++){
+        for(int i = 0;i<30;i++){
           wait_period(&timer_state,10u);
         }
         for(int i = 0;i<4;i++){
