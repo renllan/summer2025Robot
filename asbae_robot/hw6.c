@@ -169,6 +169,20 @@ void *IR_Sensor(void* arg)
         cmd.argument  = 0;
         FIFO_INSERT(param->motor_control_fifo,cmd);
 
+        cmd.command = 'm';//switch mode 
+        cmd.argument =0;
+        fifo_insert(param->control_fifo,cmd);
+        cmd.command = '1';
+        cmd.argument = '0';
+        fifo_insert(param->control_fifo,cmd);
+
+        cmd.command = 'i';
+        cmd.argument =0;
+        FIFO_INSERT(param->control_fifo,cmd);
+        cmd.command = 'i';
+        cmd.argument =0;
+        FIFO_INSERT(param->control_fifo,cmd);
+
         cmd.command = 'w';
         cmd.argument = 0;
         FIFO_INSERT(param->motor_control_fifo,cmd);
@@ -179,7 +193,12 @@ void *IR_Sensor(void* arg)
         //   wait_period(&timer_state,10u);
         //   right_val = GPIO_READ(param->gpio,param->pin_1 ); //read wall
         // }
-
+        cmd.command = 'm';//switch mode 
+        cmd.argument =0;
+        fifo_insert(param->control_fifo,cmd);
+        cmd.command = '3';
+        cmd.argument = '0';
+        fifo_insert(param->control_fifo,cmd);
         sleep(2);
         cmd.command = 's';
         cmd.argument = 0;
